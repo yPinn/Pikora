@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 
 import { FaFacebook, FaInstagram } from 'react-icons/fa';
 import { SiThreads } from 'react-icons/si';
@@ -20,27 +21,36 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
 
             <div className="w-full space-y-3">
               <Button
+                asChild
                 className="w-full bg-blue-100 hover:bg-blue-200 dark:bg-blue-950 dark:hover:bg-blue-900"
                 variant="ghost"
               >
-                <FaFacebook className="size-4 text-blue-600 dark:text-blue-400" />
-                Facebook
+                <Link href="/facebook/dashboard">
+                  <FaFacebook className="size-4 text-blue-600 dark:text-blue-400" />
+                  Facebook
+                </Link>
               </Button>
 
               <Button
+                asChild
                 className="w-full bg-pink-100 hover:bg-pink-200 dark:bg-pink-950 dark:hover:bg-pink-900"
                 variant="ghost"
               >
-                <FaInstagram className="size-4 text-pink-600 dark:text-pink-400" />
-                Instagram
+                <Link href="/instagram/dashboard">
+                  <FaInstagram className="size-4 text-pink-600 dark:text-pink-400" />
+                  Instagram
+                </Link>
               </Button>
 
               <Button
-                className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800"
+                asChild
+                className="w-full bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20"
                 variant="ghost"
               >
-                <SiThreads className="size-4 text-slate-900 dark:text-slate-100" />
-                Threads
+                <Link href="/threads/dashboard">
+                  <SiThreads className="size-4 text-black dark:text-white" />
+                  Threads
+                </Link>
               </Button>
             </div>
           </div>
@@ -49,8 +59,8 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
             <Image
               fill
               alt="Login background"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-              src="/placeholder.svg"
+              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.8]"
+              src="/Momonga_1.jpg"
             />
           </div>
         </CardContent>

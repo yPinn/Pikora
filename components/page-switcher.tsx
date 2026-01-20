@@ -20,16 +20,16 @@ import {
 } from '@/components/ui/sidebar';
 
 export function PageSwitcher({
-  teams,
+  pages: pages,
 }: {
-  teams: {
+  pages: {
     name: string;
     logo: React.ElementType;
-    plan: string;
+    role: string;
   }[];
 }) {
   const { isMobile } = useSidebar();
-  const [activeTeam, setActiveTeam] = React.useState(teams[0]);
+  const [activeTeam, setActiveTeam] = React.useState(pages[0]);
 
   if (!activeTeam) {
     return null;
@@ -49,7 +49,7 @@ export function PageSwitcher({
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{activeTeam.name}</span>
-                <span className="truncate text-xs">{activeTeam.plan}</span>
+                <span className="truncate text-xs">{activeTeam.role}</span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
@@ -61,7 +61,7 @@ export function PageSwitcher({
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-muted-foreground text-xs">Pages</DropdownMenuLabel>
-            {teams.map((team, index) => (
+            {pages.map((team, index) => (
               <DropdownMenuItem
                 key={team.name}
                 className="gap-2 p-2"
