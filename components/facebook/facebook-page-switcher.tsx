@@ -2,9 +2,10 @@
 
 import * as React from 'react';
 
+import Image from 'next/image';
+
 import { ChevronsUpDown } from 'lucide-react';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,98 +22,123 @@ import {
 } from '@/components/ui/sidebar';
 import type { FacebookPage } from '@/lib/services/facebook';
 
-interface FacebookPageSwitcherProps {
-  pages: FacebookPage[];
-}
+// 權限對應表：用於顯示與排序權重
+const ROLES: Record<string, { label: string; weight: number }> = {
+  MANAGE: { label: '管理員', weight: 10 },
+  CREATE_CONTENT: { label: '編輯者', weight: 5 },
+  MODERATE: { label: '版主', weight: 4 },
+  ADVERTISE: { label: '廣告主', weight: 3 },
+  ANALYZE: { label: '分析師', weight: 2 },
+};
 
-/**
- * 將 Facebook tasks 轉換為中文角色名稱
- */
-function getPageRole(tasks?: string[]): string {
-  if (!tasks || tasks.length === 0) return '成員';
-
-  // tasks 包含: ADVERTISE, ANALYZE, CREATE_CONTENT, MODERATE, MANAGE
-  if (tasks.includes('MANAGE')) return '管理員';
-  if (tasks.includes('CREATE_CONTENT')) return '編輯者';
-  if (tasks.includes('MODERATE')) return '版主';
-  if (tasks.includes('ADVERTISE')) return '廣告主';
-  if (tasks.includes('ANALYZE')) return '分析師';
-
-  return '成員';
-}
-
-export function FacebookPageSwitcher({ pages }: FacebookPageSwitcherProps) {
+export function FacebookPageSwitcher({ pages }: { pages: FacebookPage[] }) {
   const { isMobile } = useSidebar();
-  // 初始值設為第一個 page（Server 已取得資料）
-  const [activePage, setActivePage] = React.useState<FacebookPage | null>(
-    pages.length > 0 ? pages[0] : null
+
+  // 取得最高權限職稱
+  const getTopRole = (tasks: string[] = []) => {
+    const roleKey = Object.keys(ROLES).find((key) => tasks.includes(key));
+    return roleKey ? ROLES[roleKey].label : '成員';
+  };
+
+  // 1. 排序：依權限權重 > 字母順序
+  const sortedPages = React.useMemo(
+    () =>
+      [...pages].sort((a, b) => {
+        const getWeight = (p: FacebookPage) =>
+          Math.max(...(p.tasks?.map((t) => ROLES[t]?.weight || 0) || [0]));
+        return getWeight(b) - getWeight(a) || a.name.localeCompare(b.name, 'zh-Hant');
+      }),
+    [pages]
   );
 
-  if (pages.length === 0) {
-    return (
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton disabled size="lg">
-            <div className="bg-muted flex aspect-square size-8 items-center justify-center rounded-lg">
-              <span className="text-xs">?</span>
-            </div>
-            <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium">無粉絲專頁</span>
-              <span className="text-muted-foreground truncate text-xs">請先建立粉絲專頁</span>
-            </div>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
-    );
-  }
+  const [activePage, setActivePage] = React.useState<FacebookPage | null>(null);
 
-  if (!activePage) {
-    return null;
-  }
+  // 2. 初始化與記憶狀態
+  React.useEffect(() => {
+    const savedId = localStorage.getItem('fb_page_id');
+    setActivePage(sortedPages.find((p) => p.id === savedId) || sortedPages[0] || null);
+  }, [sortedPages]);
+
+  const handleSwitch = (page: FacebookPage) => {
+    setActivePage(page);
+    localStorage.setItem('fb_page_id', page.id);
+  };
+
+  // 3. 快捷鍵 (Cmd/Ctrl + 1~9)
+  React.useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && /^[1-9]$/.test(e.key)) {
+        e.preventDefault();
+        const target = sortedPages[parseInt(e.key) - 1];
+        if (target) handleSwitch(target);
+      }
+    };
+    window.addEventListener('keydown', down);
+    return () => window.removeEventListener('keydown', down);
+  }, [sortedPages]);
+
+  if (!activePage)
+    return <div className="bg-sidebar-accent/50 h-12 w-full animate-pulse rounded-lg" />;
 
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-              size="lg"
-            >
-              <Avatar className="size-8 rounded-lg">
-                <AvatarImage alt={activePage.name} src={activePage.picture?.data?.url} />
-                <AvatarFallback className="rounded-lg">{activePage.name.charAt(0)}</AvatarFallback>
-              </Avatar>
+            <SidebarMenuButton className="data-[state=open]:bg-sidebar-accent" size="lg">
+              <div className="bg-background relative size-8 shrink-0 overflow-hidden rounded-lg border">
+                {activePage.picture?.data?.url && (
+                  <Image
+                    fill
+                    priority
+                    alt={activePage.name}
+                    className="object-cover"
+                    sizes="32px"
+                    src={activePage.picture.data.url}
+                  />
+                )}
+              </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{activePage.name}</span>
+                <span className="truncate font-semibold">{activePage.name}</span>
                 <span className="text-muted-foreground truncate text-xs">
-                  {getPageRole(activePage.tasks)}
+                  {getTopRole(activePage.tasks)}
                 </span>
               </div>
-              <ChevronsUpDown className="ml-auto" />
+              <ChevronsUpDown className="ml-auto size-4 opacity-50" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent
             align="start"
             className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             side={isMobile ? 'bottom' : 'right'}
-            sideOffset={4}
           >
             <DropdownMenuLabel className="text-muted-foreground text-xs">
               粉絲專頁
             </DropdownMenuLabel>
-            {pages.map((page, index) => (
+            {sortedPages.map((page, i) => (
               <DropdownMenuItem
                 key={page.id}
-                className="gap-2 p-2"
-                onClick={() => setActivePage(page)}
+                className="cursor-pointer gap-2 p-2"
+                onClick={() => handleSwitch(page)}
               >
-                <Avatar className="size-6">
-                  <AvatarImage alt={page.name} src={page.picture?.data?.url} />
-                  <AvatarFallback className="text-xs">{page.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <span className="flex-1 truncate">{page.name}</span>
-                {index < 9 && <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>}
+                <div className="bg-background relative size-6 shrink-0 overflow-hidden rounded border">
+                  {page.picture?.data?.url && (
+                    <Image
+                      fill
+                      alt={page.name}
+                      className="object-cover"
+                      sizes="24px"
+                      src={page.picture.data.url}
+                    />
+                  )}
+                </div>
+                <span
+                  className={`flex-1 truncate ${activePage.id === page.id ? 'text-primary font-bold' : ''}`}
+                >
+                  {page.name}
+                </span>
+                {i < 9 && <DropdownMenuShortcut>⌘{i + 1}</DropdownMenuShortcut>}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

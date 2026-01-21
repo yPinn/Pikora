@@ -1,4 +1,4 @@
-import { BarChart3, BookOpen, Bot, Frame, Settings2, SquareTerminal, Users } from 'lucide-react';
+import { BarChart3, Frame, Gift, Layers, Trophy, Users } from 'lucide-react';
 
 import type { NavMainItem, NavProject } from './types';
 
@@ -12,88 +12,39 @@ export const facebookNavConfig: {
 } = {
   navMain: [
     {
-      title: 'Dashboard',
-      url: '/facebook/dashboard',
-      icon: SquareTerminal,
+      title: '內容管理',
+      icon: Layers, // 代表貼文與數據層
       isActive: true,
       items: [
-        {
-          title: '總覽',
-          url: '/facebook/dashboard',
-        },
-        {
-          title: '近期活動',
-          url: '/facebook/dashboard/recent',
-        },
-        {
-          title: '統計數據',
-          url: '/facebook/dashboard/stats',
-        },
+        { title: '貼文瀏覽', url: '/facebook/dashboard' }, // 瀏覽粉專貼文
+        { title: '留言撈取', url: '/facebook/fetch' }, // 內容與反應抓取
       ],
     },
     {
-      title: '貼文管理',
-      url: '/facebook/posts',
-      icon: Bot,
+      title: '抽獎引擎',
+      icon: Trophy, // 核心抽獎功能
       items: [
-        {
-          title: '所有貼文',
-          url: '/facebook/posts',
-        },
-        {
-          title: '草稿',
-          url: '/facebook/posts/drafts',
-        },
-        {
-          title: '已排程',
-          url: '/facebook/posts/scheduled',
-        },
+        { title: '活動配置', url: '/giveaway/setup' }, // 獎項與篩選規則
+        { title: '獎池驗證', url: '/giveaway/validator' }, // 資格預審
+        { title: '開獎排程', url: '/giveaway/scheduler' }, // 時間預約
+        { title: '開獎實境', url: '/giveaway/live' }, // 過程動畫與核對
       ],
     },
     {
-      title: '抽獎活動',
-      url: '/facebook/lottery',
-      icon: BookOpen,
+      title: '中獎管理',
+      icon: Gift, // 售後 CRM
       items: [
-        {
-          title: '建立抽獎',
-          url: '/facebook/lottery/create',
-        },
-        {
-          title: '進行中',
-          url: '/facebook/lottery/active',
-        },
-        {
-          title: '歷史記錄',
-          url: '/facebook/lottery/history',
-        },
-        {
-          title: '得獎名單',
-          url: '/facebook/lottery/winners',
-        },
+        { title: '得獎名單', url: '/winners/results' }, // 結果與歷史
+        { title: '中獎通知', url: '/winners/notify' }, // 通知與圖卡生成
+        { title: '私訊追蹤', url: '/winners/tracking' }, // CRM 狀態管理
       ],
     },
     {
-      title: '設定',
-      url: '/facebook/settings',
-      icon: Settings2,
+      title: '數據分析',
+      icon: BarChart3, // 成效回饋
       items: [
-        {
-          title: '一般設定',
-          url: '/facebook/settings/general',
-        },
-        {
-          title: '連結管理',
-          url: '/facebook/settings/connections',
-        },
-        {
-          title: '通知',
-          url: '/facebook/settings/notifications',
-        },
-        {
-          title: '帳號設定',
-          url: '/facebook/settings/account',
-        },
+        { title: '成效報告', url: '/insights/report' },
+        { title: '粉絲洞察', url: '/insights/audience' },
       ],
     },
   ],

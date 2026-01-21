@@ -7,7 +7,7 @@ export interface NavSubItem {
 
 export interface NavMainItem {
   title: string;
-  url: string;
+  url?: string;
   icon: LucideIcon;
   isActive?: boolean;
   items?: NavSubItem[];
