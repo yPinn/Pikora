@@ -1,7 +1,15 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { auth } from '@/lib/auth';
 
-export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
-  return <SidebarProvider>{children}</SidebarProvider>;
+import { AuthenticatedLayoutClient } from './layout-client';
+
+export default async function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect('/login');
+  }
+
+  return <AuthenticatedLayoutClient session={session}>{children}</AuthenticatedLayoutClient>;
 }

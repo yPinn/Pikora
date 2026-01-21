@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from 'next/font/google';
 
+import { SessionProvider } from '@/components/session-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 
 import type { Metadata } from 'next';
@@ -31,9 +32,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <html suppressHydrationWarning lang="en">
         <head />
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          <ThemeProvider attribute="class" defaultTheme="light">
-            {children}
-          </ThemeProvider>
+          <SessionProvider>
+            <ThemeProvider attribute="class" defaultTheme="light">
+              {children}
+            </ThemeProvider>
+          </SessionProvider>
         </body>
       </html>
     </>

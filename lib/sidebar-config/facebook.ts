@@ -1,41 +1,15 @@
-import {
-  AudioWaveform,
-  BarChart3,
-  BookOpen,
-  Bot,
-  Command,
-  Frame,
-  GalleryVerticalEnd,
-  Settings2,
-  SquareTerminal,
-  Users,
-} from 'lucide-react';
+import { BarChart3, BookOpen, Bot, Frame, Settings2, SquareTerminal, Users } from 'lucide-react';
 
-import type { SidebarConfig } from './types';
+import type { NavMainItem, NavProject } from './types';
 
-export const facebookConfig: SidebarConfig = {
-  user: {
-    name: '小桃寶寶',
-    email: 'm@example.com',
-    avatar: '/Momonga_2.jpg',
-  },
-  pages: [
-    {
-      name: '粉絲專頁A',
-      logo: GalleryVerticalEnd,
-      role: '管理者',
-    },
-    {
-      name: '粉絲專頁B',
-      logo: AudioWaveform,
-      role: '擁有者',
-    },
-    {
-      name: '粉絲專頁C',
-      logo: Command,
-      role: '編輯者',
-    },
-  ],
+/**
+ * Facebook 平台的靜態導航配置
+ * 動態資料（用戶、粉絲專頁）由 FacebookSidebar 組件從 API 取得
+ */
+export const facebookNavConfig: {
+  navMain: NavMainItem[];
+  projects: NavProject[];
+} = {
   navMain: [
     {
       title: 'Dashboard',
