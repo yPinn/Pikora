@@ -27,7 +27,7 @@ export function proxy(request: NextRequest) {
 
   // 已登入跳轉：避免已登入使用者重複訪問登入頁
   if (pathname === '/login' && sessionCookie) {
-    return NextResponse.redirect(new URL('/facebook/dashboard', request.url));
+    return NextResponse.redirect(new URL('/facebook/content/posts', request.url));
   }
 
   return NextResponse.next();

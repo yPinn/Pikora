@@ -4,7 +4,7 @@ import { memo } from 'react';
 
 import Image from 'next/image';
 
-import { BadgeCheck, ChevronsUpDown, CreditCard, LogOut, Moon, Sun } from 'lucide-react';
+import { BadgeCheck, ChevronsUpDown, Settings, LogOut, Moon, Sun } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
 
@@ -78,12 +78,12 @@ export function NavUser({ user }: { user: { name: string; email: string; avatar:
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <BadgeCheck className="mr-2 size-4" />
-                Account
+                <Settings className="mr-2 size-4" />
+                設定
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <CreditCard className="mr-2 size-4" />
-                Billing
+                <BadgeCheck className="mr-2 size-4" />
+                帳號連接
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
@@ -93,7 +93,7 @@ export function NavUser({ user }: { user: { name: string; email: string; avatar:
               ) : (
                 <Moon className="mr-2 size-4" />
               )}
-              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+              {theme === 'dark' ? '淺色模式' : '深色模式'}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/login' })}>

@@ -26,19 +26,17 @@ export function FacebookSidebar({
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <div className="flex h-12 w-full items-center px-2">
-          {isReady ? (
-            <PageSwitcher />
-          ) : (
-            <div className="flex w-full items-center gap-2 px-1">
-              <Skeleton className="h-8 w-8 rounded-lg" />
-              <div className="flex flex-1 flex-col gap-1">
-                <Skeleton className="h-3 w-24" />
-                <Skeleton className="h-2 w-16" />
-              </div>
+        {isReady ? (
+          <PageSwitcher />
+        ) : (
+          <div className="flex h-12 w-full items-center gap-2 px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+            <Skeleton className="h-8 w-8 shrink-0 rounded-lg" />
+            <div className="flex flex-1 flex-col gap-1 group-data-[collapsible=icon]:hidden">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-2 w-16" />
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={facebookNavConfig.navMain} />

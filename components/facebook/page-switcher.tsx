@@ -74,7 +74,10 @@ export function PageSwitcher() {
       <SidebarMenuItem>
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
-            <SidebarMenuButton className="data-[state=open]:bg-sidebar-accent" size="lg">
+            <SidebarMenuButton
+              className="data-[state=open]:bg-sidebar-accent group-data-[collapsible=icon]:justify-center"
+              size="lg"
+            >
               <div className="bg-background relative size-8 shrink-0 overflow-hidden rounded-lg border">
                 {activePage.picture?.data?.url && (
                   <Image
@@ -87,13 +90,13 @@ export function PageSwitcher() {
                   />
                 )}
               </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-semibold">{activePage.name}</span>
                 <span className="text-muted-foreground truncate text-xs">
                   {getTopRole(activePage.tasks)}
                 </span>
               </div>
-              <ChevronsUpDown className="ml-auto size-4 opacity-50" />
+              <ChevronsUpDown className="ml-auto size-4 opacity-50 group-data-[collapsible=icon]:hidden" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
 

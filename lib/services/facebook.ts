@@ -57,11 +57,13 @@ export interface FacebookPost {
 
 export interface FacebookAttachment {
   type: string;
+  media_type?: 'photo' | 'video' | 'link' | 'album' | string;
   url?: string;
   title?: string;
   description?: string;
   media?: {
-    image?: { src: string };
+    image?: { src: string; width?: number; height?: number };
+    source?: string; // 影片來源 URL
   };
   subattachments?: {
     data: FacebookAttachment[];
@@ -195,6 +197,7 @@ export class FacebookService extends MetaApiBase {
         'created_time',
         'permalink_url',
         'full_picture',
+        'attachments{type,media_type,media,subattachments{type,media_type,media}}',
         'shares',
         'reactions.summary(total_count)',
         'comments.summary(total_count)',
