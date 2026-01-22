@@ -1,7 +1,6 @@
+import { Shell } from '@/components/facebook/shell';
 import { auth } from '@/lib/auth';
 import { createFacebookService } from '@/lib/services/facebook';
-
-import { FacebookShell } from './facebook-shell';
 
 export default async function Layout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -26,8 +25,8 @@ export default async function Layout({ children }: { children: React.ReactNode }
   ]);
 
   return (
-    <FacebookShell pages={pages} session={session}>
+    <Shell pages={pages} session={session}>
       {children}
-    </FacebookShell>
+    </Shell>
   );
 }

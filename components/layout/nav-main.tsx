@@ -1,5 +1,8 @@
 'use client';
 
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
 import { ChevronRight, type LucideIcon } from 'lucide-react';
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -21,28 +24,30 @@ export interface NavSubItem {
 
 export interface NavMainItem {
   title: string;
-  url?: string; // 根目錄層級 url 為可選
+  url?: string;
   icon?: LucideIcon;
   isActive?: boolean;
   items?: NavSubItem[];
 }
 
 export function NavMain({ items }: { items: NavMainItem[] }) {
+  const pathname = usePathname();
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Console</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
           const hasSubItems = item.items && item.items.length > 0;
+          const isGroupActive = item.items?.some((sub) => pathname === sub.url);
 
           if (hasSubItems) {
-            // 模式 A：有子項目的分類摺疊層（不具備跳轉連結）
             return (
               <Collapsible
                 key={item.title}
                 asChild
                 className="group/collapsible"
-                defaultOpen={item.isActive}
+                defaultOpen={item.isActive || isGroupActive}
               >
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
@@ -56,10 +61,10 @@ export function NavMain({ items }: { items: NavMainItem[] }) {
                     <SidebarMenuSub>
                       {item.items?.map((subItem) => (
                         <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild>
-                            <a href={subItem.url}>
+                          <SidebarMenuSubButton asChild isActive={pathname === subItem.url}>
+                            <Link href={subItem.url}>
                               <span>{subItem.title}</span>
-                            </a>
+                            </Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                       ))}
@@ -70,15 +75,16 @@ export function NavMain({ items }: { items: NavMainItem[] }) {
             );
           }
 
-          // 模式 B：沒有子項目的直接連結層
+          const isActive = item.url ? pathname === item.url : false;
+
           return (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild={!!item.url} isActive={item.isActive} tooltip={item.title}>
+              <SidebarMenuButton asChild={!!item.url} isActive={isActive} tooltip={item.title}>
                 {item.url ? (
-                  <a href={item.url}>
+                  <Link href={item.url}>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
-                  </a>
+                  </Link>
                 ) : (
                   <div className="flex items-center gap-2">
                     {item.icon && <item.icon />}

@@ -1,23 +1,24 @@
-// facebook-shell.tsx
 'use client';
 
-import { FacebookSidebar } from '@/components/facebook/facebook-sidebar';
 import { SidebarInset } from '@/components/ui/sidebar';
+import { FacebookPageStore } from '@/contexts/facebook-page-store';
 import type { FacebookPage } from '@/lib/services/facebook';
+
+import { FacebookSidebar } from './sidebar';
 
 import type { Session } from 'next-auth';
 
-interface FacebookShellProps {
+interface ShellProps {
   children: React.ReactNode;
   session: Session;
   pages: FacebookPage[];
 }
 
-export function FacebookShell({ children, session, pages }: FacebookShellProps) {
+export function Shell({ children, session, pages }: ShellProps) {
   return (
-    <>
-      <FacebookSidebar pages={pages} session={session} />
+    <FacebookPageStore pages={pages}>
+      <FacebookSidebar session={session} />
       <SidebarInset>{children}</SidebarInset>
-    </>
+    </FacebookPageStore>
   );
 }

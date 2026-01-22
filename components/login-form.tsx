@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 
 export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) {
   const handleFacebookLogin = () => {
-    signIn('facebook', { callbackUrl: '/facebook/dashboard' });
+    signIn('facebook', { callbackUrl: '/facebook/content/posts' });
   };
 
   const handleInstagramLogin = () => {

@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation';
 
+import { AuthShell } from '@/components/layout/auth-shell';
 import { auth } from '@/lib/auth';
-
-import { AuthenticatedLayoutClient } from './layout-client';
 
 export default async function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -11,5 +10,5 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
     redirect('/login');
   }
 
-  return <AuthenticatedLayoutClient session={session}>{children}</AuthenticatedLayoutClient>;
+  return <AuthShell session={session}>{children}</AuthShell>;
 }

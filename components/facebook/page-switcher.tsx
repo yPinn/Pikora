@@ -20,6 +20,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { useFacebookPage } from '@/contexts/facebook-page-store';
 import type { FacebookPage } from '@/lib/services/facebook';
 
 // 權限對應表：用於顯示與排序權重
@@ -31,8 +32,9 @@ const ROLES: Record<string, { label: string; weight: number }> = {
   ANALYZE: { label: '分析師', weight: 2 },
 };
 
-export function FacebookPageSwitcher({ pages }: { pages: FacebookPage[] }) {
+export function PageSwitcher() {
   const { isMobile } = useSidebar();
+  const { activePage, setActivePage, pages } = useFacebookPage();
 
   // 取得最高權限職稱
   const getTopRole = (tasks: string[] = []) => {
@@ -40,7 +42,7 @@ export function FacebookPageSwitcher({ pages }: { pages: FacebookPage[] }) {
     return roleKey ? ROLES[roleKey].label : '成員';
   };
 
-  // 1. 排序：依權限權重 > 字母順序
+  // 排序：依權限權重 > 字母順序
   const sortedPages = React.useMemo(
     () =>
       [...pages].sort((a, b) => {
@@ -51,31 +53,18 @@ export function FacebookPageSwitcher({ pages }: { pages: FacebookPage[] }) {
     [pages]
   );
 
-  const [activePage, setActivePage] = React.useState<FacebookPage | null>(null);
-
-  // 2. 初始化與記憶狀態
-  React.useEffect(() => {
-    const savedId = localStorage.getItem('fb_page_id');
-    setActivePage(sortedPages.find((p) => p.id === savedId) || sortedPages[0] || null);
-  }, [sortedPages]);
-
-  const handleSwitch = (page: FacebookPage) => {
-    setActivePage(page);
-    localStorage.setItem('fb_page_id', page.id);
-  };
-
-  // 3. 快捷鍵 (Cmd/Ctrl + 1~9)
+  // 快捷鍵 (Cmd/Ctrl + 1~9)
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && /^[1-9]$/.test(e.key)) {
         e.preventDefault();
         const target = sortedPages[parseInt(e.key) - 1];
-        if (target) handleSwitch(target);
+        if (target) setActivePage(target);
       }
     };
     window.addEventListener('keydown', down);
     return () => window.removeEventListener('keydown', down);
-  }, [sortedPages]);
+  }, [sortedPages, setActivePage]);
 
   if (!activePage)
     return <div className="bg-sidebar-accent/50 h-12 w-full animate-pulse rounded-lg" />;
@@ -120,7 +109,7 @@ export function FacebookPageSwitcher({ pages }: { pages: FacebookPage[] }) {
               <DropdownMenuItem
                 key={page.id}
                 className="cursor-pointer gap-2 p-2"
-                onClick={() => handleSwitch(page)}
+                onClick={() => setActivePage(page)}
               >
                 <div className="bg-background relative size-6 shrink-0 overflow-hidden rounded border">
                   {page.picture?.data?.url && (
