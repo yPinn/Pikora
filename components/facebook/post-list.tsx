@@ -15,11 +15,14 @@ import {
   ChevronRight,
   Play,
   Images,
+  Check,
+  Copy,
 } from 'lucide-react';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFacebookPage } from '@/contexts/facebook-page-store';
 import type { FacebookPost } from '@/lib/services/facebook';
+import { cn } from '@/lib/utils';
 
 // 從貼文中提取所有媒體圖片
 function getMediaImages(post: FacebookPost): string[] {
@@ -55,9 +58,14 @@ function isVideoPost(post: FacebookPost): boolean {
   );
 }
 
+// Session storage key for selected post
+export const SELECTED_POST_URL_KEY = 'pikora_selected_post_url';
+export const SELECTED_POST_ID_KEY = 'pikora_selected_post_id';
+
 // 單一貼文卡片元件
 function PostCard({ post }: { post: FacebookPost }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [copied, setCopied] = useState(false);
   const images = getMediaImages(post);
   const hasMultipleImages = images.length > 1;
   const isVideo = isVideoPost(post);
@@ -80,13 +88,44 @@ function PostCard({ post }: { post: FacebookPost }) {
     [images.length]
   );
 
+  // 處理卡片點擊：Ctrl+點擊跳轉，單擊複製 URL
+  const handleCardClick = useCallback(
+    (e: React.MouseEvent) => {
+      // Ctrl/Cmd + 點擊：在新視窗開啟貼文
+      if (e.ctrlKey || e.metaKey) {
+        window.open(post.permalink_url, '_blank', 'noopener,noreferrer');
+        return;
+      }
+
+      // 單擊：複製 URL 並存入 sessionStorage
+      e.preventDefault();
+
+      // 存入 sessionStorage 供其他頁面使用
+      sessionStorage.setItem(SELECTED_POST_URL_KEY, post.permalink_url || '');
+      sessionStorage.setItem(SELECTED_POST_ID_KEY, post.id);
+
+      // 複製到剪貼簿
+      navigator.clipboard.writeText(post.permalink_url || '').then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    },
+    [post.permalink_url, post.id]
+  );
+
   return (
-    <a
+    <div
       key={post.id}
-      className="group bg-muted relative aspect-square overflow-hidden rounded-sm"
-      href={post.permalink_url}
-      rel="noopener noreferrer"
-      target="_blank"
+      className="group bg-muted relative aspect-square cursor-pointer overflow-hidden rounded-sm"
+      role="button"
+      tabIndex={0}
+      title="點擊複製 URL｜Ctrl+點擊開啟貼文"
+      onClick={handleCardClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          handleCardClick(e as unknown as React.MouseEvent);
+        }
+      }}
     >
       {/* 圖片顯示 */}
       {images.length > 0 ? (
@@ -171,7 +210,25 @@ function PostCard({ post }: { post: FacebookPost }) {
           {formatDistanceToNow(new Date(post.created_time), { addSuffix: true, locale: zhTW })}
         </time>
       </div>
-    </a>
+
+      {/* 複製成功提示 */}
+      <div
+        className={cn(
+          'pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-black/60 transition-opacity',
+          copied ? 'opacity-100' : 'opacity-0'
+        )}
+      >
+        <div className="flex items-center gap-2 rounded-full bg-green-500 px-3 py-1.5 text-sm font-medium text-white">
+          <Check className="h-4 w-4" />
+          已複製 URL
+        </div>
+      </div>
+
+      {/* 左下角複製圖示提示 */}
+      <div className="absolute bottom-2 left-2 z-20 rounded-full bg-black/50 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100">
+        <Copy className="h-3 w-3" />
+      </div>
+    </div>
   );
 }
 

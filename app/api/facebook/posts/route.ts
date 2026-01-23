@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const accessToken = request.headers.get('Authorization')?.replace('Bearer ', '');
     const { searchParams } = new URL(request.url);
     const pageId = searchParams.get('pageId');
+    const postId = searchParams.get('postId');
     const limit = parseInt(searchParams.get('limit') || '25', 10);
     const after = searchParams.get('after') || undefined;
 
@@ -20,16 +21,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '缺少 Access Token' }, { status: 401 });
     }
 
+    const { facebook } = getMetaServices();
+
+    // 如果有 postId，取得單一貼文資訊
+    if (postId) {
+      const post = await facebook.getPost(postId, accessToken);
+      return NextResponse.json({ data: post });
+    }
+
+    // 否則取得貼文列表
     if (!pageId) {
       return NextResponse.json({ error: '缺少 pageId 參數' }, { status: 400 });
     }
 
-    const { facebook } = getMetaServices();
     const posts = await facebook.getPosts(pageId, accessToken, { limit, after });
 
     return NextResponse.json(posts);
   } catch (error) {
-    console.error('取得貼文列表失敗:', error);
+    console.error('取得貼文失敗:', error);
 
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

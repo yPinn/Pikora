@@ -78,6 +78,12 @@ export interface FacebookComment {
   from?: {
     id: string;
     name: string;
+    picture?: {
+      data: {
+        url: string;
+        is_silhouette?: boolean;
+      };
+    };
   };
   like_count?: number;
   comment_count?: number;
@@ -90,6 +96,10 @@ export interface FacebookComment {
   };
   parent?: {
     id: string;
+  };
+  // 巢狀回覆
+  comments?: {
+    data: FacebookComment[];
   };
 }
 
@@ -333,14 +343,15 @@ export class FacebookService extends MetaApiBase {
         'id',
         'message',
         'created_time',
-        'from',
+        'from{id,name,picture}',
         'like_count',
         'comment_count',
         'attachment',
+        'comments{id,message,created_time,from{id,name,picture},like_count,attachment}',
       ],
       limit = 100,
       after,
-      filter = 'stream',
+      filter = 'toplevel',
       order = 'chronological',
     } = options;
 
