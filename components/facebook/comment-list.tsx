@@ -19,6 +19,8 @@ import {
   Flame,
   Check,
   X,
+  ChevronLeft,
+  ChevronRight,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -66,7 +68,7 @@ const CommentItem = ({ comment }: { comment: FacebookComment }) => {
   const hasReplies = comment.comments?.data && comment.comments.data.length > 0;
 
   return (
-    <div className="hover:bg-accent/5 border-b px-4 py-2 transition-colors last:border-0">
+    <div className="hover:bg-accent/5 border-b px-4 py-3 transition-colors last:border-0">
       <div className="relative flex gap-3">
         {/* 父 avatar 下方的垂直引導線 */}
         {hasReplies && <div className="bg-border absolute top-9 bottom-0 left-[18px] w-0.5" />}
@@ -76,7 +78,7 @@ const CommentItem = ({ comment }: { comment: FacebookComment }) => {
             {comment.from?.name?.[0] || '?'}
           </AvatarFallback>
         </Avatar>
-        <div className="min-w-0 flex-1 space-y-0.5">
+        <div className="min-w-0 flex-1 space-y-1">
           <p className="text-sm">
             <span className="font-semibold">{comment.from?.name}</span>
             <span className="text-muted-foreground ml-2 text-xs">
@@ -86,9 +88,11 @@ const CommentItem = ({ comment }: { comment: FacebookComment }) => {
               })}
             </span>
           </p>
-          <p className="text-sm leading-snug break-words whitespace-pre-wrap">{comment.message}</p>
+          <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
+            {comment.message}
+          </p>
           {comment.attachment?.media?.image?.src && (
-            <div className="relative mt-1.5 h-36 w-56">
+            <div className="relative mt-2 h-36 w-56">
               <Image
                 fill
                 alt="Attachment"
@@ -98,7 +102,7 @@ const CommentItem = ({ comment }: { comment: FacebookComment }) => {
               />
             </div>
           )}
-          <div className="text-muted-foreground mt-1 flex items-center gap-3 text-xs">
+          <div className="text-muted-foreground mt-1.5 flex items-center gap-3 text-xs">
             <span className="flex items-center gap-1">
               <ThumbsUp className="h-3 w-3" />
               {comment.like_count || 0}
@@ -235,7 +239,7 @@ export function CommentList() {
           ))}
         </div>
       ) : state.comments.length > 0 ? (
-        <div className="flex flex-1 flex-col space-y-3 overflow-hidden">
+        <div className="flex flex-col space-y-3">
           <div className="flex items-center gap-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -271,7 +275,11 @@ export function CommentList() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <span className="text-muted-foreground text-xs">共 {state.comments.length} 則留言</span>
+            <span className="text-muted-foreground text-xs">
+              共 {state.filteredComments.length} 則留言
+              {state.filteredComments.length !== state.comments.length &&
+                ` (全部 ${state.comments.length} 則)`}
+            </span>
             <Input
               className="ml-auto h-8 w-48 text-xs"
               placeholder="搜尋內容..."
@@ -279,11 +287,35 @@ export function CommentList() {
               onChange={(e) => actions.setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="bg-card flex-1 overflow-y-auto rounded-lg border shadow-sm">
-            {state.filteredComments.map((c) => (
+          <div className="bg-card rounded-lg border shadow-sm">
+            {state.paginatedComments.map((c) => (
               <CommentItem key={c.id} comment={c} />
             ))}
           </div>
+          {/* 分頁控制 */}
+          {state.totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                disabled={state.currentPage === 1}
+                size="sm"
+                variant="outline"
+                onClick={() => actions.setCurrentPage(state.currentPage - 1)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-muted-foreground text-sm">
+                第 {state.currentPage} / {state.totalPages} 頁
+              </span>
+              <Button
+                disabled={state.currentPage === state.totalPages}
+                size="sm"
+                variant="outline"
+                onClick={() => actions.setCurrentPage(state.currentPage + 1)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       ) : state.error ? (
         <StatusView desc={state.error} icon={AlertCircle} title="載入失敗" variant="error" />

@@ -2,44 +2,9 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 
 import { SELECTED_POST_ID_KEY, SELECTED_POST_URL_KEY } from '@/components/facebook/post-list';
 import type { FacebookComment, FacebookPage } from '@/lib/services/facebook';
+import { extractPostIdFromUrl, parseFacebookErrorMessage } from '@/lib/utils/facebook';
 
-// 從 URL 解析 postId
-function extractPostIdFromUrl(url: string, pageId?: string): string | null {
-  if (!url) return null;
-
-  // 已經是 pageId_postId 格式
-  if (url.includes('_') && /^\d+_\d+$/.test(url)) {
-    return url;
-  }
-
-  // https://www.facebook.com/{pageId}/posts/{postId}
-  const postsMatch = url.match(/\/posts\/(\d+)/);
-  if (postsMatch) {
-    return pageId ? `${pageId}_${postsMatch[1]}` : postsMatch[1];
-  }
-
-  // https://www.facebook.com/permalink.php?story_fbid={postId}&id={pageId}
-  const storyMatch = url.match(/story_fbid=(\d+)/);
-  if (storyMatch) {
-    return pageId ? `${pageId}_${storyMatch[1]}` : storyMatch[1];
-  }
-
-  return null;
-}
-
-// 解析錯誤訊息為友善提示
-function parseErrorMessage(error: string): string {
-  if (error.includes('does not exist') || error.includes('cannot be loaded')) {
-    return '該貼文不存在、已被刪除，或沒有權限查看。';
-  }
-  if (error.includes('permission') || error.includes('Permission')) {
-    return '權限不足，請確認已授權相關權限。';
-  }
-  if (error.includes('token') || error.includes('Token') || error.includes('Session')) {
-    return '授權已過期，請重新登入。';
-  }
-  return '無法取得留言，請確認貼文 URL 是否正確。';
-}
+const ITEMS_PER_PAGE = 10;
 
 export function useFacebookComments(activePage: FacebookPage | null) {
   const [comments, setComments] = useState<FacebookComment[]>([]);
@@ -50,6 +15,7 @@ export function useFacebookComments(activePage: FacebookPage | null) {
   const [postImage, setPostImage] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'most_likes'>('newest');
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const prevPageIdRef = useRef<string | undefined>(undefined);
 
@@ -125,7 +91,7 @@ export function useFacebookComments(activePage: FacebookPage | null) {
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : '未知錯誤';
-        setError(parseErrorMessage(message));
+        setError(parseFacebookErrorMessage(message));
         setComments([]);
       } finally {
         setLoading(false);
@@ -157,6 +123,7 @@ export function useFacebookComments(activePage: FacebookPage | null) {
     }
   }, [postId, fetchCommentsInternal]);
 
+  // 篩選並排序後的留言（不分頁）
   const filteredComments = useMemo(() => {
     let list = comments;
 
@@ -176,6 +143,20 @@ export function useFacebookComments(activePage: FacebookPage | null) {
       return sortBy === 'newest' ? diff : -diff;
     });
   }, [comments, sortBy, searchQuery]);
+
+  // 分頁計算
+  const totalPages = Math.ceil(filteredComments.length / ITEMS_PER_PAGE);
+
+  // 當篩選結果改變時，重置頁碼
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, sortBy]);
+
+  // 分頁後的留言
+  const paginatedComments = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredComments.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredComments, currentPage]);
 
   // 清除輸入與狀態
   const clearInput = useCallback(() => {
@@ -197,6 +178,10 @@ export function useFacebookComments(activePage: FacebookPage | null) {
       sortBy,
       searchQuery,
       filteredComments,
+      paginatedComments,
+      currentPage,
+      totalPages,
+      itemsPerPage: ITEMS_PER_PAGE,
     },
     actions: {
       fetchComments,
@@ -206,6 +191,7 @@ export function useFacebookComments(activePage: FacebookPage | null) {
       setError,
       setPostUrl,
       clearInput,
+      setCurrentPage,
     },
   };
 }

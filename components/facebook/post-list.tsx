@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 import Image from 'next/image';
 
@@ -17,10 +17,11 @@ import {
   Images,
   Check,
   Copy,
+  Loader2,
 } from 'lucide-react';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import { useFacebookPage } from '@/contexts/facebook-page-store';
+import { useFacebookPosts } from '@/hooks/use-facebook-posts';
 import type { FacebookPost } from '@/lib/services/facebook';
 import { cn } from '@/lib/utils';
 
@@ -233,41 +234,28 @@ function PostCard({ post }: { post: FacebookPost }) {
 }
 
 export function PostList() {
-  const { activePage, isReady } = useFacebookPage();
-  const [posts, setPosts] = useState<FacebookPost[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [hasFetched, setHasFetched] = useState(false);
+  const { posts, isLoading, isLoadingMore, hasMore, loadMore } = useFacebookPosts({ limit: 12 });
+  const loaderRef = useRef<HTMLDivElement>(null);
 
+  // Intersection Observer 自動載入更多
   useEffect(() => {
-    // 只有在掛載完成且有專頁 ID 和 Token 時才執行
-    if (!isReady || !activePage?.id || !activePage?.access_token) return;
+    const loader = loaderRef.current;
+    if (!loader || !hasMore) return;
 
-    const controller = new AbortController();
-    async function fetchPosts() {
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/facebook/posts?pageId=${activePage?.id}&limit=12`, {
-          headers: { Authorization: `Bearer ${activePage?.access_token}` },
-          signal: controller.signal,
-        });
-        const data = await res.json();
-        setPosts(data.data || []);
-      } catch (err: unknown) {
-        if (err instanceof Error && err.name !== 'AbortError') {
-          console.error(err);
-          setPosts([]);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoadingMore) {
+          loadMore();
         }
-      } finally {
-        setLoading(false);
-        setHasFetched(true);
-      }
-    }
+      },
+      { threshold: 0.1 }
+    );
 
-    fetchPosts();
-    return () => controller.abort();
-  }, [activePage?.id, activePage?.access_token, isReady]);
+    observer.observe(loader);
+    return () => observer.disconnect();
+  }, [hasMore, isLoadingMore, loadMore]);
 
-  if (!isReady || loading || !hasFetched) {
+  if (isLoading) {
     return (
       <div className="border-border/50 bg-muted/30 grid grid-cols-4 gap-2 rounded-lg border p-2">
         {Array.from({ length: 12 }).map((_, i) => (
@@ -281,10 +269,19 @@ export function PostList() {
     return <p className="text-muted-foreground py-10 text-center text-sm">目前沒有貼文</p>;
 
   return (
-    <div className="border-border/50 bg-muted/30 grid grid-cols-4 gap-2 rounded-lg border p-2">
-      {posts.map((post) => (
-        <PostCard key={post.id} post={post} />
-      ))}
+    <div className="space-y-2">
+      <div className="border-border/50 bg-muted/30 grid grid-cols-4 gap-2 rounded-lg border p-2">
+        {posts.map((post) => (
+          <PostCard key={post.id} post={post} />
+        ))}
+      </div>
+
+      {/* 滾動觸發區域 */}
+      {hasMore && (
+        <div ref={loaderRef} className="flex items-center justify-center py-4">
+          {isLoadingMore && <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />}
+        </div>
+      )}
     </div>
   );
 }
