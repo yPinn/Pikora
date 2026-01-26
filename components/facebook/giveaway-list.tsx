@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 
 import { GiveawayPanel } from '@/components/facebook/giveaway-panel';
+import { SELECTED_POST_ID_KEY, SELECTED_POST_URL_KEY } from '@/components/facebook/post-list';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -59,6 +60,52 @@ export function GiveawayList() {
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsError, setCommentsError] = useState<string | null>(null);
 
+  // 初始化：從 sessionStorage 讀取並清除
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const savedUrl = sessionStorage.getItem(SELECTED_POST_URL_KEY);
+    const savedId = sessionStorage.getItem(SELECTED_POST_ID_KEY);
+
+    if (savedUrl) setPostUrl(savedUrl);
+    if (savedId) setPostId(savedId);
+
+    // 讀取後清除
+    sessionStorage.removeItem(SELECTED_POST_URL_KEY);
+    sessionStorage.removeItem(SELECTED_POST_ID_KEY);
+  }, []);
+
+  // 當 postId 有值且有 access_token 時自動載入留言
+  useEffect(() => {
+    if (!postId || !activePage?.access_token) return;
+
+    const loadComments = async () => {
+      setCommentsLoading(true);
+      setCommentsError(null);
+
+      try {
+        const res = await fetch(`/api/facebook/comments?postId=${postId}&fetchAll=true`, {
+          headers: { Authorization: `Bearer ${activePage.access_token}` },
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || '取得留言失敗');
+        }
+
+        setComments(data.data || []);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : '未知錯誤';
+        setCommentsError(parseFacebookErrorMessage(message));
+        setComments([]);
+      } finally {
+        setCommentsLoading(false);
+      }
+    };
+
+    loadComments();
+  }, [postId, activePage?.access_token]);
+
   // 取得歷史紀錄
   const fetchGiveaways = useCallback(async () => {
     if (!activePage?.id) return;
@@ -83,36 +130,15 @@ export function GiveawayList() {
     }
   }, [isReady, activePage?.id, fetchGiveaways]);
 
-  // 載入留言
-  const fetchComments = useCallback(async () => {
-    if (!activePage?.access_token || !postUrl.trim()) return;
+  // 從 URL 解析並設定 postId（實際載入由 useEffect 處理）
+  const fetchComments = useCallback(() => {
+    if (!postUrl.trim()) return;
 
-    const extracted = extractPostIdFromUrl(postUrl, activePage.id);
+    const extracted = extractPostIdFromUrl(postUrl, activePage?.id);
     const targetPostId = extracted || postUrl;
 
     setPostId(targetPostId);
-    setCommentsLoading(true);
-    setCommentsError(null);
-
-    try {
-      const res = await fetch(`/api/facebook/comments?postId=${targetPostId}&fetchAll=true`, {
-        headers: { Authorization: `Bearer ${activePage.access_token}` },
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || '取得留言失敗');
-      }
-
-      setComments(data.data || []);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : '未知錯誤';
-      setCommentsError(parseFacebookErrorMessage(message));
-      setComments([]);
-    } finally {
-      setCommentsLoading(false);
-    }
-  }, [activePage?.access_token, activePage?.id, postUrl]);
+  }, [activePage?.id, postUrl]);
 
   // 清除抽獎狀態
   const clearGiveaway = () => {

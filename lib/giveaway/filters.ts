@@ -5,8 +5,10 @@ import { toDrawEntry } from './types';
 import type { DrawEntry, GiveawayFilters, FilterStats } from './types';
 
 // 計算留言中 @mention 的數量
+// 匹配 Facebook 用戶名：@ 後接字母、數字、中文、底線、點
 export function countMentions(message: string): number {
-  const matches = message.match(/@\S+/g);
+  if (!message) return 0;
+  const matches = message.match(/@[\w\u4e00-\u9fff][\w\u4e00-\u9fff.]*/g);
   return matches?.length ?? 0;
 }
 
@@ -28,9 +30,9 @@ function matchesTimeFilter(comment: FacebookComment, filters: GiveawayFilters): 
 // 檢查留言是否符合格式條件
 function matchesPatternFilter(comment: FacebookComment, filters: GiveawayFilters): boolean {
   if (!filters.pattern) return true;
+  if (!comment.message) return false;
 
   const message = filters.pattern_case_sensitive ? comment.message : comment.message.toLowerCase();
-
   const pattern = filters.pattern_case_sensitive ? filters.pattern : filters.pattern.toLowerCase();
 
   if (filters.pattern_type === 'regex') {
@@ -49,7 +51,22 @@ function matchesPatternFilter(comment: FacebookComment, filters: GiveawayFilters
 // 檢查留言是否符合 @mention 條件
 function matchesMentionFilter(comment: FacebookComment, filters: GiveawayFilters): boolean {
   if (!filters.min_mentions || filters.min_mentions <= 0) return true;
-  return countMentions(comment.message) >= filters.min_mentions;
+  return countMentions(comment.message || '') >= filters.min_mentions;
+}
+
+// 取得留言中的 @mention 集合 (排序後作為唯一鍵)
+function getMentionKey(message: string): string {
+  if (!message) return '';
+  const matches = message.match(/@[\w\u4e00-\u9fff][\w\u4e00-\u9fff.]*/g);
+  if (!matches) return '';
+  return [...new Set(matches)].sort().join(',');
+}
+
+// 加密安全的隨機索引
+function secureRandomIndex(max: number): number {
+  const array = new Uint32Array(1);
+  crypto.getRandomValues(array);
+  return array[0] % max;
 }
 
 // 建立抽獎池
@@ -90,23 +107,35 @@ export function buildDrawPool(
   const userIds = new Set<string>();
 
   if (filters.allow_duplicate && filters.duplicate_condition === 'unique_mentions') {
-    // 允許重複：每個不同的 @mention 組合算一次機會
-    // TODO: 實作更精細的 unique_mentions 邏輯
-    pool = entries;
-    entries.forEach((e) => userIds.add(e.from_id));
+    // 允許重複：同一用戶的每個不同 @mention 組合算一次機會
+    const seenCombos = new Map<string, DrawEntry>(); // key: `userId|mentionKey`
+    for (const entry of entries) {
+      const mentionKey = getMentionKey(entry.comment_message);
+      const comboKey = `${entry.from_id}|${mentionKey}`;
+      if (!seenCombos.has(comboKey)) {
+        seenCombos.set(comboKey, entry);
+      }
+    }
+    pool = Array.from(seenCombos.values());
+    pool.forEach((e) => userIds.add(e.from_id));
   } else if (filters.allow_duplicate) {
     // 允許重複：每則留言算一次機會
     pool = entries;
     entries.forEach((e) => userIds.add(e.from_id));
   } else {
-    // 不允許重複：每人只算一次 (取最早的留言)
-    const seenUsers = new Map<string, DrawEntry>();
+    // 不允許重複：每人只算一次，從該用戶的所有留言中隨機選一則
+    const userEntries = new Map<string, DrawEntry[]>();
     for (const entry of entries) {
-      if (!seenUsers.has(entry.from_id)) {
-        seenUsers.set(entry.from_id, entry);
+      if (!userEntries.has(entry.from_id)) {
+        userEntries.set(entry.from_id, []);
       }
+      userEntries.get(entry.from_id)!.push(entry);
     }
-    pool = Array.from(seenUsers.values());
+    // 每個用戶隨機選一則留言
+    pool = Array.from(userEntries.values()).map((userComments) => {
+      const randomIndex = secureRandomIndex(userComments.length);
+      return userComments[randomIndex];
+    });
     pool.forEach((e) => userIds.add(e.from_id));
   }
 
@@ -127,7 +156,7 @@ export function drawWinners(
   const winners: DrawEntry[] = [];
 
   for (let i = 0; i < count && available.length > 0; i++) {
-    const randomIndex = Math.floor(Math.random() * available.length);
+    const randomIndex = secureRandomIndex(available.length);
     const winner = available[randomIndex];
     winners.push(winner);
 

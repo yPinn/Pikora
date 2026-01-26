@@ -62,6 +62,10 @@ export const authConfig: NextAuthConfig = {
         session.accessToken = token.accessToken as string;
         session.provider = token.provider as string;
         session.providerAccountId = token.providerAccountId as string;
+        // 將 user.id 從 token.sub 傳遞到 session
+        if (session.user && token.sub) {
+          session.user.id = token.sub;
+        }
       }
       return session;
     },

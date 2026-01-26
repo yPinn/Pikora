@@ -70,10 +70,10 @@ const CommentItem = ({ comment }: { comment: FacebookComment }) => {
   return (
     <div className="hover:bg-accent/5 border-b px-4 py-3 transition-colors last:border-0">
       <div className="relative flex gap-3">
-        {hasReplies && <div className="bg-border absolute top-9 bottom-0 left-[18px] w-0.5" />}
+        {hasReplies && <div className="bg-border absolute top-9 bottom-0 left-4 w-0.5" />}
         <Avatar className="relative z-10 h-9 w-9 shrink-0">
           <AvatarImage alt={comment.from?.name} src={comment.from?.picture?.data?.url} />
-          <AvatarFallback className="text-sm font-bold">
+          <AvatarFallback className="text-sm font-bold" delayMs={300}>
             {comment.from?.name?.[0] || '?'}
           </AvatarFallback>
         </Avatar>
@@ -116,17 +116,18 @@ const CommentItem = ({ comment }: { comment: FacebookComment }) => {
         </div>
       </div>
       {hasReplies && (
-        <div className="relative ml-[2px]">
+        <div className="relative">
           {comment.comments!.data.map((reply, index) => {
             const isLast = index === comment.comments!.data.length - 1;
             return (
               <div key={reply.id} className="relative">
-                <div className="bg-border absolute top-0 left-[16px] h-[26px] w-0.5" />
-                <div className="bg-border absolute top-[26px] left-[16px] h-0.5 w-[24px]" />
-                {!isLast && (
-                  <div className="bg-border absolute top-[26px] bottom-0 left-[16px] w-0.5" />
-                )}
-                <div className="pl-[42px]">
+                {/* 垂直線（上半段） */}
+                <div className="bg-border absolute top-0 left-4 h-8 w-0.5" />
+                {/* 水平連接線 */}
+                <div className="bg-border absolute top-8 left-4 h-0.5 w-8" />
+                {/* 垂直線（下半段，非最後一個才顯示） */}
+                {!isLast && <div className="bg-border absolute top-8 bottom-0 left-4 w-0.5" />}
+                <div className="pl-8">
                   <CommentItem comment={reply} />
                 </div>
               </div>

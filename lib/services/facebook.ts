@@ -347,7 +347,9 @@ export class FacebookService extends MetaApiBase {
         'like_count',
         'comment_count',
         'attachment',
-        'comments{id,message,created_time,from{id,name,picture},like_count,attachment}',
+        'parent{id}',
+        // 巢狀回覆：最多支援 2 層 (Facebook API 限制)
+        'comments{id,message,created_time,from{id,name,picture},like_count,comment_count,attachment,parent{id},comments{id,message,created_time,from{id,name,picture},like_count,attachment,parent{id}}}',
       ],
       limit = 100,
       after,

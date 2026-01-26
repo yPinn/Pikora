@@ -63,7 +63,7 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
   // 黑名單 Set (for filtering)
   const blacklistSet = useMemo(() => new Set(blacklist.map((b) => b.from_id)), [blacklist]);
 
-  // 建立抽獎池
+  // 建立抽獎池（僅頂層留言）
   const { pool, stats } = useMemo(
     () => buildDrawPool(comments, filters, blacklistSet),
     [comments, filters, blacklistSet]

@@ -21,7 +21,10 @@ export async function GET(request: NextRequest) {
       },
       include: {
         prizes: { orderBy: { sort_order: 'asc' } },
-        winners: { where: { isValid: true } },
+        winners: {
+          where: { isValid: true },
+          include: { prize: true },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });

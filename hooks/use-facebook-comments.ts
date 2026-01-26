@@ -2,7 +2,11 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 
 import { SELECTED_POST_ID_KEY, SELECTED_POST_URL_KEY } from '@/components/facebook/post-list';
 import type { FacebookComment, FacebookPage } from '@/lib/services/facebook';
-import { extractPostIdFromUrl, parseFacebookErrorMessage } from '@/lib/utils/facebook';
+import {
+  extractPostIdFromUrl,
+  parseFacebookErrorMessage,
+  rebuildCommentTree,
+} from '@/lib/utils/facebook';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -83,7 +87,9 @@ export function useFacebookComments(activePage: FacebookPage | null) {
           throw new Error(commentsData.error || '取得留言失敗');
         }
 
-        setComments(commentsData.data || []);
+        // 根據 parent.id 重建正確的巢狀結構
+        const rebuiltComments = rebuildCommentTree<FacebookComment>(commentsData.data || []);
+        setComments(rebuiltComments);
 
         if (postRes.ok) {
           const postData = await postRes.json();

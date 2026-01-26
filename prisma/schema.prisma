@@ -59,63 +59,12 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// ==================== Meta Platform Models ====================
-// 欄位命名對應 Meta Graph API 原生回應格式 (snake_case)
-
-model FacebookPage {
-  id              String   @id                    // page.id
-  userId          String                          // 系統用戶 ID
-  name            String                          // page.name
-  access_token    String   @db.Text               // page.access_token
-  category        String?                         // page.category
-  fan_count       Int?                            // page.fan_count
-  followers_count Int?                            // page.followers_count
-  picture_url     String?                         // page.picture.data.url
-  link            String?                         // page.link
-  token_expires   DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  giveaways       Giveaway[]
-
-  @@index([userId])
-}
-
-model InstagramAccount {
-  id                  String   @id               // account.id
-  userId              String                     // 系統用戶 ID
-  username            String                     // account.username
-  access_token        String   @db.Text          // account.access_token
-  account_type        String?                    // account.account_type
-  profile_picture_url String?                    // account.profile_picture_url
-  followers_count     Int?                       // account.followers_count
-  media_count         Int?                       // account.media_count
-  token_expires       DateTime?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  @@index([userId])
-}
-
-model ThreadsAccount {
-  id                  String   @id               // account.id
-  userId              String                     // 系統用戶 ID
-  username            String                     // account.username
-  access_token        String   @db.Text          // account.access_token
-  profile_picture_url String?                    // account.profile_picture_url
-  token_expires       DateTime?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  @@index([userId])
-}
-
 // ==================== Giveaway Models ====================
 
 model Giveaway {
   id        String         @id @default(cuid())
   userId    String                               // 建立者（系統用戶）
-  pageId    String                               // Facebook 粉專 ID
+  pageId    String                               // Facebook 粉專 ID (不使用外鍵)
   postId    String                               // Facebook 貼文 ID
   post_url  String?                              // 貼文網址
   name      String?                              // 活動名稱
@@ -124,7 +73,6 @@ model Giveaway {
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
 
-  page    FacebookPage @relation(fields: [pageId], references: [id])
   prizes  Prize[]
   winners Winner[]
 

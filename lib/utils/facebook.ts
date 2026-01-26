@@ -47,3 +47,70 @@ export function parseFacebookErrorMessage(error: string): string {
   }
   return '無法取得資料，請確認輸入是否正確。';
 }
+
+/**
+ * 根據 parent.id 重建正確的留言樹狀結構
+ *
+ * Facebook API 可能將「回覆的回覆」錯誤地放在第一層回覆下，
+ * 此函數根據每則留言的 parent.id 欄位重新建構正確的巢狀關係。
+ *
+ * @param topLevelComments 頂層留言陣列（從 API 取得）
+ * @returns 重建後的留言樹狀陣列
+ */
+export function rebuildCommentTree<
+  T extends { id: string; parent?: { id: string }; comments?: { data: T[] } },
+>(topLevelComments: T[]): T[] {
+  // 收集所有留言（包括巢狀的）到 Map
+  const allComments = new Map<string, T>();
+  const topLevelIds = new Set<string>();
+
+  // 遞迴收集所有留言
+  function collectComments(comments: T[], isTopLevel = false) {
+    for (const comment of comments) {
+      allComments.set(comment.id, { ...comment, comments: undefined } as T);
+      if (isTopLevel) {
+        topLevelIds.add(comment.id);
+      }
+      if (comment.comments?.data) {
+        collectComments(comment.comments.data as T[], false);
+      }
+    }
+  }
+
+  collectComments(topLevelComments, true);
+
+  // 根據 parent.id 重建樹狀結構
+  const result: T[] = [];
+  const childrenMap = new Map<string, T[]>();
+
+  for (const [, comment] of allComments) {
+    const parentId = comment.parent?.id;
+
+    if (!parentId || topLevelIds.has(comment.id)) {
+      // 頂層留言
+      result.push(comment);
+    } else {
+      // 子留言：加入對應父留言的 children 陣列
+      if (!childrenMap.has(parentId)) {
+        childrenMap.set(parentId, []);
+      }
+      childrenMap.get(parentId)!.push(comment);
+    }
+  }
+
+  // 將子留言掛回父留言的 comments.data
+  function attachChildren(comment: T): T {
+    const children = childrenMap.get(comment.id);
+    if (children && children.length > 0) {
+      // 遞迴處理子留言的子留言
+      const processedChildren = children.map(attachChildren);
+      return {
+        ...comment,
+        comments: { data: processedChildren },
+      };
+    }
+    return comment;
+  }
+
+  return result.map(attachChildren);
+}
