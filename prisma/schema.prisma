@@ -60,47 +60,133 @@ model VerificationToken {
 }
 
 // ==================== Meta Platform Models ====================
+// 欄位命名對應 Meta Graph API 原生回應格式 (snake_case)
 
 model FacebookPage {
-  id            String   @id
-  userId        String
-  name          String
-  accessToken   String   @db.Text
-  category      String?
-  fanCount      Int?
-  pictureUrl    String?
-  tokenExpires  DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              String   @id                    // page.id
+  userId          String                          // 系統用戶 ID
+  name            String                          // page.name
+  access_token    String   @db.Text               // page.access_token
+  category        String?                         // page.category
+  fan_count       Int?                            // page.fan_count
+  followers_count Int?                            // page.followers_count
+  picture_url     String?                         // page.picture.data.url
+  link            String?                         // page.link
+  token_expires   DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  giveaways       Giveaway[]
 
   @@index([userId])
 }
 
 model InstagramAccount {
-  id               String   @id
-  userId           String
-  username         String
-  accessToken      String   @db.Text
-  accountType      String?
-  profilePictureUrl String?
-  followersCount   Int?
-  mediaCount       Int?
-  tokenExpires     DateTime?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                  String   @id               // account.id
+  userId              String                     // 系統用戶 ID
+  username            String                     // account.username
+  access_token        String   @db.Text          // account.access_token
+  account_type        String?                    // account.account_type
+  profile_picture_url String?                    // account.profile_picture_url
+  followers_count     Int?                       // account.followers_count
+  media_count         Int?                       // account.media_count
+  token_expires       DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   @@index([userId])
 }
 
 model ThreadsAccount {
-  id               String   @id
-  userId           String
-  username         String
-  accessToken      String   @db.Text
-  profilePictureUrl String?
-  tokenExpires     DateTime?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                  String   @id               // account.id
+  userId              String                     // 系統用戶 ID
+  username            String                     // account.username
+  access_token        String   @db.Text          // account.access_token
+  profile_picture_url String?                    // account.profile_picture_url
+  token_expires       DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   @@index([userId])
+}
+
+// ==================== Giveaway Models ====================
+
+model Giveaway {
+  id        String         @id @default(cuid())
+  userId    String                               // 建立者（系統用戶）
+  pageId    String                               // Facebook 粉專 ID
+  postId    String                               // Facebook 貼文 ID
+  post_url  String?                              // 貼文網址
+  name      String?                              // 活動名稱
+  filters   Json                                 // 篩選條件 (GiveawayFilters)
+  status    GiveawayStatus @default(DRAFT)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  page    FacebookPage @relation(fields: [pageId], references: [id])
+  prizes  Prize[]
+  winners Winner[]
+
+  @@index([userId])
+  @@index([pageId])
+  @@index([postId])
+}
+
+enum GiveawayStatus {
+  DRAFT
+  COMPLETED
+}
+
+model Prize {
+  id         String @id @default(cuid())
+  giveawayId String
+  name       String                              // 獎項名稱
+  quantity   Int                                 // 數量
+  sort_order Int    @default(0)                  // 排序
+
+  giveaway Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+  winners  Winner[]
+
+  @@index([giveawayId])
+}
+
+model Winner {
+  id         String @id @default(cuid())
+  giveawayId String
+  prizeId    String
+
+  // 對應 comment.from (Meta API)
+  from_id          String                        // comment.from.id
+  from_name        String                        // comment.from.name
+  from_picture_url String?                       // comment.from.picture.data.url
+
+  // 對應 comment (Meta API)
+  comment_id           String                    // comment.id
+  comment_message      String   @db.Text         // comment.message
+  comment_created_time DateTime                  // comment.created_time
+
+  drawnAt DateTime @default(now())
+  isValid Boolean  @default(true)                // false = 重抽/取消
+
+  giveaway Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+  prize    Prize    @relation(fields: [prizeId], references: [id], onDelete: Cascade)
+
+  @@index([giveawayId])
+  @@index([prizeId])
+  @@index([from_id])
+}
+
+// 全域黑名單（跨活動）
+model GiveawayBlacklist {
+  id        String   @id @default(cuid())
+  userId    String                               // 系統用戶（管理者）
+  pageId    String                               // 對應粉專
+  from_id   String                               // Facebook 用戶 ID
+  from_name String?                              // Facebook 用戶名稱
+  reason    String?                              // 排除原因
+  createdAt DateTime @default(now())
+
+  @@unique([userId, pageId, from_id])
+  @@index([userId, pageId])
 }

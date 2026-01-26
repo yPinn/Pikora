@@ -7,7 +7,7 @@ export default defineConfig({
     path: 'prisma/migrations',
   },
   datasource: {
-    url: env('DATABASE_URL'),
-    shadowDatabaseUrl: env('SHADOW_DATABASE_URL'),
+    // Prisma CLI (migrate/db push) 使用 session pooler
+    url: env('DIRECT_DATABASE_URL'),
   },
 });

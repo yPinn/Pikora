@@ -70,7 +70,6 @@ const CommentItem = ({ comment }: { comment: FacebookComment }) => {
   return (
     <div className="hover:bg-accent/5 border-b px-4 py-3 transition-colors last:border-0">
       <div className="relative flex gap-3">
-        {/* 父 avatar 下方的垂直引導線 */}
         {hasReplies && <div className="bg-border absolute top-9 bottom-0 left-[18px] w-0.5" />}
         <Avatar className="relative z-10 h-9 w-9 shrink-0">
           <AvatarImage alt={comment.from?.name} src={comment.from?.picture?.data?.url} />
@@ -116,18 +115,14 @@ const CommentItem = ({ comment }: { comment: FacebookComment }) => {
           </div>
         </div>
       </div>
-      {/* 巢狀回覆 - 帶引導線 */}
       {hasReplies && (
         <div className="relative ml-[2px]">
           {comment.comments!.data.map((reply, index) => {
             const isLast = index === comment.comments!.data.length - 1;
             return (
               <div key={reply.id} className="relative">
-                {/* 垂直線段 - 從上延伸到水平線位置 */}
                 <div className="bg-border absolute top-0 left-[16px] h-[26px] w-0.5" />
-                {/* 水平連接線 - 對齊 reply avatar 垂直中心 */}
                 <div className="bg-border absolute top-[26px] left-[16px] h-0.5 w-[24px]" />
-                {/* 非最後一則：垂直線繼續向下延伸 */}
                 {!isLast && (
                   <div className="bg-border absolute top-[26px] bottom-0 left-[16px] w-0.5" />
                 )}
@@ -255,7 +250,7 @@ export function CommentList() {
                 >
                   <Clock className="h-3.5 w-3.5" />
                   最新優先
-                  {state.sortBy === 'newest' && <Check className="ml-auto h-3.5 w-3.5" />}
+                  {state.sortBy === 'newest' && <Check className="ml-2 h-3.5 w-3.5" />}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className={state.sortBy === 'oldest' ? 'bg-accent' : ''}
@@ -263,7 +258,7 @@ export function CommentList() {
                 >
                   <History className="h-3.5 w-3.5" />
                   最早優先
-                  {state.sortBy === 'oldest' && <Check className="ml-auto h-3.5 w-3.5" />}
+                  {state.sortBy === 'oldest' && <Check className="ml-2 h-3.5 w-3.5" />}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className={state.sortBy === 'most_likes' ? 'bg-accent' : ''}
@@ -271,7 +266,7 @@ export function CommentList() {
                 >
                   <Flame className="h-3.5 w-3.5" />
                   熱門優先
-                  {state.sortBy === 'most_likes' && <Check className="ml-auto h-3.5 w-3.5" />}
+                  {state.sortBy === 'most_likes' && <Check className="ml-2 h-3.5 w-3.5" />}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -292,7 +287,6 @@ export function CommentList() {
               <CommentItem key={c.id} comment={c} />
             ))}
           </div>
-          {/* 分頁控制 */}
           {state.totalPages > 1 && (
             <div className="flex items-center justify-center gap-2">
               <Button
