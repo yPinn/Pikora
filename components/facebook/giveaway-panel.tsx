@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import {
   Gift,
@@ -18,15 +18,24 @@ import {
   Hash,
   AtSign,
   Loader2,
+  ThumbsUp,
+  ExternalLink,
+  CalendarIcon,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGiveaway } from '@/hooks/use-giveaway';
 import type { FacebookComment } from '@/lib/services/facebook';
+import { cn } from '@/lib/utils';
 
 interface GiveawayPanelProps {
   comments: FacebookComment[];
@@ -40,6 +49,10 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
     setFilters,
     prizes,
     setPrizes,
+    reactions,
+    isLoadingReactions,
+    hasLoadedReactions,
+    fetchReactions,
     pool,
     stats,
     results,
@@ -52,11 +65,18 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
     save,
   } = useGiveaway({ comments, postId, postUrl });
 
-  const [activeTab, setActiveTab] = useState<'settings' | 'results'>('settings');
+  const [activeTab, setActiveTab] = useState('settings');
 
   useEffect(() => {
     fetchBlacklist();
   }, [fetchBlacklist]);
+
+  // 當勾選「必須按讚」時，自動載入反應者
+  useEffect(() => {
+    if (filters.require_reaction && !hasLoadedReactions && !isLoadingReactions) {
+      fetchReactions();
+    }
+  }, [filters.require_reaction, hasLoadedReactions, isLoadingReactions, fetchReactions]);
 
   // 新增獎項
   const addPrize = () => {
@@ -86,30 +106,24 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
   const handleSave = async () => {
     const id = await save();
     if (id) {
-      alert('抽獎結果已儲存！');
+      toast.success('抽獎結果已儲存！');
     }
   };
 
   const totalPrizeCount = prizes.reduce((sum, p) => sum + p.quantity, 0);
-  const canDraw = pool.length > 0 && totalPrizeCount > 0;
+  // 當要求按讚但反應資料尚未載入時，不允許抽獎
+  const isWaitingForReactions = filters.require_reaction && !hasLoadedReactions;
+  const canDraw = pool.length > 0 && totalPrizeCount > 0 && !isWaitingForReactions;
 
   return (
-    <div className="flex flex-col gap-4">
+    <Tabs className="flex flex-col gap-4" value={activeTab} onValueChange={setActiveTab}>
       {/* Tab 切換 */}
-      <div className="flex gap-2">
-        <Button
-          size="sm"
-          variant={activeTab === 'settings' ? 'default' : 'outline'}
-          onClick={() => setActiveTab('settings')}
-        >
+      <TabsList className="w-fit">
+        <TabsTrigger value="settings">
           <Filter className="mr-2 h-4 w-4" />
           設定
-        </Button>
-        <Button
-          size="sm"
-          variant={activeTab === 'results' ? 'default' : 'outline'}
-          onClick={() => setActiveTab('results')}
-        >
+        </TabsTrigger>
+        <TabsTrigger value="results">
           <Trophy className="mr-2 h-4 w-4" />
           結果
           {results.length > 0 && (
@@ -117,19 +131,19 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
               {results.length}
             </span>
           )}
-        </Button>
-      </div>
+        </TabsTrigger>
+      </TabsList>
 
-      {activeTab === 'settings' ? (
+      <TabsContent value="settings">
         <div className="grid gap-4 lg:grid-cols-2">
           {/* 左欄：獎項設定 */}
-          <Card className="p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="flex items-center gap-2 font-medium">
+          <Card className="flex flex-col gap-3 p-4">
+            <div className="flex items-center justify-between">
+              <h3 className="flex items-center gap-2 text-sm font-medium">
                 <Gift className="h-4 w-4" />
                 獎項設定
               </h3>
-              <Button size="sm" variant="ghost" onClick={addPrize}>
+              <Button className="h-7 px-2 text-xs" size="sm" variant="ghost" onClick={addPrize}>
                 <Plus className="mr-1 h-3 w-3" />
                 新增
               </Button>
@@ -139,72 +153,137 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
               {prizes.map((prize, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <Input
-                    className="flex-1"
+                    className="h-8 flex-1 text-sm"
                     placeholder="獎項名稱"
                     value={prize.name}
                     onChange={(e) => updatePrize(i, 'name', e.target.value)}
                   />
                   <Input
-                    className="w-20"
+                    className="h-8 w-16 text-sm"
                     min={1}
                     type="number"
                     value={prize.quantity}
                     onChange={(e) => updatePrize(i, 'quantity', parseInt(e.target.value) || 1)}
                   />
                   <Button
+                    className="h-7 w-7"
                     disabled={prizes.length <= 1}
                     size="icon"
                     variant="ghost"
                     onClick={() => removePrize(i)}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               ))}
             </div>
 
-            <p className="text-muted-foreground mt-3 text-xs">共 {totalPrizeCount} 個名額</p>
+            <p className="text-muted-foreground text-xs">共 {totalPrizeCount} 個名額</p>
           </Card>
 
           {/* 右欄：篩選條件 */}
-          <Card className="p-4">
-            <h3 className="mb-3 flex items-center gap-2 font-medium">
-              <Filter className="h-4 w-4" />
-              篩選條件
-            </h3>
+          <Card className="flex flex-col gap-3 p-4">
+            <div className="flex items-center justify-between">
+              <h3 className="flex items-center gap-2 text-sm font-medium">
+                <Filter className="h-4 w-4" />
+                篩選條件
+              </h3>
+              {filters.require_reaction && (
+                <div className="flex items-center gap-2 text-xs">
+                  {isLoadingReactions ? (
+                    <>
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <span className="text-muted-foreground">載入中...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-muted-foreground">{reactions.length} 反應</span>
+                      <button className="text-primary hover:underline" onClick={fetchReactions}>
+                        更新
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* 時間範圍 */}
-              <div className="space-y-2">
-                <Label className="flex items-center gap-1 text-xs">
+              <div className="space-y-1.5">
+                <Label className="text-muted-foreground flex items-center gap-1 text-xs">
                   <Clock className="h-3 w-3" />
                   時間範圍
                 </Label>
                 <div className="flex gap-2">
-                  <Input
-                    className="flex-1"
-                    placeholder="開始"
-                    type="datetime-local"
-                    value={filters.time_start || ''}
-                    onChange={(e) => setFilters({ ...filters, time_start: e.target.value })}
-                  />
-                  <Input
-                    className="flex-1"
-                    placeholder="結束"
-                    type="datetime-local"
-                    value={filters.time_end || ''}
-                    onChange={(e) => setFilters({ ...filters, time_end: e.target.value })}
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        className={cn(
+                          'h-8 flex-1 justify-start text-left text-sm font-normal',
+                          !filters.time_start && 'text-muted-foreground'
+                        )}
+                        variant="outline"
+                      >
+                        <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                        {filters.time_start
+                          ? format(new Date(filters.time_start), 'yyyy/MM/dd')
+                          : '開始日期'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-auto p-0">
+                      <Calendar
+                        locale={zhTW}
+                        mode="single"
+                        selected={filters.time_start ? new Date(filters.time_start) : undefined}
+                        onSelect={(date) =>
+                          setFilters({
+                            ...filters,
+                            time_start: date ? date.toISOString() : '',
+                          })
+                        }
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        className={cn(
+                          'h-8 flex-1 justify-start text-left text-sm font-normal',
+                          !filters.time_end && 'text-muted-foreground'
+                        )}
+                        variant="outline"
+                      >
+                        <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                        {filters.time_end
+                          ? format(new Date(filters.time_end), 'yyyy/MM/dd')
+                          : '結束日期'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-auto p-0">
+                      <Calendar
+                        locale={zhTW}
+                        mode="single"
+                        selected={filters.time_end ? new Date(filters.time_end) : undefined}
+                        onSelect={(date) =>
+                          setFilters({
+                            ...filters,
+                            time_end: date ? date.toISOString() : '',
+                          })
+                        }
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
 
               {/* 格式檢查 */}
-              <div className="space-y-2">
-                <Label className="flex items-center gap-1 text-xs">
+              <div className="space-y-1.5">
+                <Label className="text-muted-foreground flex items-center gap-1 text-xs">
                   <Hash className="h-3 w-3" />
-                  留言格式 (包含關鍵字)
+                  留言格式（包含關鍵字）
                 </Label>
                 <Input
+                  className="h-8 text-sm"
                   placeholder="例如：+1 或 我要參加"
                   value={filters.pattern || ''}
                   onChange={(e) => setFilters({ ...filters, pattern: e.target.value })}
@@ -212,12 +291,13 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
               </div>
 
               {/* @mention 要求 */}
-              <div className="space-y-2">
-                <Label className="flex items-center gap-1 text-xs">
+              <div className="space-y-1.5">
+                <Label className="text-muted-foreground flex items-center gap-1 text-xs">
                   <AtSign className="h-3 w-3" />
                   最少 Tag 人數
                 </Label>
                 <Input
+                  className="h-8 text-sm"
                   min={0}
                   placeholder="0 = 不限制"
                   type="number"
@@ -228,50 +308,81 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                 />
               </div>
 
-              {/* 重複參加 */}
-              <div className="flex items-center gap-2">
-                <input
-                  checked={filters.allow_duplicate || false}
-                  className="h-4 w-4"
-                  id="allow-duplicate"
-                  type="checkbox"
-                  onChange={(e) => setFilters({ ...filters, allow_duplicate: e.target.checked })}
-                />
-                <Label className="text-sm" htmlFor="allow-duplicate">
-                  允許同一人多次參加（每則留言算一次機會）
-                </Label>
+              {/* Checkboxes */}
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    checked={filters.require_reaction || false}
+                    id="require_reaction"
+                    onCheckedChange={(checked) =>
+                      setFilters({ ...filters, require_reaction: checked === true })
+                    }
+                  />
+                  <Label
+                    className="flex cursor-pointer items-center gap-1 text-sm font-normal"
+                    htmlFor="require_reaction"
+                  >
+                    <ThumbsUp className="h-3 w-3" />
+                    必須按讚/反應
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    checked={filters.allow_duplicate || false}
+                    id="allow_duplicate"
+                    onCheckedChange={(checked) =>
+                      setFilters({ ...filters, allow_duplicate: checked === true })
+                    }
+                  />
+                  <Label className="cursor-pointer text-sm font-normal" htmlFor="allow_duplicate">
+                    允許重複參加
+                  </Label>
+                </div>
               </div>
             </div>
           </Card>
 
-          {/* 統計資訊 */}
-          <Card className="p-4 lg:col-span-2">
-            <h3 className="mb-3 flex items-center gap-2 font-medium">
-              <Users className="h-4 w-4" />
-              參與者統計
-            </h3>
-
-            <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-              <div>
-                <p className="text-muted-foreground text-xs">總留言數</p>
-                <p className="text-lg font-semibold">{stats.total_comments}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-xs">符合條件</p>
-                <p className="text-lg font-semibold">{stats.after_blacklist_filter}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-xs">抽獎池大小</p>
-                <p className="text-lg font-semibold">{stats.final_pool_size}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-xs">不重複用戶</p>
-                <p className="text-lg font-semibold">{stats.unique_users}</p>
-              </div>
+          {/* 統計資訊 + 抽獎按鈕 */}
+          <Card className="flex flex-col gap-3 p-4 lg:col-span-2">
+            <div className="flex items-center justify-between">
+              <h3 className="flex items-center gap-2 text-sm font-medium">
+                <Users className="h-4 w-4" />
+                參與者統計
+              </h3>
             </div>
 
-            <div className="mt-4 flex gap-2">
-              <Button className="flex-1" disabled={!canDraw || isDrawing} onClick={handleDraw}>
+            <div className="flex items-end justify-between gap-4">
+              <div className="grid flex-1 grid-cols-3 gap-4">
+                <div>
+                  <p className="text-muted-foreground text-xs">總留言</p>
+                  <p className="text-xl font-semibold tabular-nums">{stats.total_comments}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">通過篩選</p>
+                  <p className="text-xl font-semibold tabular-nums">
+                    {stats.after_blacklist_filter}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">
+                    {filters.allow_duplicate ? '抽獎機會' : '參與人數'}
+                  </p>
+                  <p className="text-xl font-semibold tabular-nums">
+                    {filters.allow_duplicate ? (
+                      <>
+                        {stats.final_pool_size}
+                        <span className="text-muted-foreground ml-1 text-xs font-normal">
+                          ({stats.unique_users} 人)
+                        </span>
+                      </>
+                    ) : (
+                      stats.unique_users
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <Button className="shrink-0" disabled={!canDraw || isDrawing} onClick={handleDraw}>
                 {isDrawing ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
@@ -281,13 +392,20 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
               </Button>
             </div>
 
-            {!canDraw && pool.length === 0 && (
-              <p className="text-destructive mt-2 text-center text-xs">沒有符合條件的參與者</p>
+            {!canDraw && (
+              <p className="text-destructive text-center text-xs">
+                {isWaitingForReactions
+                  ? '正在載入反應資料...'
+                  : pool.length === 0
+                    ? '沒有符合條件的參與者'
+                    : null}
+              </p>
             )}
           </Card>
         </div>
-      ) : (
-        /* 結果頁 */
+      </TabsContent>
+
+      <TabsContent value="results">
         <Card className="p-4">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="flex items-center gap-2 font-medium">
@@ -344,12 +462,25 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                               {result.winner.comment_message}
                             </p>
                           </div>
-                          <span className="text-muted-foreground text-xs">
-                            {formatDistanceToNow(new Date(result.winner.comment_created_time), {
-                              addSuffix: true,
-                              locale: zhTW,
-                            })}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground text-xs">
+                              {formatDistanceToNow(new Date(result.winner.comment_created_time), {
+                                addSuffix: true,
+                                locale: zhTW,
+                              })}
+                            </span>
+                            {result.winner.from_profile_url && (
+                              <a
+                                className="text-muted-foreground hover:text-primary"
+                                href={result.winner.from_profile_url}
+                                rel="noopener noreferrer"
+                                target="_blank"
+                                title="開啟個人頁面（可手動驗證分享）"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </a>
+                            )}
+                          </div>
                         </div>
                       ))}
 
@@ -365,7 +496,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
             </div>
           )}
         </Card>
-      )}
-    </div>
+      </TabsContent>
+    </Tabs>
   );
 }

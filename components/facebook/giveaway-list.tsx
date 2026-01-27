@@ -6,7 +6,6 @@ import { formatDistanceToNow } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import {
   Gift,
-  Trophy,
   ExternalLink,
   Trash2,
   Search,
@@ -14,18 +13,31 @@ import {
   X,
   Clipboard,
   AlertCircle,
+  History,
+  ChevronDown,
 } from 'lucide-react';
 
 import { GiveawayPanel } from '@/components/facebook/giveaway-panel';
 import { SELECTED_POST_ID_KEY, SELECTED_POST_URL_KEY } from '@/components/facebook/post-list';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFacebookPage } from '@/contexts/facebook-page-store';
 import type { FacebookComment } from '@/lib/services/facebook';
-import { cn } from '@/lib/utils';
 import { extractPostIdFromUrl, parseFacebookErrorMessage } from '@/lib/utils/facebook';
 
 interface GiveawayRecord {
@@ -150,8 +162,6 @@ export function GiveawayList() {
 
   // 刪除歷史紀錄
   const handleDelete = async (id: string) => {
-    if (!confirm('確定要刪除這個抽獎紀錄嗎？')) return;
-
     try {
       const res = await fetch(`/api/giveaway/${id}`, { method: 'DELETE' });
       if (res.ok) {
@@ -162,11 +172,10 @@ export function GiveawayList() {
     }
   };
 
-  if (!isReady || listLoading) {
+  if (!isReady) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-32 w-full" />
         <Skeleton className="h-32 w-full" />
       </div>
     );
@@ -176,7 +185,7 @@ export function GiveawayList() {
     <div className="space-y-6">
       {/* 新抽獎區塊 */}
       <Card className="p-4">
-        <h3 className="mb-3 flex items-center gap-2 font-medium">
+        <h3 className="flex items-center gap-2 text-sm font-medium">
           <Gift className="h-4 w-4" />
           建立新抽獎
         </h3>
@@ -242,92 +251,95 @@ export function GiveawayList() {
         )}
       </Card>
 
-      {/* 歷史紀錄 */}
-      <div>
-        <h3 className="text-muted-foreground mb-3 text-sm font-medium">歷史紀錄</h3>
-
-        {giveaways.length === 0 ? (
-          <Card className="flex flex-col items-center justify-center py-12">
-            <Trophy className="text-muted-foreground mb-4 h-12 w-12 opacity-50" />
-            <p className="text-muted-foreground text-sm">尚無抽獎紀錄</p>
-          </Card>
-        ) : (
-          <div className="space-y-3">
-            {giveaways.map((giveaway) => (
-              <Card key={giveaway.id} className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium">
-                        {giveaway.name || `抽獎活動 #${giveaway.id.slice(-6)}`}
-                      </h4>
-                      <span
-                        className={cn(
-                          'rounded-full px-2 py-0.5 text-xs',
-                          giveaway.status === 'COMPLETED'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                        )}
-                      >
-                        {giveaway.status === 'COMPLETED' ? '已完成' : '草稿'}
-                      </span>
-                    </div>
-
-                    <p className="text-muted-foreground mt-1 text-xs">
-                      {formatDistanceToNow(new Date(giveaway.createdAt), {
-                        addSuffix: true,
-                        locale: zhTW,
-                      })}
-                      {' · '}
-                      {giveaway.prizes.map((p) => `${p.name} x${p.quantity}`).join('、')}
-                    </p>
-
-                    {giveaway.winners.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {giveaway.winners.slice(0, 5).map((w) => (
-                          <div
-                            key={w.id}
-                            className="bg-muted flex items-center gap-2 rounded-full py-1 pr-3 pl-1"
-                          >
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={w.from_picture_url} />
-                              <AvatarFallback className="text-xs">{w.from_name[0]}</AvatarFallback>
-                            </Avatar>
-                            <span className="text-xs">
-                              {w.from_name}
-                              <span className="text-muted-foreground ml-1">({w.prize.name})</span>
-                            </span>
-                          </div>
-                        ))}
-                        {giveaway.winners.length > 5 && (
-                          <span className="text-muted-foreground self-center text-xs">
-                            +{giveaway.winners.length - 5} 人
-                          </span>
-                        )}
+      {/* 歷史紀錄 - Collapsible */}
+      <Collapsible>
+        <CollapsibleTrigger className="group hover:bg-muted flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors">
+          <History className="text-muted-foreground h-4 w-4" />
+          <span className="text-muted-foreground">歷史紀錄</span>
+          {listLoading ? (
+            <Loader2 className="text-muted-foreground h-3 w-3 animate-spin" />
+          ) : giveaways.length > 0 ? (
+            <span className="bg-muted rounded-full px-2 py-0.5 text-xs">{giveaways.length}</span>
+          ) : null}
+          <ChevronDown className="text-muted-foreground ml-auto h-4 w-4 transition-transform group-data-[state=open]:rotate-180" />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-2">
+          {listLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-14 w-full" />
+              <Skeleton className="h-14 w-full" />
+            </div>
+          ) : giveaways.length === 0 ? (
+            <p className="text-muted-foreground py-4 text-center text-xs">尚無抽獎紀錄</p>
+          ) : (
+            <div className="space-y-2">
+              {giveaways.map((giveaway) => (
+                <Card key={giveaway.id} className="p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate text-sm font-medium">
+                          {giveaway.name || `#${giveaway.id.slice(-6)}`}
+                        </span>
+                        <Badge
+                          className={
+                            giveaway.status === 'COMPLETED'
+                              ? 'bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400'
+                              : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400'
+                          }
+                          variant={giveaway.status === 'COMPLETED' ? 'default' : 'secondary'}
+                        >
+                          {giveaway.status === 'COMPLETED' ? '已完成' : '草稿'}
+                        </Badge>
                       </div>
-                    )}
+                      <p className="text-muted-foreground mt-0.5 text-xs">
+                        {formatDistanceToNow(new Date(giveaway.createdAt), {
+                          addSuffix: true,
+                          locale: zhTW,
+                        })}
+                        {giveaway.winners.length > 0 && ` · ${giveaway.winners.length} 位中獎者`}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 gap-1">
+                      {giveaway.post_url && (
+                        <Button
+                          className="h-7 w-7"
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => window.open(giveaway.post_url, '_blank')}
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button className="h-7 w-7" size="icon" variant="ghost">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>確定要刪除嗎？</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              此操作無法復原，抽獎紀錄將被永久刪除。
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>取消</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(giveaway.id)}>
+                              刪除
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
-
-                  <div className="flex gap-1">
-                    {giveaway.post_url && (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => window.open(giveaway.post_url, '_blank')}
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                    )}
-                    <Button size="icon" variant="ghost" onClick={() => handleDelete(giveaway.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }

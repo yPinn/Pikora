@@ -13,7 +13,7 @@ import {
   type FilterStats,
   type BlacklistEntry,
 } from '@/lib/giveaway';
-import type { FacebookComment } from '@/lib/services/facebook';
+import type { FacebookComment, FacebookReaction } from '@/lib/services/facebook';
 
 interface UseGiveawayOptions {
   comments: FacebookComment[];
@@ -28,6 +28,12 @@ interface UseGiveawayReturn {
   prizes: PrizeInput[];
   setPrizes: (prizes: PrizeInput[]) => void;
   blacklist: BlacklistEntry[];
+
+  // 反應資料
+  reactions: FacebookReaction[];
+  isLoadingReactions: boolean;
+  hasLoadedReactions: boolean;
+  fetchReactions: () => Promise<void>;
 
   // 抽獎池
   pool: DrawEntry[];
@@ -56,6 +62,9 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
   const [filters, setFilters] = useState<GiveawayFilters>({});
   const [prizes, setPrizes] = useState<PrizeInput[]>([{ name: '頭獎', quantity: 1 }]);
   const [blacklist, setBlacklist] = useState<BlacklistEntry[]>([]);
+  const [reactions, setReactions] = useState<FacebookReaction[]>([]);
+  const [isLoadingReactions, setIsLoadingReactions] = useState(false);
+  const [hasLoadedReactions, setHasLoadedReactions] = useState(false);
   const [results, setResults] = useState<DrawResult[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -63,10 +72,19 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
   // 黑名單 Set (for filtering)
   const blacklistSet = useMemo(() => new Set(blacklist.map((b) => b.from_id)), [blacklist]);
 
+  // 反應者 ID Set (for filtering)
+  const reactorIds = useMemo(() => new Set(reactions.map((r) => r.id)), [reactions]);
+
   // 建立抽獎池（僅頂層留言）
   const { pool, stats } = useMemo(
-    () => buildDrawPool(comments, filters, blacklistSet),
-    [comments, filters, blacklistSet]
+    () =>
+      buildDrawPool(
+        comments,
+        filters,
+        blacklistSet,
+        filters.require_reaction ? reactorIds : undefined
+      ),
+    [comments, filters, blacklistSet, reactorIds]
   );
 
   // 執行抽獎
@@ -78,7 +96,12 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
 
     for (let i = 0; i < prizes.length; i++) {
       const prize = prizes[i];
-      const { winners, remainingPool } = drawWinners(currentPool, prize.quantity, excludedUsers);
+      const { winners, remainingPool } = drawWinners(
+        currentPool,
+        prize.quantity,
+        excludedUsers,
+        filters.allow_duplicate || false
+      );
 
       for (const winner of winners) {
         allResults.push({
@@ -94,7 +117,7 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
 
     setResults(allResults);
     setIsDrawing(false);
-  }, [pool, prizes]);
+  }, [pool, prizes, filters.allow_duplicate]);
 
   // 重抽單一獎項
   const redraw = useCallback(
@@ -109,7 +132,12 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
       );
 
       // 重抽
-      const { winners } = drawWinners(pool, prize.quantity, otherWinnerIds);
+      const { winners } = drawWinners(
+        pool,
+        prize.quantity,
+        otherWinnerIds,
+        filters.allow_duplicate || false
+      );
 
       // 更新結果
       setResults((prev) => {
@@ -122,7 +150,7 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
         return [...filtered, ...newResults].sort((a, b) => a.prize_id.localeCompare(b.prize_id));
       });
     },
-    [pool, prizes, results]
+    [pool, prizes, results, filters.allow_duplicate]
   );
 
   // 重置
@@ -144,6 +172,30 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
       console.error('取得黑名單失敗:', error);
     }
   }, [activePage?.id]);
+
+  // 取得反應者列表
+  const fetchReactions = useCallback(async () => {
+    if (!activePage?.access_token || !postId) return;
+
+    setIsLoadingReactions(true);
+    try {
+      const res = await fetch(`/api/facebook/reactions?postId=${postId}&fetchAll=true`, {
+        headers: {
+          Authorization: `Bearer ${activePage.access_token}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setReactions(data.data || []);
+        setHasLoadedReactions(true);
+      }
+    } catch (error) {
+      console.error('取得反應列表失敗:', error);
+      setHasLoadedReactions(true); // 即使失敗也標記為已嘗試
+    } finally {
+      setIsLoadingReactions(false);
+    }
+  }, [activePage?.access_token, postId]);
 
   // 新增黑名單
   const addToBlacklist = useCallback(
@@ -253,6 +305,10 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
     prizes,
     setPrizes,
     blacklist,
+    reactions,
+    isLoadingReactions,
+    hasLoadedReactions,
+    fetchReactions,
     pool,
     stats,
     results,

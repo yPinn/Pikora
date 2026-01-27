@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 
 import { SessionProvider } from '@/components/session-provider';
 import { ThemeProvider } from '@/components/theme-provider';
+import { Toaster } from '@/components/ui/sonner';
 
 import type { Metadata } from 'next';
 
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           <SessionProvider>
             <ThemeProvider attribute="class" defaultTheme="light">
               {children}
+              <Toaster />
             </ThemeProvider>
           </SessionProvider>
         </body>

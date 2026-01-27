@@ -15,15 +15,14 @@ import {
   ChevronRight,
   Play,
   Images,
-  Check,
   Copy,
   Loader2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFacebookPosts } from '@/hooks/use-facebook-posts';
 import type { FacebookPost } from '@/lib/services/facebook';
-import { cn } from '@/lib/utils';
 
 // 從貼文中提取所有媒體圖片
 function getMediaImages(post: FacebookPost): string[] {
@@ -66,7 +65,6 @@ export const SELECTED_POST_ID_KEY = 'pikora_selected_post_id';
 // 單一貼文卡片元件
 function PostCard({ post }: { post: FacebookPost }) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [copied, setCopied] = useState(false);
   const images = getMediaImages(post);
   const hasMultipleImages = images.length > 1;
   const isVideo = isVideoPost(post);
@@ -107,8 +105,7 @@ function PostCard({ post }: { post: FacebookPost }) {
 
       // 複製到剪貼簿
       navigator.clipboard.writeText(post.permalink_url || '').then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        toast.success('已複製 URL');
       });
     },
     [post.permalink_url, post.id]
@@ -210,19 +207,6 @@ function PostCard({ post }: { post: FacebookPost }) {
         <time className="mt-1 text-[9px] opacity-80">
           {formatDistanceToNow(new Date(post.created_time), { addSuffix: true, locale: zhTW })}
         </time>
-      </div>
-
-      {/* 複製成功提示 */}
-      <div
-        className={cn(
-          'pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-black/60 transition-opacity',
-          copied ? 'opacity-100' : 'opacity-0'
-        )}
-      >
-        <div className="flex items-center gap-2 rounded-full bg-green-500 px-3 py-1.5 text-sm font-medium text-white">
-          <Check className="h-4 w-4" />
-          已複製 URL
-        </div>
       </div>
 
       {/* 左下角複製圖示提示 */}

@@ -10,6 +10,9 @@ export interface GiveawayFilters {
   min_mentions?: number;
   allow_duplicate?: boolean;
   duplicate_condition?: 'unique_mentions';
+  // 反應篩選
+  require_reaction?: boolean;
+  allowed_reactions?: string[]; // 空陣列 = 全部反應類型皆可
 }
 
 // 抽獎池 Entry
@@ -17,6 +20,7 @@ export interface DrawEntry {
   from_id: string;
   from_name: string;
   from_picture_url?: string;
+  from_profile_url?: string; // Facebook 個人頁面連結
   comment_id: string;
   comment_message: string;
   comment_created_time: string;
@@ -29,6 +33,7 @@ export function toDrawEntry(comment: FacebookComment): DrawEntry | null {
     from_id: comment.from.id,
     from_name: comment.from.name,
     from_picture_url: comment.from.picture?.data?.url,
+    from_profile_url: `https://facebook.com/${comment.from.id}`,
     comment_id: comment.id,
     comment_message: comment.message,
     comment_created_time: comment.created_time,
@@ -72,6 +77,7 @@ export interface FilterStats {
   after_time_filter: number;
   after_pattern_filter: number;
   after_mention_filter: number;
+  after_reaction_filter: number; // 反應篩選後數量
   after_blacklist_filter: number;
   final_pool_size: number;
   unique_users: number;

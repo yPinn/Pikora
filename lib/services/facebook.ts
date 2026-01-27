@@ -103,6 +103,20 @@ export interface FacebookComment {
   };
 }
 
+// 反應類型
+export type ReactionType = 'LIKE' | 'LOVE' | 'WOW' | 'HAHA' | 'SAD' | 'ANGRY' | 'CARE';
+
+export interface FacebookReaction {
+  id: string;
+  name: string;
+  type: ReactionType;
+  picture?: {
+    data: {
+      url: string;
+    };
+  };
+}
+
 // Insights 類型
 export interface FacebookInsight {
   id: string;
@@ -439,6 +453,72 @@ export class FacebookService extends MetaApiBase {
       params: { is_hidden: isHidden },
       accessToken: pageAccessToken,
     });
+  }
+
+  // ==================== 反應管理 ====================
+
+  /**
+   * 取得貼文反應者列表
+   */
+  async getPostReactions(
+    postId: string,
+    accessToken: string,
+    options: {
+      fields?: string[];
+      limit?: number;
+      after?: string;
+      type?: ReactionType;
+    } = {}
+  ): Promise<PaginatedResponse<FacebookReaction>> {
+    const { fields = ['id', 'name', 'type', 'picture'], limit = 100, after, type } = options;
+
+    const params: Record<string, string | number | boolean | undefined> = {
+      fields: fields.join(','),
+      limit,
+      after,
+    };
+
+    // 只有在指定 type 時才加入參數
+    if (type) {
+      params.type = type;
+    }
+
+    return this.request<PaginatedResponse<FacebookReaction>>(`/${postId}/reactions`, {
+      params,
+      accessToken,
+    });
+  }
+
+  /**
+   * 取得所有反應者（自動分頁）
+   */
+  async getAllPostReactions(
+    postId: string,
+    accessToken: string,
+    options: {
+      fields?: string[];
+      type?: ReactionType;
+      maxPages?: number;
+    } = {}
+  ): Promise<FacebookReaction[]> {
+    const { maxPages = 100 } = options;
+    const allReactions: FacebookReaction[] = [];
+    let after: string | undefined;
+    let pageCount = 0;
+
+    do {
+      const response = await this.getPostReactions(postId, accessToken, {
+        ...options,
+        limit: 100,
+        after,
+      });
+
+      allReactions.push(...response.data);
+      after = response.paging?.cursors?.after;
+      pageCount++;
+    } while (after && pageCount < maxPages);
+
+    return allReactions;
   }
 
   // ==================== Insights ====================
