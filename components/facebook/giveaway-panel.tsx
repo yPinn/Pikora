@@ -21,6 +21,8 @@ import {
   ThumbsUp,
   ExternalLink,
   CalendarIcon,
+  Ban,
+  UserX,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -49,6 +51,9 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
     setFilters,
     prizes,
     setPrizes,
+    blacklist,
+    addToBlacklist,
+    removeFromBlacklist,
     reactions,
     isLoadingReactions,
     hasLoadedReactions,
@@ -129,6 +134,15 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
           {results.length > 0 && (
             <span className="bg-primary-foreground text-primary ml-2 rounded-full px-1.5 text-xs">
               {results.length}
+            </span>
+          )}
+        </TabsTrigger>
+        <TabsTrigger value="blacklist">
+          <UserX className="mr-2 h-4 w-4" />
+          黑名單
+          {blacklist.length > 0 && (
+            <span className="bg-primary-foreground text-primary ml-2 rounded-full px-1.5 text-xs">
+              {blacklist.length}
             </span>
           )}
         </TabsTrigger>
@@ -452,12 +466,38 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                     <div className="space-y-2">
                       {prizeResults.map((result, i) => (
                         <div key={i} className="bg-muted/50 flex items-center gap-3 rounded-lg p-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={result.winner.from_picture_url} />
-                            <AvatarFallback>{result.winner.from_name[0]}</AvatarFallback>
-                          </Avatar>
+                          {result.winner.from_profile_url ? (
+                            <a
+                              href={result.winner.from_profile_url}
+                              rel="noopener noreferrer"
+                              target="_blank"
+                              title="查看個人頁面"
+                            >
+                              <Avatar className="h-10 w-10">
+                                <AvatarImage src={result.winner.from_picture_url} />
+                                <AvatarFallback>{result.winner.from_name[0]}</AvatarFallback>
+                              </Avatar>
+                            </a>
+                          ) : (
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={result.winner.from_picture_url} />
+                              <AvatarFallback>{result.winner.from_name[0]}</AvatarFallback>
+                            </Avatar>
+                          )}
                           <div className="min-w-0 flex-1">
-                            <p className="font-medium">{result.winner.from_name}</p>
+                            {result.winner.from_profile_url ? (
+                              <a
+                                className="hover:text-primary font-medium hover:underline"
+                                href={result.winner.from_profile_url}
+                                rel="noopener noreferrer"
+                                target="_blank"
+                                title="查看個人頁面"
+                              >
+                                {result.winner.from_name}
+                              </a>
+                            ) : (
+                              <p className="font-medium">{result.winner.from_name}</p>
+                            )}
                             <p className="text-muted-foreground truncate text-xs">
                               {result.winner.comment_message}
                             </p>
@@ -469,17 +509,32 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                                 locale: zhTW,
                               })}
                             </span>
-                            {result.winner.from_profile_url && (
+                            {postUrl && (
                               <a
                                 className="text-muted-foreground hover:text-primary"
-                                href={result.winner.from_profile_url}
+                                href={`${postUrl}?comment_id=${result.winner.comment_id}`}
                                 rel="noopener noreferrer"
                                 target="_blank"
-                                title="開啟個人頁面（可手動驗證分享）"
+                                title="查看留言"
                               >
                                 <ExternalLink className="h-4 w-4" />
                               </a>
                             )}
+                            <Button
+                              className="h-7 w-7"
+                              size="icon"
+                              title="加入黑名單"
+                              variant="ghost"
+                              onClick={() => {
+                                addToBlacklist({
+                                  from_id: result.winner.from_id,
+                                  from_name: result.winner.from_name,
+                                });
+                                toast.success(`已將 ${result.winner.from_name} 加入黑名單`);
+                              }}
+                            >
+                              <Ban className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
                       ))}
@@ -493,6 +548,50 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                   </div>
                 );
               })}
+            </div>
+          )}
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="blacklist">
+        <Card className="p-4">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="flex items-center gap-2 font-medium">
+              <UserX className="h-4 w-4" />
+              黑名單管理
+            </h3>
+            <p className="text-muted-foreground text-xs">黑名單內的用戶將不會出現在抽獎池中</p>
+          </div>
+
+          {blacklist.length === 0 ? (
+            <p className="text-muted-foreground py-8 text-center text-sm">尚無黑名單</p>
+          ) : (
+            <div className="space-y-2">
+              {blacklist.map((entry) => (
+                <div
+                  key={entry.from_id}
+                  className="bg-muted/50 flex items-center justify-between gap-3 rounded-lg p-3"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">{entry.from_name || entry.from_id}</p>
+                    {entry.reason && (
+                      <p className="text-muted-foreground truncate text-xs">{entry.reason}</p>
+                    )}
+                  </div>
+                  <Button
+                    className="h-7 shrink-0"
+                    size="sm"
+                    variant="ghost"
+                    onClick={async () => {
+                      await removeFromBlacklist(entry.from_id);
+                      toast.success(`已將 ${entry.from_name || entry.from_id} 從黑名單移除`);
+                    }}
+                  >
+                    <Trash2 className="mr-1 h-3 w-3" />
+                    移除
+                  </Button>
+                </div>
+              ))}
             </div>
           )}
         </Card>

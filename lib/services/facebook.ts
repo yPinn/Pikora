@@ -78,6 +78,7 @@ export interface FacebookComment {
   from?: {
     id: string;
     name: string;
+    link?: string;
     picture?: {
       data: {
         url: string;
@@ -357,13 +358,13 @@ export class FacebookService extends MetaApiBase {
         'id',
         'message',
         'created_time',
-        'from{id,name,picture}',
+        'from{id,name,picture,link}',
         'like_count',
         'comment_count',
         'attachment',
         'parent{id}',
         // 巢狀回覆：最多支援 2 層 (Facebook API 限制)
-        'comments{id,message,created_time,from{id,name,picture},like_count,comment_count,attachment,parent{id},comments{id,message,created_time,from{id,name,picture},like_count,attachment,parent{id}}}',
+        'comments{id,message,created_time,from{id,name,picture,link},like_count,comment_count,attachment,parent{id},comments{id,message,created_time,from{id,name,picture,link},like_count,attachment,parent{id}}}',
       ],
       limit = 100,
       after,

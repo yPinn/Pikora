@@ -33,7 +33,7 @@ export function toDrawEntry(comment: FacebookComment): DrawEntry | null {
     from_id: comment.from.id,
     from_name: comment.from.name,
     from_picture_url: comment.from.picture?.data?.url,
-    from_profile_url: `https://facebook.com/${comment.from.id}`,
+    from_profile_url: comment.from.link,
     comment_id: comment.id,
     comment_message: comment.message,
     comment_created_time: comment.created_time,
