@@ -31,9 +31,17 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGiveaway } from '@/hooks/use-giveaway';
 import type { FacebookComment } from '@/lib/services/facebook';
@@ -71,6 +79,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
   } = useGiveaway({ comments, postId, postUrl });
 
   const [activeTab, setActiveTab] = useState('settings');
+  const [poolSearch, setPoolSearch] = useState('');
 
   useEffect(() => {
     fetchBlacklist();
@@ -363,6 +372,98 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                 <Users className="h-4 w-4" />
                 參與者統計
               </h3>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button disabled={pool.length === 0} size="sm" variant="outline">
+                    <Users className="mr-1 h-3 w-3" />
+                    查看獎池
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="flex max-h-[80vh] max-w-lg flex-col overflow-hidden">
+                  <DialogHeader>
+                    <DialogTitle>
+                      獎池人選 ({stats.unique_users} 人
+                      {filters.allow_duplicate && `, ${stats.final_pool_size} 次機會`})
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="flex flex-1 flex-col space-y-3 overflow-hidden">
+                    <Input
+                      className="h-8"
+                      placeholder="搜尋姓名或留言..."
+                      value={poolSearch}
+                      onChange={(e) => setPoolSearch(e.target.value)}
+                    />
+                    <ScrollArea className="flex-1">
+                      <div className="space-y-2 pr-4">
+                        {(() => {
+                          // 按用戶去重，並計算每人的留言數
+                          const userMap = new Map<
+                            string,
+                            { entry: (typeof pool)[0]; count: number }
+                          >();
+                          pool.forEach((entry) => {
+                            if (!userMap.has(entry.from_id)) {
+                              userMap.set(entry.from_id, { entry, count: 1 });
+                            } else {
+                              userMap.get(entry.from_id)!.count++;
+                            }
+                          });
+
+                          const uniqueUsers = Array.from(userMap.values()).filter(
+                            ({ entry }) =>
+                              !poolSearch ||
+                              entry.from_name.toLowerCase().includes(poolSearch.toLowerCase())
+                          );
+
+                          if (uniqueUsers.length === 0) {
+                            return (
+                              <p className="text-muted-foreground py-4 text-center text-sm">
+                                {poolSearch ? '找不到符合的人選' : '獎池為空'}
+                              </p>
+                            );
+                          }
+
+                          return uniqueUsers.map(({ entry, count }) => (
+                            <div
+                              key={entry.from_id}
+                              className="bg-muted/50 flex items-center gap-3 rounded-lg p-3"
+                            >
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={entry.from_picture_url} />
+                                <AvatarFallback>{entry.from_name[0]}</AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium">
+                                  {entry.from_name}
+                                  {count > 1 && (
+                                    <span className="text-muted-foreground ml-1 text-xs font-normal">
+                                      ({count} {filters.allow_duplicate ? '次機會' : '則留言'})
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                              <Button
+                                className="h-7 shrink-0"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  addToBlacklist({
+                                    from_id: entry.from_id,
+                                    from_name: entry.from_name,
+                                  });
+                                  toast.success(`已將 ${entry.from_name} 加入黑名單`);
+                                }}
+                              >
+                                <Ban className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
 
             <div className="flex items-end justify-between gap-4">

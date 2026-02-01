@@ -5,7 +5,7 @@
 
 import { NextResponse } from 'next/server';
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     // Facebook 會發送 signed_request 參數
     // 這裡可以處理用戶資料刪除的邏輯

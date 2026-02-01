@@ -23,7 +23,6 @@ export const authConfig: NextAuthConfig = {
             'pages_read_user_content',
             'pages_manage_posts',
             'pages_manage_engagement',
-            'pages_manage_metadata',
           ].join(' '),
         },
       },

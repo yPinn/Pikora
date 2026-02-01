@@ -76,15 +76,15 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
         </CardContent>
       </Card>
       <div className="text-muted-foreground px-6 text-center text-sm">
-        By logging in, you agree to our{' '}
-        <a className="underline-offset-2 hover:underline" href="#">
-          Terms of Service
+        登入即表示您同意我們的{' '}
+        <a className="underline-offset-2 hover:underline" href="/terms">
+          服務條款
         </a>{' '}
-        and{' '}
-        <a className="underline-offset-2 hover:underline" href="#">
-          Privacy Policy
+        和{' '}
+        <a className="underline-offset-2 hover:underline" href="/privacy">
+          隱私政策
         </a>
-        .
+        。
       </div>
     </div>
   );
