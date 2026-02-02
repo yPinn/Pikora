@@ -56,78 +56,78 @@ const StatusView = ({ icon: Icon, title, desc, variant = 'default' }: StatusView
         variant === 'error' ? 'text-destructive' : 'text-muted-foreground'
       )}
     />
-    <h3 className={cn('text-lg font-medium', variant === 'error' && 'text-destructive')}>
+    <h3 className={cn('text-heading font-medium', variant === 'error' && 'text-destructive')}>
       {title}
     </h3>
-    <p className="text-muted-foreground mt-2 max-w-xs text-sm leading-relaxed">{desc}</p>
+    <p className="text-muted-foreground text-body mt-2 max-w-xs leading-relaxed">{desc}</p>
   </div>
 );
 
-// --- 原子組件：留言單項目 ---
+// --- 原子組件：留言單項目 (Facebook 風格) ---
 const CommentItem = ({ comment }: { comment: FacebookComment }) => {
   const hasReplies = comment.comments?.data && comment.comments.data.length > 0;
 
   return (
-    <div className="hover:bg-accent/5 border-b px-4 py-3 transition-colors last:border-0">
-      <div className="relative flex gap-3">
-        {hasReplies && <div className="bg-border absolute top-9 bottom-0 left-4 w-0.5" />}
-        <Avatar className="relative z-10 h-9 w-9 shrink-0">
+    <div className="relative py-1">
+      <div className="relative flex gap-2">
+        {hasReplies && <div className="bg-border absolute top-9 bottom-0 left-[15px] w-0.5" />}
+        <Avatar className="h-8 w-8 shrink-0">
           <AvatarImage alt={comment.from?.name} src={comment.from?.picture?.data?.url} />
-          <AvatarFallback className="text-sm font-bold" delayMs={300}>
+          <AvatarFallback className="text-xs font-medium" delayMs={300}>
             {comment.from?.name?.[0] || '?'}
           </AvatarFallback>
         </Avatar>
-        <div className="min-w-0 flex-1 space-y-1">
-          <p className="text-sm">
-            <span className="font-semibold">{comment.from?.name}</span>
-            <span className="text-muted-foreground ml-2 text-xs">
-              {formatDistanceToNow(new Date(comment.created_time), {
-                addSuffix: true,
-                locale: zhTW,
-              })}
-            </span>
-          </p>
-          <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
-            {comment.message}
-          </p>
+        <div className="min-w-0 flex-1">
+          <div className="bg-muted inline-block max-w-full rounded-2xl px-3 py-2">
+            <p className="text-caption font-semibold">{comment.from?.name}</p>
+            <p className="text-body break-words whitespace-pre-wrap">{comment.message}</p>
+          </div>
           {comment.attachment?.media?.image?.src && (
-            <div className="relative mt-2 h-36 w-56">
+            <div className="relative mt-1 h-36 w-56">
               <Image
                 fill
                 alt="Attachment"
-                className="rounded-md border object-cover"
+                className="rounded-lg object-cover"
                 sizes="224px"
                 src={comment.attachment.media.image.src}
               />
             </div>
           )}
-          <div className="text-muted-foreground mt-1.5 flex items-center gap-3 text-xs">
-            <span className="flex items-center gap-1">
-              <ThumbsUp className="h-3 w-3" />
-              {comment.like_count || 0}
+          <div className="text-muted-foreground flex items-center gap-3 px-1 pt-0.5 text-xs">
+            <span>
+              {formatDistanceToNow(new Date(comment.created_time), {
+                addSuffix: false,
+                locale: zhTW,
+              })}
             </span>
-            {comment.comment_count !== undefined && comment.comment_count > 0 && (
+            {(comment.like_count ?? 0) > 0 && (
+              <span className="flex items-center gap-1">
+                <ThumbsUp className="h-3 w-3" />
+                {comment.like_count}
+              </span>
+            )}
+            {(comment.comment_count ?? 0) > 0 && (
               <span className="flex items-center gap-1">
                 <MessageCircle className="h-3 w-3" />
-                {comment.comment_count} 則回覆
+                {comment.comment_count}
               </span>
             )}
           </div>
         </div>
       </div>
       {hasReplies && (
-        <div className="relative">
+        <div>
           {comment.comments!.data.map((reply, index) => {
             const isLast = index === comment.comments!.data.length - 1;
             return (
               <div key={reply.id} className="relative">
-                {/* 垂直線（上半段） */}
-                <div className="bg-border absolute top-0 left-4 h-8 w-0.5" />
+                {/* 垂直線上段（連接到水平線） */}
+                <div className="bg-border absolute top-0 left-[15px] h-5 w-0.5" />
+                {/* 垂直線下段（非最後一個才顯示） */}
+                {!isLast && <div className="bg-border absolute top-5 bottom-0 left-[15px] w-0.5" />}
                 {/* 水平連接線 */}
-                <div className="bg-border absolute top-8 left-4 h-0.5 w-8" />
-                {/* 垂直線（下半段，非最後一個才顯示） */}
-                {!isLast && <div className="bg-border absolute top-8 bottom-0 left-4 w-0.5" />}
-                <div className="pl-8">
+                <div className="bg-border absolute top-5 left-[15px] h-0.5 w-[20px]" />
+                <div className="pl-10">
                   <CommentItem comment={reply} />
                 </div>
               </div>
@@ -271,19 +271,19 @@ export function CommentList() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <span className="text-muted-foreground text-xs">
+            <span className="text-muted-foreground text-caption">
               共 {state.filteredComments.length} 則留言
               {state.filteredComments.length !== state.comments.length &&
                 ` (全部 ${state.comments.length} 則)`}
             </span>
             <Input
-              className="ml-auto h-8 w-48 text-xs"
+              className="text-caption ml-auto h-8 w-48"
               placeholder="搜尋內容..."
               value={state.searchQuery}
               onChange={(e) => actions.setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="bg-card rounded-lg border shadow-sm">
+          <div className="space-y-1 px-2">
             {state.paginatedComments.map((c) => (
               <CommentItem key={c.id} comment={c} />
             ))}
@@ -298,7 +298,7 @@ export function CommentList() {
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="text-muted-foreground text-sm">
+              <span className="text-muted-foreground text-body">
                 第 {state.currentPage} / {state.totalPages} 頁
               </span>
               <Button

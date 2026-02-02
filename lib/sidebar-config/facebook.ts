@@ -1,4 +1,4 @@
-import { BarChart3, Layers, Trophy } from 'lucide-react';
+import { BarChart3, HelpCircle, Layers, Trophy } from 'lucide-react';
 
 import type { NavMainItem } from './types';
 
@@ -34,6 +34,15 @@ export const facebookNavConfig: {
       items: [
         { title: '總覽報告', url: '/facebook/insights/overview' },
         { title: '粉絲洞察', url: '/facebook/insights/audience' },
+      ],
+    },
+    {
+      title: 'Help',
+      icon: HelpCircle,
+      items: [
+        { title: '系統介紹', url: '/facebook/help/info' },
+        { title: '使用指南', url: '/facebook/help/guide' },
+        { title: '常見問題', url: '/facebook/help/faq' },
       ],
     },
   ],

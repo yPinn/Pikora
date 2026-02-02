@@ -162,11 +162,16 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
           {/* 左欄：獎項設定 */}
           <Card className="flex flex-col gap-3 p-4">
             <div className="flex items-center justify-between">
-              <h3 className="flex items-center gap-2 text-sm font-medium">
+              <h3 className="text-body flex items-center gap-2 font-medium">
                 <Gift className="h-4 w-4" />
                 獎項設定
               </h3>
-              <Button className="h-7 px-2 text-xs" size="sm" variant="ghost" onClick={addPrize}>
+              <Button
+                className="text-caption h-7 px-2"
+                size="sm"
+                variant="ghost"
+                onClick={addPrize}
+              >
                 <Plus className="mr-1 h-3 w-3" />
                 新增
               </Button>
@@ -201,13 +206,13 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
               ))}
             </div>
 
-            <p className="text-muted-foreground text-xs">共 {totalPrizeCount} 個名額</p>
+            <p className="text-muted-foreground text-caption">共 {totalPrizeCount} 個名額</p>
           </Card>
 
           {/* 右欄：篩選條件 */}
           <Card className="flex flex-col gap-3 p-4">
             <div className="flex items-center justify-between">
-              <h3 className="flex items-center gap-2 text-sm font-medium">
+              <h3 className="text-body flex items-center gap-2 font-medium">
                 <Filter className="h-4 w-4" />
                 篩選條件
               </h3>
@@ -233,7 +238,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
             <div className="space-y-3">
               {/* 時間範圍 */}
               <div className="space-y-1.5">
-                <Label className="text-muted-foreground flex items-center gap-1 text-xs">
+                <Label className="text-muted-foreground text-caption flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   時間範圍
                 </Label>
@@ -301,7 +306,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
 
               {/* 格式檢查 */}
               <div className="space-y-1.5">
-                <Label className="text-muted-foreground flex items-center gap-1 text-xs">
+                <Label className="text-muted-foreground text-caption flex items-center gap-1">
                   <Hash className="h-3 w-3" />
                   留言格式（包含關鍵字）
                 </Label>
@@ -315,7 +320,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
 
               {/* @mention 要求 */}
               <div className="space-y-1.5">
-                <Label className="text-muted-foreground flex items-center gap-1 text-xs">
+                <Label className="text-muted-foreground text-caption flex items-center gap-1">
                   <AtSign className="h-3 w-3" />
                   最少 Tag 人數
                 </Label>
@@ -368,7 +373,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
           {/* 統計資訊 + 抽獎按鈕 */}
           <Card className="flex flex-col gap-3 p-4 lg:col-span-2">
             <div className="flex items-center justify-between">
-              <h3 className="flex items-center gap-2 text-sm font-medium">
+              <h3 className="text-body flex items-center gap-2 font-medium">
                 <Users className="h-4 w-4" />
                 參與者統計
               </h3>
@@ -469,17 +474,17 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
             <div className="flex items-end justify-between gap-4">
               <div className="grid flex-1 grid-cols-3 gap-4">
                 <div>
-                  <p className="text-muted-foreground text-xs">總留言</p>
+                  <p className="text-muted-foreground text-caption">總留言</p>
                   <p className="text-xl font-semibold tabular-nums">{stats.total_comments}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs">通過篩選</p>
+                  <p className="text-muted-foreground text-caption">通過篩選</p>
                   <p className="text-xl font-semibold tabular-nums">
                     {stats.after_blacklist_filter}
                   </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs">
+                  <p className="text-muted-foreground text-caption">
                     {filters.allow_duplicate ? '抽獎機會' : '參與人數'}
                   </p>
                   <p className="text-xl font-semibold tabular-nums">
@@ -508,7 +513,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
             </div>
 
             {!canDraw && (
-              <p className="text-destructive text-center text-xs">
+              <p className="text-destructive text-caption text-center">
                 {isWaitingForReactions
                   ? '正在載入反應資料...'
                   : pool.length === 0
@@ -544,7 +549,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
           </div>
 
           {results.length === 0 ? (
-            <p className="text-muted-foreground py-8 text-center text-sm">尚未進行抽獎</p>
+            <p className="text-muted-foreground text-body py-8 text-center">尚未進行抽獎</p>
           ) : (
             <div className="space-y-4">
               {prizes.map((prize, prizeIndex) => {
@@ -553,7 +558,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                 return (
                   <div key={prizeIndex}>
                     <div className="mb-2 flex items-center justify-between">
-                      <h4 className="text-sm font-medium">{prize.name}</h4>
+                      <h4 className="text-body font-medium">{prize.name}</h4>
                       <Button
                         size="sm"
                         variant="ghost"
@@ -599,12 +604,12 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                             ) : (
                               <p className="font-medium">{result.winner.from_name}</p>
                             )}
-                            <p className="text-muted-foreground truncate text-xs">
+                            <p className="text-muted-foreground text-caption truncate">
                               {result.winner.comment_message}
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-muted-foreground text-xs">
+                            <span className="text-muted-foreground text-caption">
                               {formatDistanceToNow(new Date(result.winner.comment_created_time), {
                                 addSuffix: true,
                                 locale: zhTW,
@@ -641,7 +646,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                       ))}
 
                       {prizeResults.length === 0 && (
-                        <p className="text-muted-foreground text-center text-xs">
+                        <p className="text-muted-foreground text-caption text-center">
                           名額不足，無法抽出
                         </p>
                       )}
@@ -661,11 +666,11 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
               <UserX className="h-4 w-4" />
               黑名單管理
             </h3>
-            <p className="text-muted-foreground text-xs">黑名單內的用戶將不會出現在抽獎池中</p>
+            <p className="text-muted-foreground text-caption">黑名單內的用戶將不會出現在抽獎池中</p>
           </div>
 
           {blacklist.length === 0 ? (
-            <p className="text-muted-foreground py-8 text-center text-sm">尚無黑名單</p>
+            <p className="text-muted-foreground text-body py-8 text-center">尚無黑名單</p>
           ) : (
             <div className="space-y-2">
               {blacklist.map((entry) => (
@@ -676,7 +681,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                   <div className="min-w-0 flex-1">
                     <p className="font-medium">{entry.from_name || entry.from_id}</p>
                     {entry.reason && (
-                      <p className="text-muted-foreground truncate text-xs">{entry.reason}</p>
+                      <p className="text-muted-foreground text-caption truncate">{entry.reason}</p>
                     )}
                   </div>
                   <Button
