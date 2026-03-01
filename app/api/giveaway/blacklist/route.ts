@@ -41,8 +41,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { pageId, from_id, from_name, reason } = body;
 
-    if (!pageId || !from_id) {
-      return NextResponse.json({ error: '缺少必要參數' }, { status: 400 });
+    if (typeof pageId !== 'string' || pageId.trim().length === 0) {
+      return NextResponse.json({ error: '無效的 pageId' }, { status: 400 });
+    }
+    if (typeof from_id !== 'string' || from_id.trim().length === 0 || from_id.length > 100) {
+      return NextResponse.json({ error: '無效的 from_id' }, { status: 400 });
+    }
+    if (from_name !== undefined && (typeof from_name !== 'string' || from_name.length > 200)) {
+      return NextResponse.json({ error: '無效的 from_name' }, { status: 400 });
+    }
+    if (reason !== undefined && (typeof reason !== 'string' || reason.length > 500)) {
+      return NextResponse.json({ error: '無效的 reason' }, { status: 400 });
     }
 
     const entry = await prisma.giveawayBlacklist.upsert({

@@ -210,7 +210,7 @@ export function CommentList() {
           disabled={!state.postUrl}
           title="原始貼文"
           variant="outline"
-          onClick={() => window.open(state.postUrl, '_blank')}
+          onClick={() => window.open(state.postUrl, '_blank', 'noopener,noreferrer')}
         >
           <ExternalLink className="h-4 w-4" />
         </Button>

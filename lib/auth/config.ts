@@ -31,12 +31,15 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
+      const hasTokenError = auth?.error === 'AccessTokenExpired';
 
       // 定義需要保護的路由
       const protectedPaths = ['/facebook', '/instagram', '/threads'];
       const isProtectedRoute = protectedPaths.some((path) => nextUrl.pathname.startsWith(path));
 
       if (isProtectedRoute) {
+        // Token 過期：強制重新登入
+        if (hasTokenError) return false;
         if (isLoggedIn) return true;
         // 重定向到登入頁
         return false;
@@ -52,15 +55,25 @@ export const authConfig: NextAuthConfig = {
         token.expiresAt = account.expires_at;
         token.provider = account.provider;
         token.providerAccountId = account.providerAccountId;
+        return token;
       }
+
+      // Access token 已過期：清除並標記錯誤，讓 authorized callback 強制重新登入
+      if (token.expiresAt && Date.now() / 1000 > (token.expiresAt as number)) {
+        return { ...token, accessToken: undefined, error: 'AccessTokenExpired' as const };
+      }
+
       return token;
     },
     async session({ session, token }) {
       // 將 token 資訊傳遞到 session
       if (token) {
-        session.accessToken = token.accessToken as string;
+        session.accessToken = token.accessToken as string | undefined;
         session.provider = token.provider as string;
         session.providerAccountId = token.providerAccountId as string;
+        if (token.error) {
+          session.error = token.error as string;
+        }
         // 將 user.id 從 token.sub 傳遞到 session
         if (session.user && token.sub) {
           session.user.id = token.sub;
@@ -84,6 +97,7 @@ declare module 'next-auth' {
     accessToken?: string;
     provider?: string;
     providerAccountId?: string;
+    error?: string;
   }
 
   interface JWT {
@@ -92,5 +106,6 @@ declare module 'next-auth' {
     expiresAt?: number;
     provider?: string;
     providerAccountId?: string;
+    error?: string;
   }
 }

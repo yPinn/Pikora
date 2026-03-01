@@ -1,22 +1,22 @@
 /**
  * Facebook Pages API 路由
- * GET /api/meta/facebook/pages - 取得用戶管理的所有專頁
+ * GET /api/facebook/pages - 取得用戶管理的所有專頁
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { auth } from '@/lib/auth';
 import { getMetaServices } from '@/lib/services';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const accessToken = request.headers.get('Authorization')?.replace('Bearer ', '');
-
-    if (!accessToken) {
-      return NextResponse.json({ error: '缺少 Access Token' }, { status: 401 });
+    const session = await auth();
+    if (!session?.accessToken) {
+      return NextResponse.json({ error: '未授權' }, { status: 401 });
     }
 
     const { facebook } = getMetaServices();
-    const pages = await facebook.getPages(accessToken);
+    const pages = await facebook.getPages(session.accessToken);
 
     return NextResponse.json({ data: pages });
   } catch (error) {

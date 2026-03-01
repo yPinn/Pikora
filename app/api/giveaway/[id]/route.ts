@@ -45,9 +45,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const { id } = await params;
     const body = await request.json();
 
-    // 驗證權限
+    // 驗證權限，同時取得 prizes 以驗證 prizeId 所有權
     const existing = await prisma.giveaway.findFirst({
       where: { id, userId: session.user.id },
+      include: { prizes: { select: { id: true } } },
     });
 
     if (!existing) {
@@ -56,16 +57,61 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     // 儲存中獎者
     if (body.winners) {
+      // 驗證 winners 陣列
+      if (!Array.isArray(body.winners)) {
+        return NextResponse.json({ error: 'winners 格式錯誤' }, { status: 400 });
+      }
+      if (body.winners.length > 200) {
+        return NextResponse.json({ error: 'winners 數量超過上限 (200)' }, { status: 400 });
+      }
+
+      const validPrizeIds = new Set(existing.prizes.map((p) => p.id));
+
+      for (const w of body.winners) {
+        if (typeof w.prize_id !== 'string' || !validPrizeIds.has(w.prize_id)) {
+          return NextResponse.json({ error: '無效的 prize_id' }, { status: 400 });
+        }
+        if (
+          typeof w.from_id !== 'string' ||
+          w.from_id.trim().length === 0 ||
+          w.from_id.length > 100
+        ) {
+          return NextResponse.json({ error: '無效的 from_id' }, { status: 400 });
+        }
+        if (
+          typeof w.from_name !== 'string' ||
+          w.from_name.trim().length === 0 ||
+          w.from_name.length > 200
+        ) {
+          return NextResponse.json({ error: '無效的 from_name' }, { status: 400 });
+        }
+        if (
+          typeof w.comment_id !== 'string' ||
+          w.comment_id.trim().length === 0 ||
+          w.comment_id.length > 100
+        ) {
+          return NextResponse.json({ error: '無效的 comment_id' }, { status: 400 });
+        }
+        if (typeof w.comment_message !== 'string' || w.comment_message.length > 10000) {
+          return NextResponse.json({ error: '無效的 comment_message' }, { status: 400 });
+        }
+        const parsedTime = new Date(w.comment_created_time);
+        if (isNaN(parsedTime.getTime())) {
+          return NextResponse.json({ error: '無效的 comment_created_time' }, { status: 400 });
+        }
+      }
+
       await prisma.$transaction(async (tx) => {
         for (const w of body.winners) {
           await tx.winner.create({
             data: {
               giveawayId: id,
               prizeId: w.prize_id,
-              from_id: w.from_id,
-              from_name: w.from_name,
-              from_picture_url: w.from_picture_url,
-              comment_id: w.comment_id,
+              from_id: w.from_id.trim(),
+              from_name: w.from_name.trim(),
+              from_picture_url:
+                typeof w.from_picture_url === 'string' ? w.from_picture_url : undefined,
+              comment_id: w.comment_id.trim(),
               comment_message: w.comment_message,
               comment_created_time: new Date(w.comment_created_time),
             },

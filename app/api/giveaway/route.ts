@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/lib/auth';
+import { validateGiveawayFilters } from '@/lib/giveaway/types';
 import prisma from '@/lib/prisma';
 
 // GET /api/giveaway - 取得抽獎活動列表
@@ -53,8 +54,20 @@ export async function POST(request: NextRequest) {
     if (typeof postId !== 'string' || postId.trim().length === 0) {
       return NextResponse.json({ error: '無效的 postId' }, { status: 400 });
     }
-    if (!filters || typeof filters !== 'object') {
-      return NextResponse.json({ error: '缺少篩選條件' }, { status: 400 });
+    if (post_url !== undefined) {
+      if (typeof post_url !== 'string') {
+        return NextResponse.json({ error: '無效的 post_url 格式' }, { status: 400 });
+      }
+      try {
+        const u = new URL(post_url);
+        if (u.protocol !== 'https:' && u.protocol !== 'http:') throw new Error();
+      } catch {
+        return NextResponse.json({ error: '無效的 post_url 格式' }, { status: 400 });
+      }
+    }
+    const filtersError = validateGiveawayFilters(filters);
+    if (filtersError) {
+      return NextResponse.json({ error: filtersError }, { status: 400 });
     }
     if (!Array.isArray(prizes) || prizes.length === 0) {
       return NextResponse.json({ error: '缺少獎項' }, { status: 400 });

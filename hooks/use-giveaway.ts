@@ -165,7 +165,9 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
     if (!activePage?.id) return;
 
     try {
-      const res = await fetch(`/api/giveaway/blacklist?pageId=${activePage.id}`);
+      const res = await fetch(
+        `/api/giveaway/blacklist?${new URLSearchParams({ pageId: activePage.id })}`
+      );
       const data = await res.json();
       if (res.ok) {
         setBlacklist(data.data || []);
@@ -181,9 +183,12 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
 
     setIsLoadingReactions(true);
     try {
-      const res = await fetch(
-        `/api/facebook/reactions?postId=${postId}&pageId=${activePage.id}&fetchAll=true`
-      );
+      const reactionsParams = new URLSearchParams({
+        postId,
+        pageId: activePage.id,
+        fetchAll: 'true',
+      });
+      const res = await fetch(`/api/facebook/reactions?${reactionsParams}`);
       const data = await res.json();
       if (res.ok) {
         setReactions(data.data || []);
@@ -225,10 +230,8 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
       if (!activePage?.id) return;
 
       try {
-        const res = await fetch(
-          `/api/giveaway/blacklist?pageId=${activePage.id}&fromId=${fromId}`,
-          { method: 'DELETE' }
-        );
+        const deleteParams = new URLSearchParams({ pageId: activePage.id, fromId });
+        const res = await fetch(`/api/giveaway/blacklist?${deleteParams}`, { method: 'DELETE' });
 
         if (res.ok) {
           setBlacklist((prev) => prev.filter((b) => b.from_id !== fromId));

@@ -73,11 +73,15 @@ export function useFacebookComments(activePage: FacebookPage | null) {
       setError(null);
 
       try {
+        const commentsParams = new URLSearchParams({
+          postId: targetPostId,
+          pageId: activePage.id,
+          fetchAll: 'true',
+        });
+        const postParams = new URLSearchParams({ postId: targetPostId, pageId: activePage.id });
         const [commentsRes, postRes] = await Promise.all([
-          fetch(
-            `/api/facebook/comments?postId=${targetPostId}&pageId=${activePage.id}&fetchAll=true`
-          ),
-          fetch(`/api/facebook/posts?postId=${targetPostId}&pageId=${activePage.id}`),
+          fetch(`/api/facebook/comments?${commentsParams}`),
+          fetch(`/api/facebook/posts?${postParams}`),
         ]);
 
         const commentsData = await commentsRes.json();
