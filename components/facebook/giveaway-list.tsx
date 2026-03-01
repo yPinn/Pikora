@@ -87,18 +87,18 @@ export function GiveawayList() {
     sessionStorage.removeItem(SELECTED_POST_ID_KEY);
   }, []);
 
-  // 當 postId 有值且有 access_token 時自動載入留言
+  // 當 postId 有值且有 activePage 時自動載入留言
   useEffect(() => {
-    if (!postId || !activePage?.access_token) return;
+    if (!postId || !activePage?.id) return;
 
     const loadComments = async () => {
       setCommentsLoading(true);
       setCommentsError(null);
 
       try {
-        const res = await fetch(`/api/facebook/comments?postId=${postId}&fetchAll=true`, {
-          headers: { Authorization: `Bearer ${activePage.access_token}` },
-        });
+        const res = await fetch(
+          `/api/facebook/comments?postId=${postId}&pageId=${activePage.id}&fetchAll=true`
+        );
 
         const data = await res.json();
         if (!res.ok) {
@@ -116,7 +116,7 @@ export function GiveawayList() {
     };
 
     loadComments();
-  }, [postId, activePage?.access_token]);
+  }, [postId, activePage?.id]);
 
   // 取得歷史紀錄
   const fetchGiveaways = useCallback(async () => {

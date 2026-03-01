@@ -47,22 +47,40 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { pageId, postId, post_url, name, filters, prizes } = body;
 
-    if (!pageId || !postId || !filters || !prizes?.length) {
-      return NextResponse.json({ error: '缺少必要參數' }, { status: 400 });
+    if (typeof pageId !== 'string' || pageId.trim().length === 0) {
+      return NextResponse.json({ error: '無效的 pageId' }, { status: 400 });
+    }
+    if (typeof postId !== 'string' || postId.trim().length === 0) {
+      return NextResponse.json({ error: '無效的 postId' }, { status: 400 });
+    }
+    if (!filters || typeof filters !== 'object') {
+      return NextResponse.json({ error: '缺少篩選條件' }, { status: 400 });
+    }
+    if (!Array.isArray(prizes) || prizes.length === 0) {
+      return NextResponse.json({ error: '缺少獎項' }, { status: 400 });
+    }
+    for (const p of prizes) {
+      if (typeof p.name !== 'string' || p.name.trim().length === 0) {
+        return NextResponse.json({ error: '獎項名稱不得為空' }, { status: 400 });
+      }
+      const qty = Number(p.quantity);
+      if (!Number.isInteger(qty) || qty < 1 || qty > 100) {
+        return NextResponse.json({ error: '獎項數量需為 1~100 的整數' }, { status: 400 });
+      }
     }
 
     const giveaway = await prisma.giveaway.create({
       data: {
         userId: session.user.id,
-        pageId,
-        postId,
-        post_url,
-        name,
+        pageId: pageId.trim(),
+        postId: postId.trim(),
+        post_url: typeof post_url === 'string' ? post_url.trim() : undefined,
+        name: typeof name === 'string' ? name.trim() : undefined,
         filters,
         prizes: {
           create: prizes.map((p: { name: string; quantity: number }, i: number) => ({
-            name: p.name,
-            quantity: p.quantity,
+            name: p.name.trim(),
+            quantity: Number(p.quantity),
             sort_order: i,
           })),
         },

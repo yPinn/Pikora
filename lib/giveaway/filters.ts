@@ -37,6 +37,7 @@ function matchesPatternFilter(comment: FacebookComment, filters: GiveawayFilters
 
   if (filters.pattern_type === 'regex') {
     try {
+      if (!isSafeRegex(filters.pattern)) return false;
       const flags = filters.pattern_case_sensitive ? '' : 'i';
       const regex = new RegExp(filters.pattern, flags);
       return regex.test(comment.message);
@@ -62,11 +63,26 @@ function getMentionKey(message: string): string {
   return [...new Set(matches)].sort().join(',');
 }
 
-// 加密安全的隨機索引
+// 加密安全的隨機索引（rejection sampling 消除 modulo bias）
 function secureRandomIndex(max: number): number {
+  const limit = Math.floor(0x100000000 / max) * max;
   const array = new Uint32Array(1);
-  crypto.getRandomValues(array);
-  return array[0] % max;
+  let value: number;
+  do {
+    crypto.getRandomValues(array);
+    value = array[0];
+  } while (value >= limit);
+  return value % max;
+}
+
+// 檢查正則表達式是否可能造成 ReDoS（catastrophic backtracking）
+function isSafeRegex(pattern: string): boolean {
+  if (pattern.length > 200) return false;
+  // 拒絕巢狀量詞：(X+)+、(X*)* 等
+  if (/\([^)]*[+*][^)]*\)[+*?]/.test(pattern)) return false;
+  // 拒絕 (a|a)+ 類型的重疊交替量詞
+  if (/\(([^|)]+\|)+[^|)]+\)[+*]/.test(pattern)) return false;
+  return true;
 }
 
 // 建立抽獎池

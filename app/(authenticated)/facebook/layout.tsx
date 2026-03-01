@@ -18,7 +18,6 @@ export default async function Layout({ children }: { children: React.ReactNode }
   const pages = await facebookService.getPages(session.accessToken, [
     'id',
     'name',
-    'access_token',
     'category',
     'tasks',
     'picture',

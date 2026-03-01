@@ -40,7 +40,7 @@ export function useFacebookPosts(options: UseFacebookPostsOptions = {}): UseFace
 
   const fetchPosts = useCallback(
     async (cursor?: string) => {
-      if (!activePage?.id || !activePage?.access_token) {
+      if (!activePage?.id) {
         setIsLoading(false);
         return;
       }
@@ -65,7 +65,6 @@ export function useFacebookPosts(options: UseFacebookPostsOptions = {}): UseFace
         if (cursor) params.set('after', cursor);
 
         const res = await fetch(`/api/facebook/posts?${params}`, {
-          headers: { Authorization: `Bearer ${activePage.access_token}` },
           signal: abortControllerRef.current.signal,
         });
 
@@ -100,7 +99,7 @@ export function useFacebookPosts(options: UseFacebookPostsOptions = {}): UseFace
         setIsLoadingMore(false);
       }
     },
-    [activePage?.id, activePage?.access_token, limit]
+    [activePage?.id, limit]
   );
 
   const refetch = useCallback(async () => {

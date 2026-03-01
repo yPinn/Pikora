@@ -59,7 +59,7 @@ export function useFacebookComments(activePage: FacebookPage | null) {
   // 當 postId 變更且有效時自動抓取
   // 注意：不依賴 activePage?.id，避免切換專頁時用舊 postId 發請求
   useEffect(() => {
-    if (postId && activePage?.access_token) {
+    if (postId && activePage?.id) {
       fetchCommentsInternal(postId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -67,19 +67,17 @@ export function useFacebookComments(activePage: FacebookPage | null) {
 
   const fetchCommentsInternal = useCallback(
     async (targetPostId: string) => {
-      if (!activePage?.access_token || !targetPostId) return;
+      if (!activePage?.id || !targetPostId) return;
 
       setLoading(true);
       setError(null);
 
       try {
         const [commentsRes, postRes] = await Promise.all([
-          fetch(`/api/facebook/comments?postId=${targetPostId}&fetchAll=true`, {
-            headers: { Authorization: `Bearer ${activePage.access_token}` },
-          }),
-          fetch(`/api/facebook/posts?postId=${targetPostId}`, {
-            headers: { Authorization: `Bearer ${activePage.access_token}` },
-          }),
+          fetch(
+            `/api/facebook/comments?postId=${targetPostId}&pageId=${activePage.id}&fetchAll=true`
+          ),
+          fetch(`/api/facebook/posts?postId=${targetPostId}&pageId=${activePage.id}`),
         ]);
 
         const commentsData = await commentsRes.json();
@@ -103,7 +101,7 @@ export function useFacebookComments(activePage: FacebookPage | null) {
         setLoading(false);
       }
     },
-    [activePage?.access_token]
+    [activePage?.id]
   );
 
   // 對外的 fetchComments：處理 URL 解析

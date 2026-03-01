@@ -60,7 +60,9 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
   const { activePage } = useFacebookPage();
 
   const [filters, setFilters] = useState<GiveawayFilters>({});
-  const [prizes, setPrizes] = useState<PrizeInput[]>([{ name: '頭獎', quantity: 1 }]);
+  const [prizes, setPrizes] = useState<PrizeInput[]>([
+    { id: crypto.randomUUID(), name: '頭獎', quantity: 1 },
+  ]);
   const [blacklist, setBlacklist] = useState<BlacklistEntry[]>([]);
   const [reactions, setReactions] = useState<FacebookReaction[]>([]);
   const [isLoadingReactions, setIsLoadingReactions] = useState(false);
@@ -175,15 +177,13 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
 
   // 取得反應者列表
   const fetchReactions = useCallback(async () => {
-    if (!activePage?.access_token || !postId) return;
+    if (!activePage?.id || !postId) return;
 
     setIsLoadingReactions(true);
     try {
-      const res = await fetch(`/api/facebook/reactions?postId=${postId}&fetchAll=true`, {
-        headers: {
-          Authorization: `Bearer ${activePage.access_token}`,
-        },
-      });
+      const res = await fetch(
+        `/api/facebook/reactions?postId=${postId}&pageId=${activePage.id}&fetchAll=true`
+      );
       const data = await res.json();
       if (res.ok) {
         setReactions(data.data || []);
@@ -195,7 +195,7 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
     } finally {
       setIsLoadingReactions(false);
     }
-  }, [activePage?.access_token, postId]);
+  }, [activePage?.id, postId]);
 
   // 新增黑名單
   const addToBlacklist = useCallback(
@@ -282,11 +282,13 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
           comment_created_time: r.winner.comment_created_time,
         }));
 
-        await fetch(`/api/giveaway/${giveawayId}`, {
+        const patchRes = await fetch(`/api/giveaway/${giveawayId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ winners }),
         });
+        const patchData = await patchRes.json();
+        if (!patchRes.ok) throw new Error(patchData.error || '儲存中獎者失敗');
 
         return giveawayId;
       } catch (error) {

@@ -94,7 +94,10 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
 
   // 新增獎項
   const addPrize = () => {
-    setPrizes([...prizes, { name: `${prizes.length + 1} 獎`, quantity: 1 }]);
+    setPrizes([
+      ...prizes,
+      { id: crypto.randomUUID(), name: `${prizes.length + 1} 獎`, quantity: 1 },
+    ]);
   };
 
   // 更新獎項
@@ -174,7 +177,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
 
             <div className="space-y-2">
               {prizes.map((prize, i) => (
-                <div key={i} className="flex items-center gap-2">
+                <div key={prize.id} className="flex items-center gap-2">
                   <Input
                     className="h-8 flex-1 text-sm"
                     placeholder="獎項名稱"
@@ -565,8 +568,11 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                     </div>
 
                     <div className="space-y-2">
-                      {prizeResults.map((result, i) => (
-                        <div key={i} className="bg-muted/50 flex items-center gap-3 rounded-lg p-3">
+                      {prizeResults.map((result) => (
+                        <div
+                          key={result.winner.comment_id}
+                          className="bg-muted/50 flex items-center gap-3 rounded-lg p-3"
+                        >
                           {result.winner.from_profile_url ? (
                             <a
                               href={result.winner.from_profile_url}

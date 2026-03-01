@@ -42,6 +42,7 @@ export function toDrawEntry(comment: FacebookComment): DrawEntry | null {
 
 // 獎項
 export interface PrizeInput {
+  id: string; // 穩定的 React key，用於 list rendering
   name: string;
   quantity: number;
 }
