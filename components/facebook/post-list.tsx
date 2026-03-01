@@ -10,7 +10,6 @@ import {
   Heart,
   MessageCircle,
   Share2,
-  FileText,
   ChevronLeft,
   ChevronRight,
   Play,
@@ -135,8 +134,17 @@ function PostCard({ post }: { post: FacebookPost }) {
           src={images[currentIndex]}
         />
       ) : (
-        <div className="flex h-full items-center justify-center">
-          <FileText className="text-muted-foreground h-6 w-6" />
+        <div className="relative h-full overflow-hidden">
+          {/* 背景圖片（模糊+低對比） */}
+          <Image
+            fill
+            alt=""
+            className="object-cover opacity-75 blur-[2px] saturate-0 dark:opacity-75"
+            sizes="(max-width: 768px) 33vw, 300px"
+            src="/Momonga_2.jpg"
+          />
+          {/* 覆蓋層 */}
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-200/70 to-slate-300/70 dark:from-slate-800/80 dark:to-slate-900/80" />
         </div>
       )}
 
@@ -188,8 +196,12 @@ function PostCard({ post }: { post: FacebookPost }) {
         </>
       )}
 
-      {/* Hover 時顯示互動數據 */}
-      <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-end bg-gradient-to-t from-black/80 p-2 text-white opacity-0 transition-opacity group-hover:opacity-100">
+      {/* Hover 時顯示互動數據與文字預覽 */}
+      <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/50 to-transparent p-2 text-white opacity-0 transition-opacity group-hover:opacity-100">
+        {/* 貼文文字預覽 */}
+        {post.message && (
+          <p className="mb-1.5 line-clamp-2 text-[11px] leading-tight opacity-90">{post.message}</p>
+        )}
         <div className="flex gap-3 text-[10px]">
           <span className="flex items-center gap-1">
             <Heart className="h-3 w-3 fill-white" />
@@ -250,7 +262,7 @@ export function PostList() {
   }
 
   if (posts.length === 0)
-    return <p className="text-muted-foreground py-10 text-center text-sm">目前沒有貼文</p>;
+    return <p className="text-muted-foreground text-body py-10 text-center">目前沒有貼文</p>;
 
   return (
     <div className="space-y-2">

@@ -6,17 +6,17 @@ export default function PrivacyPolicy() {
   return (
     <div className="container mx-auto max-w-2xl px-4 py-12">
       <Link
-        className="text-muted-foreground hover:text-foreground mb-8 inline-flex items-center gap-1 text-sm"
+        className="text-body text-muted-foreground hover:text-foreground mb-8 inline-flex items-center gap-1"
         href="/login"
       >
         <ArrowLeft className="h-4 w-4" />
         返回
       </Link>
 
-      <h1 className="mb-2 text-2xl font-bold">隱私政策</h1>
-      <p className="text-muted-foreground mb-8 text-sm">最後更新：2025 年 1 月</p>
+      <h1 className="text-title mb-2 font-bold">隱私政策</h1>
+      <p className="text-body text-muted-foreground mb-8">最後更新：2025 年 1 月</p>
 
-      <div className="space-y-6 text-sm leading-relaxed">
+      <div className="text-body space-y-6 leading-relaxed">
         <section>
           <h2 className="mb-2 font-semibold">1. 資料收集</h2>
           <p className="text-muted-foreground">

@@ -92,7 +92,7 @@ export function PageSwitcher() {
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-semibold">{activePage.name}</span>
-                <span className="text-muted-foreground truncate text-xs">
+                <span className="text-muted-foreground text-caption truncate">
                   {getTopRole(activePage.tasks)}
                 </span>
               </div>
@@ -105,7 +105,7 @@ export function PageSwitcher() {
             className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             side={isMobile ? 'bottom' : 'right'}
           >
-            <DropdownMenuLabel className="text-muted-foreground text-xs">
+            <DropdownMenuLabel className="text-muted-foreground text-caption">
               粉絲專頁
             </DropdownMenuLabel>
             {sortedPages.map((page, i) => (

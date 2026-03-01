@@ -75,7 +75,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
           </div>
         </CardContent>
       </Card>
-      <div className="text-muted-foreground px-6 text-center text-sm">
+      <div className="text-muted-foreground text-body px-6 text-center">
         登入即表示您同意我們的{' '}
         <a className="underline-offset-2 hover:underline" href="/terms">
           服務條款
