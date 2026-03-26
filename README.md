@@ -1,49 +1,162 @@
 # Pikora
 
-Meta 生態系社群抽獎管理工具，整合 Facebook、Instagram、Threads，支援進階篩選與公正隨機抽獎。
+Meta 生態系社群抽獎管理工具，整合 Facebook、Instagram、Threads，自動載入留言、彈性篩選參與者、密碼學安全抽獎，讓每場活動更省力、更公正。
+
+---
+
+## 平台支援狀態
+
+| 平台      | 狀態     | 可用功能                                   |
+| --------- | -------- | ------------------------------------------ |
+| Facebook  | 正式開放 | 完整抽獎套件、貼文瀏覽、留言管理、歷史紀錄 |
+| Instagram | 即將推出 | 商業帳號整合                               |
+| Threads   | 即將推出 | 回覆管理                                   |
+
+---
+
+## 登入與授權
+
+使用 Facebook 帳號登入，系統將要求授予以下權限：
+
+- `pages_show_list` — 查看所管理的粉絲專頁列表
+- `pages_read_engagement` — 讀取互動數據
+- `pages_read_user_content` — 讀取貼文留言內容
+- `pages_manage_posts` — 管理貼文
+- `pages_manage_engagement` — 管理互動
+
+登入後可在左側邊欄切換要管理的粉絲專頁。同一帳號若管理多個粉絲專頁，可隨時切換，各頁面的黑名單與抽獎紀錄相互獨立。
+
+---
+
+## 功能概覽
+
+### 內容管理
+
+#### 貼文列表 `/facebook/content/posts`
+
+以無限捲動的圖片牆呈現粉絲專頁所有貼文。
+
+- 點擊貼文：複製貼文連結至剪貼簿，並自動帶入抽獎頁面
+- Ctrl/Cmd + 點擊：在新視窗開啟 Facebook 原始貼文
+- 輪播貼文顯示多圖指示器與左右切換箭頭
+- 影片貼文顯示播放圖示
+- 貼文卡片顯示：縮圖、發文時間、按讚 / 留言 / 分享數
+
+#### 留言列表 `/facebook/content/comments`
+
+輸入貼文網址後載入該貼文的所有頂層留言與回覆。
+
+- 以 Facebook 風格呈現留言串（含縮排連線）
+- 顯示留言者頭像、姓名、留言內容、時間、附圖
+- 留言排序：最新、最舊、最多讚
+- 即時搜尋留言內容
+
+---
+
+### 抽獎系統
+
+#### 新增抽獎 `/facebook/engage/giveaway`
+
+##### 獎項設定
+
+- 新增多個獎項，各別設定名稱與數量
+- 系統顯示目前獎位總數
+
+##### 篩選條件
+
+以下條件可單獨或組合使用：
+
+| 篩選項目         | 說明                                   |
+| ---------------- | -------------------------------------- |
+| 時間範圍         | 僅納入指定時段內的留言                 |
+| 關鍵字 / Regex   | 留言內容須包含指定文字或符合正規表示式 |
+| 大小寫區分       | 搭配關鍵字使用，嚴格比對大小寫         |
+| 最少 @mention 數 | 留言須標記至少 N 位用戶（0–20）        |
+| 需按讚貼文       | 僅限有對貼文按讚或表情的留言者         |
+| 允許重複中獎     | 同一用戶的每則留言視為獨立參加資格     |
+
+啟用「需按讚貼文」時，系統自動非同步載入按讚名單並顯示進度。
+
+##### 參加資格池
+
+篩選後即時顯示：
+
+- 已載入留言總數
+- 通過篩選的留言數
+- 不重複的合格參加者人數（或允許重複時的總資格數）
+
+可點開「查看名單」逐一檢視合格參加者，並直接將特定用戶加入黑名單。
+
+##### 抽獎流程
+
+1. 完成設定後按「開始抽獎」
+2. 系統以 `crypto.getRandomValues()` + rejection sampling 確保均勻分佈
+3. 各獎項依序抽出，已中獎者自動從後續獎項中排除
+4. 結果頁籤顯示每位得獎者的頭像、姓名、原始留言內容
+
+##### 得獎者管理
+
+- 點擊留言連結可在 Facebook 查看原始留言，手動驗證
+- 對個別獎項重抽：保留其他獎項結果，僅該獎重新隨機
+- 將得獎者加入黑名單（立即生效）
+- 儲存至資料庫，產生永久抽獎紀錄
+
+##### 黑名單
+
+管理當前粉絲專頁的黑名單。黑名單以粉絲專頁為單位，跨活動持續生效。可隨時移除黑名單成員。
+
+---
+
+### 抽獎紀錄
+
+#### 得獎名單 `/facebook/engage/winners`
+
+列出該粉絲專頁所有已儲存的抽獎活動：
+
+- 每筆紀錄顯示：活動名稱、建立日期、獎項數、得獎者數
+- 展開後可查看每位得獎者的完整資訊與留言連結
+- 匯出 CSV：下載包含所有得獎者資訊的試算表
+- 刪除紀錄：含二次確認防止誤操作
+
+---
+
+## 抽獎公正性保障
+
+| 機制               | 說明                                                       |
+| ------------------ | ---------------------------------------------------------- |
+| 密碼學隨機         | 使用 Web Crypto API (`crypto.getRandomValues()`)，非偽隨機 |
+| Rejection sampling | 消除模數偏差，確保每位參加者被選中的機率完全相等           |
+| ReDoS 防護         | 自定義 Regex 篩選條件進行安全驗證，防止惡意表達式拖慢系統  |
+| 重抽隔離           | 重抽單一獎項時，其他獎項的得獎者不受影響且自動列入排除名單 |
+
+---
+
+## 資料儲存範圍
+
+系統儲存：
+
+- OAuth 存取權杖（用於呼叫 Meta Graph API）
+- 抽獎紀錄（篩選條件、獎項設定、得獎者資訊）
+- 黑名單（以粉絲專頁為單位）
+- 基本帳號資訊（用戶 ID、電子郵件）
+
+系統不儲存：
+
+- 貼文內容或圖片
+- 完整留言列表（僅在當次瀏覽 session 中暫存於前端）
+- 按讚 / 表情詳細資料
+
+帳號移除：
+
+- 前往 Facebook 設定移除應用程式授權，可立即撤銷所有 OAuth 存取權杖
+- 如需刪除所有資料，Facebook 資料刪除 Callback 會自動清除帳號及所有相關紀錄
+
+---
 
 ## Tech Stack
 
 - **Framework** — Next.js 16 (App Router), React 19, TypeScript
-- **Auth** — NextAuth.js v5，Facebook OAuth 2.0
+- **Auth** — NextAuth.js v5, Facebook OAuth 2.0
 - **Database** — PostgreSQL + Prisma ORM
-- **UI** — Radix UI, Tailwind CSS v4, shadcn/ui
-- **API** — Meta Graph API
-
-## Getting Started
-
-```bash
-# 安裝相依套件
-npm install
-
-# 設定環境變數
-cp .env.example .env.local
-
-# 同步資料庫 schema
-npm run db:push
-
-# 啟動開發伺服器
-npm run dev
-```
-
-開啟 [http://localhost:3000](http://localhost:3000)。
-
-## Environment Variables
-
-```env
-DATABASE_URL=
-AUTH_SECRET=
-AUTH_FACEBOOK_ID=
-AUTH_FACEBOOK_SECRET=
-```
-
-## Scripts
-
-| 指令                 | 說明                           |
-| -------------------- | ------------------------------ |
-| `npm run dev`        | 啟動開發伺服器                 |
-| `npm run build`      | 正式建置（含 prisma generate） |
-| `npm run lint`       | ESLint 檢查                    |
-| `npm run format`     | Prettier 格式化                |
-| `npm run db:migrate` | 建立並執行 migration           |
-| `npm run db:studio`  | 開啟 Prisma Studio             |
+- **UI** — Radix UI, Tailwind CSS v4, shadcn/ui, lucide-react
+- **API** — Meta Graph API v22.0
