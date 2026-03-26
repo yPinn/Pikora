@@ -184,6 +184,15 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Reserve scrollbar gutter on html to prevent layout shift between pages.
+     Scroll functionality is preserved; only the visual track is hidden. */
+  html {
+    overflow-y: scroll;
+    scrollbar-width: none; /* Firefox */
+  }
+  html::-webkit-scrollbar {
+    display: none; /* Chrome / Safari */
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

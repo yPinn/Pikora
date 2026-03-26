@@ -47,6 +47,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -438,6 +439,9 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                       獎池人選 ({stats.unique_users} 人
                       {filters.allow_duplicate && `, ${stats.final_pool_size} 次機會`})
                     </DialogTitle>
+                    <DialogDescription className="sr-only">
+                      符合篩選條件的抽獎參加者名單
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="flex flex-1 flex-col space-y-3 overflow-hidden">
                     <Input
