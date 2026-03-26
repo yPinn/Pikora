@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
+import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import {
@@ -24,8 +25,20 @@ import {
   Ban,
   UserX,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -44,8 +57,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGiveaway } from '@/hooks/use-giveaway';
+import { ANIM, cardReveal } from '@/lib/animation';
 import type { FacebookComment } from '@/lib/services/facebook';
 import { cn } from '@/lib/utils';
+import { isFacebookCdnUrl, isFacebookProfileUrl } from '@/lib/utils/facebook';
 
 interface GiveawayPanelProps {
   comments: FacebookComment[];
@@ -80,6 +95,31 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
 
   const [activeTab, setActiveTab] = useState('settings');
   const [poolSearch, setPoolSearch] = useState('');
+
+  // 按用戶去重並計算每人留言數（pool 可達數千筆，避免每次 render 重算）
+  const poolUsers = useMemo(() => {
+    const userMap = new Map<string, { entry: (typeof pool)[0]; count: number }>();
+    pool.forEach((entry) => {
+      const existing = userMap.get(entry.from_id);
+      if (!existing) {
+        userMap.set(entry.from_id, { entry, count: 1 });
+      } else {
+        existing.count++;
+      }
+    });
+    return Array.from(userMap.values());
+  }, [pool]);
+
+  const filteredPoolUsers = useMemo(() => {
+    if (!poolSearch) return poolUsers;
+    const q = poolSearch.toLowerCase();
+    return poolUsers.filter(({ entry }) => entry.from_name.toLowerCase().includes(q));
+  }, [poolUsers, poolSearch]);
+
+  // auto-animate refs
+  const [prizesRef] = useAutoAnimate<HTMLDivElement>();
+  const [blacklistRef] = useAutoAnimate<HTMLDivElement>();
+  const [resultsRef] = useAutoAnimate<HTMLDivElement>();
 
   useEffect(() => {
     fetchBlacklist();
@@ -121,9 +161,14 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
 
   // 儲存結果
   const handleSave = async () => {
-    const id = await save();
-    if (id) {
-      toast.success('抽獎結果已儲存！');
+    try {
+      const id = await save();
+      if (id) {
+        toast.success('抽獎結果已儲存！');
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '儲存失敗，請重試';
+      toast.error(message);
     }
   };
 
@@ -180,17 +225,17 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
               </Button>
             </div>
 
-            <div className="space-y-2">
+            <div ref={prizesRef} className="space-y-2">
               {prizes.map((prize, i) => (
                 <div key={prize.id} className="flex items-center gap-2">
                   <Input
-                    className="h-8 flex-1 text-sm"
+                    className="h-10 flex-1 text-sm"
                     placeholder="獎項名稱"
                     value={prize.name}
                     onChange={(e) => updatePrize(i, 'name', e.target.value)}
                   />
                   <Input
-                    className="h-8 w-16 text-sm"
+                    className="h-10 w-16 text-sm"
                     min={1}
                     type="number"
                     value={prize.quantity}
@@ -250,7 +295,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                     <PopoverTrigger asChild>
                       <Button
                         className={cn(
-                          'h-8 flex-1 justify-start text-left text-sm font-normal',
+                          'h-10 flex-1 justify-start text-left text-sm font-normal',
                           !filters.time_start && 'text-muted-foreground'
                         )}
                         variant="outline"
@@ -279,7 +324,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                     <PopoverTrigger asChild>
                       <Button
                         className={cn(
-                          'h-8 flex-1 justify-start text-left text-sm font-normal',
+                          'h-10 flex-1 justify-start text-left text-sm font-normal',
                           !filters.time_end && 'text-muted-foreground'
                         )}
                         variant="outline"
@@ -314,7 +359,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                   留言格式（包含關鍵字）
                 </Label>
                 <Input
-                  className="h-8 text-sm"
+                  className="h-10 text-sm"
                   placeholder="例如：+1 或 我要參加"
                   value={filters.pattern || ''}
                   onChange={(e) => setFilters({ ...filters, pattern: e.target.value })}
@@ -328,7 +373,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                   最少 Tag 人數
                 </Label>
                 <Input
-                  className="h-8 text-sm"
+                  className="h-10 text-sm"
                   min={0}
                   placeholder="0 = 不限制"
                   type="number"
@@ -396,48 +441,31 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                   </DialogHeader>
                   <div className="flex flex-1 flex-col space-y-3 overflow-hidden">
                     <Input
-                      className="h-8"
+                      className="h-10"
                       placeholder="搜尋姓名或留言..."
                       value={poolSearch}
                       onChange={(e) => setPoolSearch(e.target.value)}
                     />
                     <ScrollArea className="flex-1">
                       <div className="space-y-2 pr-4">
-                        {(() => {
-                          // 按用戶去重，並計算每人的留言數
-                          const userMap = new Map<
-                            string,
-                            { entry: (typeof pool)[0]; count: number }
-                          >();
-                          pool.forEach((entry) => {
-                            if (!userMap.has(entry.from_id)) {
-                              userMap.set(entry.from_id, { entry, count: 1 });
-                            } else {
-                              userMap.get(entry.from_id)!.count++;
-                            }
-                          });
-
-                          const uniqueUsers = Array.from(userMap.values()).filter(
-                            ({ entry }) =>
-                              !poolSearch ||
-                              entry.from_name.toLowerCase().includes(poolSearch.toLowerCase())
-                          );
-
-                          if (uniqueUsers.length === 0) {
-                            return (
-                              <p className="text-muted-foreground py-4 text-center text-sm">
-                                {poolSearch ? '找不到符合的人選' : '獎池為空'}
-                              </p>
-                            );
-                          }
-
-                          return uniqueUsers.map(({ entry, count }) => (
+                        {filteredPoolUsers.length === 0 ? (
+                          <p className="text-muted-foreground py-4 text-center text-sm">
+                            {poolSearch ? '找不到符合的人選' : '獎池為空'}
+                          </p>
+                        ) : (
+                          filteredPoolUsers.map(({ entry, count }) => (
                             <div
                               key={entry.from_id}
                               className="bg-muted/50 flex items-center gap-3 rounded-lg p-3"
                             >
                               <Avatar className="h-8 w-8">
-                                <AvatarImage src={entry.from_picture_url} />
+                                <AvatarImage
+                                  src={
+                                    isFacebookCdnUrl(entry.from_picture_url)
+                                      ? entry.from_picture_url
+                                      : undefined
+                                  }
+                                />
                                 <AvatarFallback>{entry.from_name[0]}</AvatarFallback>
                               </Avatar>
                               <div className="min-w-0 flex-1">
@@ -465,8 +493,8 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                                 <Ban className="h-3 w-3" />
                               </Button>
                             </div>
-                          ));
-                        })()}
+                          ))
+                        )}
                       </div>
                     </ScrollArea>
                   </div>
@@ -554,7 +582,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
           {results.length === 0 ? (
             <p className="text-muted-foreground text-body py-8 text-center">尚未進行抽獎</p>
           ) : (
-            <div className="space-y-4">
+            <div ref={resultsRef} className="space-y-4">
               {prizes.map((prize, prizeIndex) => {
                 const prizeResults = results.filter((r) => r.prize_id === `prize_${prizeIndex}`);
 
@@ -572,91 +600,113 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                       </Button>
                     </div>
 
-                    <div className="space-y-2">
-                      {prizeResults.map((result) => (
-                        <div
-                          key={result.winner.comment_id}
-                          className="bg-muted/50 flex items-center gap-3 rounded-lg p-3"
-                        >
-                          {result.winner.from_profile_url ? (
-                            <a
-                              href={result.winner.from_profile_url}
-                              rel="noopener noreferrer"
-                              target="_blank"
-                              title="查看個人頁面"
-                            >
-                              <Avatar className="h-10 w-10">
-                                <AvatarImage src={result.winner.from_picture_url} />
-                                <AvatarFallback>{result.winner.from_name[0]}</AvatarFallback>
-                              </Avatar>
-                            </a>
-                          ) : (
-                            <Avatar className="h-10 w-10">
-                              <AvatarImage src={result.winner.from_picture_url} />
-                              <AvatarFallback>{result.winner.from_name[0]}</AvatarFallback>
-                            </Avatar>
-                          )}
-                          <div className="min-w-0 flex-1">
-                            {result.winner.from_profile_url ? (
+                    <AnimatePresence>
+                      <div className="space-y-2">
+                        {prizeResults.map((result, i) => (
+                          <motion.div
+                            key={result.winner.comment_id}
+                            animate={cardReveal.animate}
+                            className="bg-muted/50 flex items-center gap-3 rounded-lg p-3"
+                            exit={cardReveal.exit}
+                            initial={cardReveal.initial}
+                            transition={{
+                              duration: ANIM.normal,
+                              delay: i * ANIM.staggerDelay,
+                              ease: ANIM.ease,
+                            }}
+                          >
+                            {isFacebookProfileUrl(result.winner.from_profile_url) ? (
                               <a
-                                className="hover:text-primary font-medium hover:underline"
                                 href={result.winner.from_profile_url}
                                 rel="noopener noreferrer"
                                 target="_blank"
                                 title="查看個人頁面"
                               >
-                                {result.winner.from_name}
+                                <Avatar className="h-10 w-10">
+                                  <AvatarImage
+                                    src={
+                                      isFacebookCdnUrl(result.winner.from_picture_url)
+                                        ? result.winner.from_picture_url
+                                        : undefined
+                                    }
+                                  />
+                                  <AvatarFallback>{result.winner.from_name[0]}</AvatarFallback>
+                                </Avatar>
                               </a>
                             ) : (
-                              <p className="font-medium">{result.winner.from_name}</p>
+                              <Avatar className="h-10 w-10">
+                                <AvatarImage
+                                  src={
+                                    isFacebookCdnUrl(result.winner.from_picture_url)
+                                      ? result.winner.from_picture_url
+                                      : undefined
+                                  }
+                                />
+                                <AvatarFallback>{result.winner.from_name[0]}</AvatarFallback>
+                              </Avatar>
                             )}
-                            <p className="text-muted-foreground text-caption truncate">
-                              {result.winner.comment_message}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-muted-foreground text-caption">
-                              {formatDistanceToNow(new Date(result.winner.comment_created_time), {
-                                addSuffix: true,
-                                locale: zhTW,
-                              })}
-                            </span>
-                            {postUrl && (
-                              <a
-                                className="text-muted-foreground hover:text-primary"
-                                href={`${postUrl}?comment_id=${result.winner.comment_id}`}
-                                rel="noopener noreferrer"
-                                target="_blank"
-                                title="查看留言"
+                            <div className="min-w-0 flex-1">
+                              {isFacebookProfileUrl(result.winner.from_profile_url) ? (
+                                <a
+                                  className="hover:text-primary font-medium hover:underline"
+                                  href={result.winner.from_profile_url}
+                                  rel="noopener noreferrer"
+                                  target="_blank"
+                                  title="查看個人頁面"
+                                >
+                                  {result.winner.from_name}
+                                </a>
+                              ) : (
+                                <p className="font-medium">{result.winner.from_name}</p>
+                              )}
+                              <p className="text-muted-foreground text-caption truncate">
+                                {result.winner.comment_message}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-muted-foreground text-caption">
+                                {formatDistanceToNow(new Date(result.winner.comment_created_time), {
+                                  addSuffix: true,
+                                  locale: zhTW,
+                                })}
+                              </span>
+                              {postUrl && (
+                                <a
+                                  className="text-muted-foreground hover:text-primary"
+                                  href={`${postUrl}?comment_id=${result.winner.comment_id}`}
+                                  rel="noopener noreferrer"
+                                  target="_blank"
+                                  title="查看留言"
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                </a>
+                              )}
+                              <Button
+                                className="h-7 w-7"
+                                size="icon"
+                                title="加入黑名單"
+                                variant="ghost"
+                                onClick={() => {
+                                  addToBlacklist({
+                                    from_id: result.winner.from_id,
+                                    from_name: result.winner.from_name,
+                                  });
+                                  toast.success(`已將 ${result.winner.from_name} 加入黑名單`);
+                                }}
                               >
-                                <ExternalLink className="h-4 w-4" />
-                              </a>
-                            )}
-                            <Button
-                              className="h-7 w-7"
-                              size="icon"
-                              title="加入黑名單"
-                              variant="ghost"
-                              onClick={() => {
-                                addToBlacklist({
-                                  from_id: result.winner.from_id,
-                                  from_name: result.winner.from_name,
-                                });
-                                toast.success(`已將 ${result.winner.from_name} 加入黑名單`);
-                              }}
-                            >
-                              <Ban className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
+                                <Ban className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </motion.div>
+                        ))}
 
-                      {prizeResults.length === 0 && (
-                        <p className="text-muted-foreground text-caption text-center">
-                          名額不足，無法抽出
-                        </p>
-                      )}
-                    </div>
+                        {prizeResults.length === 0 && (
+                          <p className="text-muted-foreground text-caption text-center">
+                            名額不足，無法抽出
+                          </p>
+                        )}
+                      </div>
+                    </AnimatePresence>
                   </div>
                 );
               })}
@@ -678,7 +728,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
           {blacklist.length === 0 ? (
             <p className="text-muted-foreground text-body py-8 text-center">尚無黑名單</p>
           ) : (
-            <div className="space-y-2">
+            <div ref={blacklistRef} className="space-y-2">
               {blacklist.map((entry) => (
                 <div
                   key={entry.from_id}
@@ -690,18 +740,34 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                       <p className="text-muted-foreground text-caption truncate">{entry.reason}</p>
                     )}
                   </div>
-                  <Button
-                    className="h-7 shrink-0"
-                    size="sm"
-                    variant="ghost"
-                    onClick={async () => {
-                      await removeFromBlacklist(entry.from_id);
-                      toast.success(`已將 ${entry.from_name || entry.from_id} 從黑名單移除`);
-                    }}
-                  >
-                    <Trash2 className="mr-1 h-3 w-3" />
-                    移除
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button className="h-7 shrink-0" size="sm" variant="ghost">
+                        <Trash2 className="mr-1 h-3 w-3" />
+                        移除
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>確認移除黑名單？</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          將 <strong>{entry.from_name || entry.from_id}</strong>{' '}
+                          從黑名單移除後，此用戶將重新出現在抽獎池中。
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>取消</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={async () => {
+                            await removeFromBlacklist(entry.from_id);
+                            toast.success(`已將 ${entry.from_name || entry.from_id} 從黑名單移除`);
+                          }}
+                        >
+                          確認移除
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               ))}
             </div>

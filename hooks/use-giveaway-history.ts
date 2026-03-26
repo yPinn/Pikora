@@ -3,6 +3,9 @@
 import { useState, useCallback, useEffect } from 'react';
 
 import { useFacebookPage } from '@/contexts/facebook-page-store';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('use-giveaway-history');
 
 // 中獎者資料
 export interface GiveawayWinner {
@@ -69,7 +72,8 @@ export function useGiveawayHistory(): UseGiveawayHistoryReturn {
     setError(null);
 
     try {
-      const res = await fetch(`/api/giveaway?pageId=${activePage.id}`);
+      const params = new URLSearchParams({ pageId: activePage.id });
+      const res = await fetch(`/api/giveaway?${params}`);
       const data = await res.json();
 
       if (res.ok) {
@@ -77,8 +81,8 @@ export function useGiveawayHistory(): UseGiveawayHistoryReturn {
       } else {
         setError(data.error || '取得失敗');
       }
-    } catch (err) {
-      console.error('取得抽獎紀錄失敗:', err);
+    } catch (error) {
+      logger.error('Failed to fetch giveaway history', error);
       setError('取得失敗');
     } finally {
       setIsLoading(false);
@@ -96,8 +100,8 @@ export function useGiveawayHistory(): UseGiveawayHistoryReturn {
         return true;
       }
       return false;
-    } catch (err) {
-      console.error('刪除抽獎紀錄失敗:', err);
+    } catch (error) {
+      logger.error('Failed to delete giveaway record', error);
       return false;
     }
   }, []);

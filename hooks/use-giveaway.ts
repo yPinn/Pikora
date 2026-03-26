@@ -13,7 +13,10 @@ import {
   type FilterStats,
   type BlacklistEntry,
 } from '@/lib/giveaway';
+import { createLogger } from '@/lib/logger';
 import type { FacebookComment, FacebookReaction } from '@/lib/services/facebook';
+
+const logger = createLogger('use-giveaway');
 
 interface UseGiveawayOptions {
   comments: FacebookComment[];
@@ -107,7 +110,7 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
 
       for (const winner of winners) {
         allResults.push({
-          prize_id: `prize_${i}`,
+          prize_id: prize.id,
           prize_name: prize.name,
           winner,
         });
@@ -124,8 +127,7 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
   // 重抽單一獎項
   const redraw = useCallback(
     (prizeId: string) => {
-      const prizeIndex = parseInt(prizeId.replace('prize_', ''), 10);
-      const prize = prizes[prizeIndex];
+      const prize = prizes.find((p) => p.id === prizeId);
       if (!prize) return;
 
       // 取得其他獎項的中獎者 (需排除)
@@ -149,7 +151,11 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
           prize_name: prize.name,
           winner: w,
         }));
-        return [...filtered, ...newResults].sort((a, b) => a.prize_id.localeCompare(b.prize_id));
+        return [...filtered, ...newResults].sort((a, b) => {
+          const ia = prizes.findIndex((p) => p.id === a.prize_id);
+          const ib = prizes.findIndex((p) => p.id === b.prize_id);
+          return ia - ib;
+        });
       });
     },
     [pool, prizes, results, filters.allow_duplicate]
@@ -173,7 +179,7 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
         setBlacklist(data.data || []);
       }
     } catch (error) {
-      console.error('取得黑名單失敗:', error);
+      logger.error('Failed to fetch blacklist', error);
     }
   }, [activePage?.id]);
 
@@ -195,7 +201,7 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
         setHasLoadedReactions(true);
       }
     } catch (error) {
-      console.error('取得反應列表失敗:', error);
+      logger.error('Failed to fetch reactions', error);
       setHasLoadedReactions(true); // 即使失敗也標記為已嘗試
     } finally {
       setIsLoadingReactions(false);
@@ -218,7 +224,7 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
           setBlacklist((prev) => [...prev, entry]);
         }
       } catch (error) {
-        console.error('新增黑名單失敗:', error);
+        logger.error('Failed to add to blacklist', error);
       }
     },
     [activePage?.id]
@@ -237,7 +243,7 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
           setBlacklist((prev) => prev.filter((b) => b.from_id !== fromId));
         }
       } catch (error) {
-        console.error('移除黑名單失敗:', error);
+        logger.error('Failed to remove from blacklist', error);
       }
     },
     [activePage?.id]
@@ -269,9 +275,10 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
         if (!createRes.ok) throw new Error(createData.error);
 
         const giveawayId = createData.data.id;
+        // 建立從本地 prize UUID 到資料庫 prize id 的映射（順序與送出 prizes 陣列相同）
         const prizeMap = new Map<string, string>();
-        createData.data.prizes.forEach((p: { id: string }, i: number) => {
-          prizeMap.set(`prize_${i}`, p.id);
+        prizes.forEach((localPrize, i) => {
+          prizeMap.set(localPrize.id, createData.data.prizes[i].id);
         });
 
         // 儲存中獎者
@@ -291,12 +298,16 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
           body: JSON.stringify({ winners }),
         });
         const patchData = await patchRes.json();
-        if (!patchRes.ok) throw new Error(patchData.error || '儲存中獎者失敗');
+        if (!patchRes.ok) {
+          // PATCH 失敗：清理剛建立的 giveaway 避免留下空殼資料
+          await fetch(`/api/giveaway/${giveawayId}`, { method: 'DELETE' }).catch(() => null);
+          throw new Error(patchData.error || '儲存中獎者失敗');
+        }
 
         return giveawayId;
       } catch (error) {
-        console.error('儲存失敗:', error);
-        return null;
+        logger.error('Failed to save giveaway', error);
+        throw error;
       } finally {
         setIsSaving(false);
       }

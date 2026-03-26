@@ -48,9 +48,12 @@ export function GiveawayList() {
       setCommentsError(null);
 
       try {
-        const res = await fetch(
-          `/api/facebook/comments?postId=${postId}&pageId=${activePage.id}&fetchAll=true`
-        );
+        const commentsParams = new URLSearchParams({
+          postId,
+          pageId: activePage.id,
+          fetchAll: 'true',
+        });
+        const res = await fetch(`/api/facebook/comments?${commentsParams}`);
 
         const data = await res.json();
         if (!res.ok) {
