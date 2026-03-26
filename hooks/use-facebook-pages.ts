@@ -17,7 +17,7 @@ interface UseFacebookPagesReturn {
  * Hook 用於取得用戶管理的 Facebook 粉絲專頁
  */
 export function useFacebookPages(): UseFacebookPagesReturn {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [pages, setPages] = useState<FacebookPage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export function useFacebookPages(): UseFacebookPagesReturn {
       return;
     }
 
-    if (!session?.accessToken) {
+    if (status !== 'authenticated') {
       setIsLoading(false);
       return;
     }
@@ -37,11 +37,7 @@ export function useFacebookPages(): UseFacebookPagesReturn {
     setError(null);
 
     try {
-      const response = await fetch('/api/facebook/pages', {
-        headers: {
-          Authorization: `Bearer ${session.accessToken}`,
-        },
-      });
+      const response = await fetch('/api/facebook/pages');
 
       if (!response.ok) {
         const data = await response.json();
@@ -55,7 +51,7 @@ export function useFacebookPages(): UseFacebookPagesReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [session?.accessToken, status]);
+  }, [status]);
 
   useEffect(() => {
     fetchPages();

@@ -48,6 +48,42 @@ export function parseFacebookErrorMessage(error: string): string {
   return '無法取得資料，請確認輸入是否正確。';
 }
 
+/** 允許的 Facebook 圖片 CDN 網域（與 next.config.ts remotePatterns 一致） */
+const ALLOWED_FB_CDN_HOSTNAMES = [
+  /^[a-z0-9-]+\.fbcdn\.net$/,
+  /^platform-lookaside\.fbsbx\.com$/,
+  /^lookaside\.fbsbx\.com$/,
+  /^graph\.facebook\.com$/,
+];
+
+/**
+ * 驗證 URL 是否來自 Facebook 允許的圖片 CDN
+ * 避免渲染任意來源的圖片 URL
+ */
+export function isFacebookCdnUrl(url: string | undefined): boolean {
+  if (!url) return false;
+  try {
+    const { protocol, hostname } = new URL(url);
+    if (protocol !== 'https:') return false;
+    return ALLOWED_FB_CDN_HOSTNAMES.some((pattern) => pattern.test(hostname));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 驗證 URL 是否為 Facebook 個人頁面連結（用於 href）
+ */
+export function isFacebookProfileUrl(url: string | undefined): boolean {
+  if (!url) return false;
+  try {
+    const { protocol, hostname } = new URL(url);
+    return protocol === 'https:' && /^(?:www\.)?facebook\.com$/.test(hostname);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * 根據 parent.id 重建正確的留言樹狀結構
  *
@@ -91,10 +127,12 @@ export function rebuildCommentTree<
       result.push(comment);
     } else {
       // 子留言：加入對應父留言的 children 陣列
-      if (!childrenMap.has(parentId)) {
-        childrenMap.set(parentId, []);
+      const children = childrenMap.get(parentId);
+      if (children) {
+        children.push(comment);
+      } else {
+        childrenMap.set(parentId, [comment]);
       }
-      childrenMap.get(parentId)!.push(comment);
     }
   }
 
