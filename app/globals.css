@@ -95,6 +95,13 @@
   --gap-section: var(--space-3); /* 區塊間距 */
   --gap-item: var(--space-1); /* 元件間距 */
 
+  /* ===== Animation Tokens ===== */
+  --anim-fast: 0.2s; /* 頁面過場、卡片出現 */
+  --anim-normal: 0.3s; /* 強調動畫（winner reveal） */
+  --anim-ease: cubic-bezier(0.25, 0.1, 0.25, 1); /* easeOut */
+  --anim-stagger: 0.04s; /* 列表 stagger 間距 */
+  --anim-stagger-delay: 0.1s; /* stagger 每項延遲 */
+
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.129 0.042 264.695);
@@ -107,7 +114,7 @@
   --secondary: oklch(0.968 0.007 247.896);
   --secondary-foreground: oklch(0.208 0.042 265.755);
   --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
+  --muted-foreground: oklch(0.48 0.046 257.417);
   --accent: oklch(0.968 0.007 247.896);
   --accent-foreground: oklch(0.208 0.042 265.755);
   --destructive: oklch(0.577 0.245 27.325);
@@ -130,37 +137,44 @@
 }
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
+  /* === Warm Charcoal Dark Theme === */
+  --background: oklch(0.12 0.006 50);
+  --foreground: oklch(0.97 0.003 248);
+
+  --card: oklch(0.18 0.008 55);
+  --card-foreground: oklch(0.97 0.003 248);
+  --popover: oklch(0.18 0.008 55);
+  --popover-foreground: oklch(0.97 0.003 248);
+
+  --primary: oklch(0.68 0.17 255);
+  --primary-foreground: oklch(0.97 0.003 248);
+
+  --secondary: oklch(0.23 0.008 55);
+  --secondary-foreground: oklch(0.97 0.003 248);
+  --muted: oklch(0.23 0.008 55);
+  --muted-foreground: oklch(0.65 0.015 60);
+  --accent: oklch(0.23 0.008 55);
+  --accent-foreground: oklch(0.97 0.003 248);
+
+  --destructive: oklch(0.65 0.22 22);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
+  --ring: oklch(0.68 0.17 255);
+
+  --chart-1: oklch(0.65 0.18 255);
+  --chart-2: oklch(0.65 0.17 162);
+  --chart-3: oklch(0.75 0.18 70);
+  --chart-4: oklch(0.62 0.25 303);
+  --chart-5: oklch(0.64 0.24 16);
+
+  --sidebar: oklch(0.15 0.007 52);
+  --sidebar-foreground: oklch(0.97 0.003 248);
+  --sidebar-primary: oklch(0.6 0.18 264);
+  --sidebar-primary-foreground: oklch(0.97 0.003 248);
+  --sidebar-accent: oklch(0.23 0.008 55);
+  --sidebar-accent-foreground: oklch(0.97 0.003 248);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  --sidebar-ring: oklch(0.68 0.17 255);
 }
 
 @layer base {
@@ -169,5 +183,27 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* 保留 infinite 動畫（如 spinner），僅加速一次性動畫 */
+  *:not(.animate-spin):not([class*='animate-spin']),
+  *:not(.animate-spin):not([class*='animate-spin'])::before,
+  *:not(.animate-spin):not([class*='animate-spin'])::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --gap-page: var(--space-3); /* 桌面版頁面內距 24px */
   }
 }

@@ -17,10 +17,13 @@ import {
   Copy,
   Loader2,
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import { toast } from 'sonner';
 
 import { Skeleton } from '@/components/ui/skeleton';
+import { useFacebookPage } from '@/contexts/facebook-page-store';
 import { useFacebookPosts } from '@/hooks/use-facebook-posts';
+import { ANIM, scaleIn, staggerContainer } from '@/lib/animation';
 import type { FacebookPost } from '@/lib/services/facebook';
 
 // 從貼文中提取所有媒體圖片
@@ -64,6 +67,7 @@ export const SELECTED_POST_ID_KEY = 'pikora_selected_post_id';
 // 單一貼文卡片元件
 function PostCard({ post }: { post: FacebookPost }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showOverlay, setShowOverlay] = useState(false);
   const images = getMediaImages(post);
   const hasMultipleImages = images.length > 1;
   const isVideo = isVideoPost(post);
@@ -111,26 +115,34 @@ function PostCard({ post }: { post: FacebookPost }) {
   );
 
   return (
-    <div
+    <motion.div
       key={post.id}
+      animate={scaleIn.animate}
       className="group bg-muted relative aspect-square cursor-pointer overflow-hidden rounded-sm"
+      initial={scaleIn.initial}
       role="button"
       tabIndex={0}
       title="點擊複製 URL｜Ctrl+點擊開啟貼文"
+      transition={scaleIn.transition}
+      whileTap={{ scale: ANIM.scale.tap }}
+      onBlur={() => setShowOverlay(false)}
       onClick={handleCardClick}
+      onFocus={() => setShowOverlay(true)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           handleCardClick(e as unknown as React.MouseEvent);
         }
       }}
+      onPointerEnter={() => setShowOverlay(true)}
+      onPointerLeave={() => setShowOverlay(false)}
     >
       {/* 圖片顯示 */}
       {images.length > 0 ? (
         <Image
           fill
-          alt="fb"
-          className="object-cover transition-transform group-hover:scale-105"
-          sizes="(max-width: 768px) 33vw, 300px"
+          alt={post.message ? post.message.slice(0, 60) : 'Facebook 貼文圖片'}
+          className="object-cover transition-transform group-hover:scale-105 motion-reduce:transition-none"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"
           src={images[currentIndex]}
         />
       ) : (
@@ -138,9 +150,10 @@ function PostCard({ post }: { post: FacebookPost }) {
           {/* 背景圖片（模糊+低對比） */}
           <Image
             fill
+            priority
             alt=""
             className="object-cover opacity-75 blur-[2px] saturate-0 dark:opacity-75"
-            sizes="(max-width: 768px) 33vw, 300px"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"
             src="/Momonga_2.jpg"
           />
           {/* 覆蓋層 */}
@@ -167,7 +180,7 @@ function PostCard({ post }: { post: FacebookPost }) {
         <>
           <button
             aria-label="上一張"
-            className="absolute top-1/2 left-2 z-20 -translate-y-1/2 rounded-full bg-black/50 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
+            className={`absolute top-1/2 left-2 z-20 -translate-y-1/2 rounded-full bg-black/50 p-1.5 text-white transition-opacity hover:bg-black/70 motion-reduce:transition-none ${showOverlay ? 'opacity-100' : 'opacity-0'}`}
             type="button"
             onClick={handlePrev}
           >
@@ -175,7 +188,7 @@ function PostCard({ post }: { post: FacebookPost }) {
           </button>
           <button
             aria-label="下一張"
-            className="absolute top-1/2 right-2 z-20 -translate-y-1/2 rounded-full bg-black/50 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
+            className={`absolute top-1/2 right-2 z-20 -translate-y-1/2 rounded-full bg-black/50 p-1.5 text-white transition-opacity hover:bg-black/70 motion-reduce:transition-none ${showOverlay ? 'opacity-100' : 'opacity-0'}`}
             type="button"
             onClick={handleNext}
           >
@@ -196,13 +209,16 @@ function PostCard({ post }: { post: FacebookPost }) {
         </>
       )}
 
-      {/* Hover 時顯示互動數據與文字預覽 */}
-      <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/50 to-transparent p-2 text-white opacity-0 transition-opacity group-hover:opacity-100">
+      {/* Hover / Focus / Touch 時顯示互動數據與文字預覽 */}
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none absolute inset-0 z-10 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/50 to-transparent p-2 text-white transition-opacity motion-reduce:transition-none ${showOverlay ? 'opacity-100' : 'opacity-0'}`}
+      >
         {/* 貼文文字預覽 */}
         {post.message && (
-          <p className="mb-1.5 line-clamp-2 text-[11px] leading-tight opacity-90">{post.message}</p>
+          <p className="mb-1.5 line-clamp-2 text-xs leading-tight opacity-90">{post.message}</p>
         )}
-        <div className="flex gap-3 text-[10px]">
+        <div className="flex gap-3 text-xs">
           <span className="flex items-center gap-1">
             <Heart className="h-3 w-3 fill-white" />
             {post.reactions?.summary?.total_count || 0}
@@ -216,21 +232,27 @@ function PostCard({ post }: { post: FacebookPost }) {
             {post.shares?.count || 0}
           </span>
         </div>
-        <time className="mt-1 text-[9px] opacity-80">
+        <time className="mt-1 text-xs opacity-80">
           {formatDistanceToNow(new Date(post.created_time), { addSuffix: true, locale: zhTW })}
         </time>
       </div>
 
       {/* 左下角複製圖示提示 */}
-      <div className="absolute bottom-2 left-2 z-20 rounded-full bg-black/50 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100">
+      <div
+        aria-hidden="true"
+        className={`absolute right-2 bottom-2 z-20 rounded-full bg-black/50 p-1.5 text-white transition-opacity motion-reduce:transition-none ${showOverlay ? 'opacity-100' : 'opacity-0'}`}
+      >
         <Copy className="h-3 w-3" />
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 export function PostList() {
-  const { posts, isLoading, isLoadingMore, hasMore, loadMore } = useFacebookPosts({ limit: 12 });
+  const { activePage } = useFacebookPage();
+  const { posts, isLoading, isLoadingMore, hasMore, loadMore, error, refetch } = useFacebookPosts({
+    limit: 12,
+  });
   const loaderRef = useRef<HTMLDivElement>(null);
 
   // Intersection Observer 自動載入更多
@@ -253,7 +275,7 @@ export function PostList() {
 
   if (isLoading) {
     return (
-      <div className="border-border/50 bg-muted/30 grid grid-cols-4 gap-2 rounded-lg border p-2">
+      <div className="border-border/50 bg-muted/30 grid grid-cols-2 gap-2 rounded-lg border p-2 sm:grid-cols-3 lg:grid-cols-4">
         {Array.from({ length: 12 }).map((_, i) => (
           <Skeleton key={i} className="aspect-square rounded-sm" />
         ))}
@@ -261,16 +283,38 @@ export function PostList() {
     );
   }
 
+  if (error)
+    return (
+      <div className="flex flex-col items-center gap-3 py-10 text-center">
+        <p className="text-muted-foreground text-body">{error}</p>
+        <button
+          className="text-primary text-sm underline-offset-4 hover:underline"
+          type="button"
+          onClick={refetch}
+        >
+          重試
+        </button>
+      </div>
+    );
+
+  if (!activePage)
+    return <p className="text-muted-foreground text-body py-10 text-center">尚未選取粉絲專頁</p>;
+
   if (posts.length === 0)
     return <p className="text-muted-foreground text-body py-10 text-center">目前沒有貼文</p>;
 
   return (
     <div className="space-y-2">
-      <div className="border-border/50 bg-muted/30 grid grid-cols-4 gap-2 rounded-lg border p-2">
+      <motion.div
+        animate="show"
+        className="border-border/50 bg-muted/30 grid grid-cols-2 gap-2 rounded-lg border p-2 sm:grid-cols-3 lg:grid-cols-4"
+        initial="hidden"
+        variants={staggerContainer}
+      >
         {posts.map((post) => (
           <PostCard key={post.id} post={post} />
         ))}
-      </div>
+      </motion.div>
 
       {/* 滾動觸發區域 */}
       {hasMore && (

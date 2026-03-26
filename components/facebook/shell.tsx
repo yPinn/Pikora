@@ -1,5 +1,6 @@
 'use client';
 
+import { PageTransition } from '@/components/layout/page-transition';
 import { SidebarInset } from '@/components/ui/sidebar';
 import { FacebookPageStore } from '@/contexts/facebook-page-store';
 import type { FacebookPage } from '@/lib/services/facebook';
@@ -18,7 +19,9 @@ export function Shell({ children, session, pages }: ShellProps) {
   return (
     <FacebookPageStore pages={pages}>
       <FacebookSidebar session={session} />
-      <SidebarInset>{children}</SidebarInset>
+      <SidebarInset>
+        <PageTransition>{children}</PageTransition>
+      </SidebarInset>
     </FacebookPageStore>
   );
 }
