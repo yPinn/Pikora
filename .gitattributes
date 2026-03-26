@@ -1,0 +1,42 @@
+# Force LF on all platforms (overrides local git autocrlf)
+* text=auto eol=lf
+
+*.ts     text eol=lf
+*.tsx    text eol=lf
+*.js     text eol=lf
+*.jsx    text eol=lf
+*.mjs    text eol=lf
+*.mts    text eol=lf
+*.cjs    text eol=lf
+*.json   text eol=lf
+*.jsonc  text eol=lf
+*.yaml   text eol=lf
+*.yml    text eol=lf
+*.toml   text eol=lf
+*.env    text eol=lf
+*.css    text eol=lf
+*.html   text eol=lf
+*.md     text eol=lf
+*.mdx    text eol=lf
+*.prisma text eol=lf
+*.sh     text eol=lf
+
+# Prevent git from modifying binary content
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.webp   binary
+*.svg    binary
+*.woff   binary
+*.woff2  binary
+*.ttf    binary
+*.eot    binary
+*.otf    binary
+*.pdf    binary
+
+# -diff: exclude from git diff output to reduce noise
+package-lock.json text eol=lf -diff
+yarn.lock         text eol=lf -diff
+pnpm-lock.yaml    text eol=lf -diff

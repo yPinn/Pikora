@@ -37,7 +37,9 @@ const eslintConfig = defineConfig([
         'error',
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
       ],
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/no-empty-object-type': 'error',
 
       'react/self-closing-comp': ['error', { component: true, html: true }],
       'react/jsx-curly-brace-presence': ['error', { props: 'never', children: 'never' }],
@@ -52,7 +54,7 @@ const eslintConfig = defineConfig([
       ],
 
       'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
+      'react-hooks/exhaustive-deps': 'error',
     },
   },
 ]);
