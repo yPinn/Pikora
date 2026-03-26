@@ -10,10 +10,13 @@ export default async function Layout({ children }: { children: React.ReactNode }
     return <div>請先登入</div>;
   }
 
-  const facebookService = createFacebookService({
-    appId: process.env.META_APP_ID!,
-    appSecret: process.env.META_APP_SECRET!,
-  });
+  const appId = process.env.META_APP_ID;
+  const appSecret = process.env.META_APP_SECRET;
+  if (!appId || !appSecret) {
+    throw new Error('META_APP_ID and META_APP_SECRET environment variables are required');
+  }
+
+  const facebookService = createFacebookService({ appId, appSecret });
 
   const pages = await facebookService.getPages(session.accessToken, [
     'id',

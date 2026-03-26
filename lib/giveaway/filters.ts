@@ -189,10 +189,12 @@ export function drawWinners(
     // 這樣每次抽獎/重抽都會重新隨機選擇留言
     const userEntriesMap = new Map<string, DrawEntry[]>();
     for (const entry of available) {
-      if (!userEntriesMap.has(entry.from_id)) {
-        userEntriesMap.set(entry.from_id, []);
+      const entries = userEntriesMap.get(entry.from_id);
+      if (entries) {
+        entries.push(entry);
+      } else {
+        userEntriesMap.set(entry.from_id, [entry]);
       }
-      userEntriesMap.get(entry.from_id)!.push(entry);
     }
 
     const userIds = Array.from(userEntriesMap.keys());
@@ -201,7 +203,7 @@ export function drawWinners(
       // 隨機選一個用戶
       const userIndex = secureRandomIndex(userIds.length);
       const selectedUserId = userIds[userIndex];
-      const userComments = userEntriesMap.get(selectedUserId)!;
+      const userComments = userEntriesMap.get(selectedUserId) ?? [];
 
       // 從該用戶的留言中隨機選一則
       const commentIndex = secureRandomIndex(userComments.length);

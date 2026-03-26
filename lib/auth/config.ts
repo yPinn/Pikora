@@ -7,11 +7,17 @@ import Facebook from 'next-auth/providers/facebook';
 
 import type { NextAuthConfig } from 'next-auth';
 
+const clientId = process.env.META_APP_ID;
+const clientSecret = process.env.META_APP_SECRET;
+if (!clientId || !clientSecret) {
+  throw new Error('META_APP_ID and META_APP_SECRET environment variables are required');
+}
+
 export const authConfig: NextAuthConfig = {
   providers: [
     Facebook({
-      clientId: process.env.META_APP_ID!,
-      clientSecret: process.env.META_APP_SECRET!,
+      clientId,
+      clientSecret,
       authorization: {
         params: {
           // 請求的權限範圍

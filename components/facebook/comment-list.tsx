@@ -117,8 +117,8 @@ const CommentItem = ({ comment }: { comment: FacebookComment }) => {
       </div>
       {hasReplies && (
         <div>
-          {comment.comments!.data.map((reply, index) => {
-            const isLast = index === comment.comments!.data.length - 1;
+          {comment.comments?.data.map((reply, index) => {
+            const isLast = index === (comment.comments?.data.length ?? 0) - 1;
             return (
               <div key={reply.id} className="relative">
                 {/* 垂直線上段（連接到水平線） */}

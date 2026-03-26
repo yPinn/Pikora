@@ -155,7 +155,8 @@ export class MetaApiBase {
       }
     }
 
-    throw new MetaApiException(lastError!, '已達最大重試次數');
+    if (!lastError) throw new Error('已達最大重試次數');
+    throw new MetaApiException(lastError, '已達最大重試次數');
   }
 
   /**
