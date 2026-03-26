@@ -115,13 +115,13 @@ export function createMetaServicesFromEnv(): MetaServices {
 }
 
 /**
- * 單例模式的服務實例（用於伺服器端）
+ * 單例模式的服務實例（掛在 global 上，跨 HMR 熱重載保留快取）
  */
-let servicesInstance: MetaServices | null = null;
+const globalForServices = global as unknown as { metaServices: MetaServices | null };
 
 export function getMetaServices(): MetaServices {
-  if (!servicesInstance) {
-    servicesInstance = createMetaServicesFromEnv();
+  if (!globalForServices.metaServices) {
+    globalForServices.metaServices = createMetaServicesFromEnv();
   }
-  return servicesInstance;
+  return globalForServices.metaServices;
 }

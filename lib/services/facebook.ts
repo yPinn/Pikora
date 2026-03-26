@@ -155,6 +155,19 @@ export interface CreateMediaPostParams extends CreatePostParams {
  * Facebook Pages API 服務類別
  */
 export class FacebookService extends MetaApiBase {
+  // Cache page access tokens to avoid an extra round-trip on every API call.
+  // Key: `${pageId}:${userAccessToken}`, Value: { token, expiresAt }
+  private pageTokenCache = new Map<string, { token: string; expiresAt: number }>();
+  private static readonly PAGE_TOKEN_TTL_MS = 55 * 60 * 1000; // 55 minutes
+
+  // Cache posts list responses (keyed by pageId + pagination, NOT by token).
+  // Safe to share across users since page posts are public page content.
+  private postsCache = new Map<
+    string,
+    { data: PaginatedResponse<FacebookPost>; expiresAt: number }
+  >();
+  private static readonly POSTS_TTL_MS = 60 * 1000; // 60 seconds
+
   constructor(config: MetaServiceConfig) {
     super(config, GRAPH_API_BASE_URL);
   }
@@ -190,13 +203,25 @@ export class FacebookService extends MetaApiBase {
   }
 
   /**
-   * 取得專頁 Access Token
+   * 取得專頁 Access Token（帶快取，TTL 55 分鐘）
    */
   async getPageAccessToken(pageId: string, userAccessToken: string): Promise<string> {
+    const cacheKey = `${pageId}:${userAccessToken}`;
+    const cached = this.pageTokenCache.get(cacheKey);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.token;
+    }
+
     const response = await this.request<{ access_token: string }>(`/${pageId}`, {
       params: { fields: 'access_token' },
       accessToken: userAccessToken,
     });
+
+    this.pageTokenCache.set(cacheKey, {
+      token: response.access_token,
+      expiresAt: Date.now() + FacebookService.PAGE_TOKEN_TTL_MS,
+    });
+
     return response.access_token;
   }
 
@@ -232,7 +257,13 @@ export class FacebookService extends MetaApiBase {
       before,
     } = options;
 
-    return this.request<PaginatedResponse<FacebookPost>>(`/${pageId}/posts`, {
+    const cacheKey = `${pageId}:${limit}:${after ?? ''}:${before ?? ''}`;
+    const cached = this.postsCache.get(cacheKey);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.data;
+    }
+
+    const data = await this.request<PaginatedResponse<FacebookPost>>(`/${pageId}/posts`, {
       params: {
         fields: fields.join(','),
         limit,
@@ -241,6 +272,9 @@ export class FacebookService extends MetaApiBase {
       },
       accessToken,
     });
+
+    this.postsCache.set(cacheKey, { data, expiresAt: Date.now() + FacebookService.POSTS_TTL_MS });
+    return data;
   }
 
   /**
