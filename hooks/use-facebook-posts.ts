@@ -85,7 +85,10 @@ export function useFacebookPosts(options: UseFacebookPostsOptions = {}): UseFace
 
         setAfterCursor(nextCursor);
         setHasMore(!!nextCursor && newPosts.length === limit);
+        setIsLoading(false);
+        setIsLoadingMore(false);
       } catch (err) {
+        // AbortError 代表請求被主動取消（如切換 route），不更新任何狀態
         if (err instanceof Error && err.name === 'AbortError') {
           return;
         }
@@ -94,7 +97,6 @@ export function useFacebookPosts(options: UseFacebookPostsOptions = {}): UseFace
         if (!isLoadMore) {
           setPosts([]);
         }
-      } finally {
         setIsLoading(false);
         setIsLoadingMore(false);
       }

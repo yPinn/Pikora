@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 
 import { SELECTED_POST_ID_KEY, SELECTED_POST_URL_KEY } from '@/components/facebook/post-list';
