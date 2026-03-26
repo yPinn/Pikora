@@ -1,33 +1,16 @@
 /**
  * Facebook 資料刪除回呼
  * 當用戶要求刪除資料時，Facebook 會呼叫此 endpoint
+ * Meta 平台政策要求：必須實際刪除用戶所有資料
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
 
-import crypto from 'crypto';
+import { createLogger, maskId } from '@/lib/logger';
+import prisma from '@/lib/prisma';
+import { parseSignedRequest } from '@/lib/utils/meta-webhook';
 
-function parseSignedRequest(
-  signedRequest: string,
-  appSecret: string
-): Record<string, unknown> | null {
-  const parts = signedRequest.split('.');
-  if (parts.length !== 2) return null;
-  const [encodedSig, payload] = parts;
-
-  const sig = Buffer.from(encodedSig.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
-  const expectedSig = crypto.createHmac('sha256', appSecret).update(payload).digest();
-
-  if (sig.length !== expectedSig.length || !crypto.timingSafeEqual(sig, expectedSig)) return null;
-
-  try {
-    return JSON.parse(
-      Buffer.from(payload.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf-8')
-    );
-  } catch {
-    return null;
-  }
-}
+const logger = createLogger('data-deletion');
 
 export async function POST(request: NextRequest) {
   try {
@@ -56,8 +39,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid signed_request' }, { status: 400 });
     }
 
-    const confirmationCode = `DEL_${Date.now()}`;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pikora.vercel.app';
+    const facebookUserId = data.user_id as string | undefined;
+    if (!facebookUserId) {
+      return NextResponse.json({ error: 'Missing user_id in payload' }, { status: 400 });
+    }
+
+    // 找到對應的系統用戶（透過 Facebook OAuth account）
+    const account = await prisma.account.findFirst({
+      where: { provider: 'facebook', providerAccountId: facebookUserId },
+      select: { userId: true },
+    });
+
+    if (account) {
+      const { userId } = account;
+
+      // 刪除 Giveaway（Cascade 自動刪除 Prize、Winner）
+      await prisma.giveaway.deleteMany({ where: { userId } });
+
+      // 刪除黑名單
+      await prisma.giveawayBlacklist.deleteMany({ where: { userId } });
+
+      // 刪除 User（Cascade 自動刪除 Account、Session）
+      await prisma.user.delete({ where: { id: userId } });
+
+      logger.warn(`Deleted all data for Facebook user ${maskId(facebookUserId)}`);
+    } else {
+      // 用戶不存在於系統中，視為已刪除
+      logger.warn(`Facebook user ${maskId(facebookUserId)} not found, skipping`);
+    }
+
+    const confirmationCode = `DEL_${facebookUserId}_${Date.now()}`;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (!appUrl) {
+      logger.error('NEXT_PUBLIC_APP_URL is not set');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
 
     return NextResponse.json({
       url: `${appUrl}/deletion-status?code=${confirmationCode}`,
