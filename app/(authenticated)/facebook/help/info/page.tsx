@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart3, Layers, Settings, Trophy } from 'lucide-react';
+import { Filter, Gift, History, Layers, ShieldCheck, Shuffle } from 'lucide-react';
 
 import { PageHeader } from '@/components/common/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,84 +14,122 @@ export default function SystemInfoPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Pikora - Facebook 粉專管理工具</CardTitle>
-            <CardDescription>一站式管理您的 Facebook 粉絲專頁，提升互動效率</CardDescription>
+            <CardTitle>Pikora — Facebook 粉絲專頁抽獎管理工具</CardTitle>
+            <CardDescription>
+              專為粉絲專頁管理者設計，從載入留言到抽出得獎者，一站完成
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground">
-              Pikora
-              是一款專為粉絲專頁管理者設計的工具，整合貼文管理、留言互動、抽獎活動等功能，讓您更有效率地經營社群。
+          <CardContent>
+            <p className="text-muted-foreground text-body">
+              Pikora 透過 Meta Graph API
+              讀取您授權管理的粉絲專頁留言，提供進階篩選、密碼學安全抽獎、黑名單管理與完整歷史紀錄，讓每場社群抽獎活動更省力、更公正。
             </p>
           </CardContent>
         </Card>
 
-        <h3 className="mt-4 font-semibold">主要功能</h3>
+        <h3 className="mt-2 font-semibold">主要功能模組</h3>
 
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader className="flex flex-row items-center gap-4">
-              <Layers className="text-primary h-8 w-8" />
+              <Layers className="text-primary h-8 w-8 shrink-0" />
               <div>
-                <CardTitle className="text-base">Content 內容管理</CardTitle>
-                <CardDescription>貼文與留言的統一管理</CardDescription>
+                <CardTitle className="text-base">Content — 內容管理</CardTitle>
+                <CardDescription>貼文與留言的瀏覽與管理</CardDescription>
               </div>
             </CardHeader>
             <CardContent>
               <ul className="text-muted-foreground text-body list-inside list-disc space-y-1">
-                <li>瀏覽所有粉專貼文</li>
-                <li>查看並管理留言</li>
-                <li>快速篩選與搜尋</li>
+                <li>瀏覽粉絲專頁所有貼文</li>
+                <li>批次分頁載入貼文留言</li>
+                <li>按關鍵字搜尋與篩選留言</li>
               </ul>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center gap-4">
-              <Trophy className="text-primary h-8 w-8" />
+              <Filter className="text-primary h-8 w-8 shrink-0" />
               <div>
-                <CardTitle className="text-base">Engage 互動功能</CardTitle>
-                <CardDescription>抽獎與通知工具</CardDescription>
+                <CardTitle className="text-base">進階篩選條件</CardTitle>
+                <CardDescription>精準定義符合資格的留言</CardDescription>
               </div>
             </CardHeader>
             <CardContent>
               <ul className="text-muted-foreground text-body list-inside list-disc space-y-1">
-                <li>公平透明的抽獎系統</li>
-                <li>中獎名單管理</li>
-                <li>批次通知發送</li>
+                <li>留言時間區間限制</li>
+                <li>關鍵字過濾（支援正規表達式）</li>
+                <li>@提及人數下限</li>
+                <li>指定按讚反應類型</li>
               </ul>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center gap-4">
-              <BarChart3 className="text-primary h-8 w-8" />
+              <Shuffle className="text-primary h-8 w-8 shrink-0" />
               <div>
-                <CardTitle className="text-base">Insights 數據分析</CardTitle>
-                <CardDescription>粉專表現與受眾洞察</CardDescription>
+                <CardTitle className="text-base">Engage — 抽獎系統</CardTitle>
+                <CardDescription>公正透明的隨機抽獎</CardDescription>
               </div>
             </CardHeader>
             <CardContent>
               <ul className="text-muted-foreground text-body list-inside list-disc space-y-1">
-                <li>總覽報告與趨勢</li>
-                <li>粉絲組成分析</li>
-                <li>互動數據追蹤</li>
+                <li>密碼學安全亂數（CSPRNG），避免模數偏差</li>
+                <li>可設定多組獎項名額</li>
+                <li>支援同人限得一獎或可重複中獎</li>
+                <li>重抽自動排除已中獎者</li>
               </ul>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center gap-4">
-              <Settings className="text-primary h-8 w-8" />
+              <Gift className="text-primary h-8 w-8 shrink-0" />
               <div>
-                <CardTitle className="text-base">安全與隱私</CardTitle>
-                <CardDescription>資料保護機制</CardDescription>
+                <CardTitle className="text-base">得獎者管理</CardTitle>
+                <CardDescription>紀錄與追蹤每場活動結果</CardDescription>
               </div>
             </CardHeader>
             <CardContent>
               <ul className="text-muted-foreground text-body list-inside list-disc space-y-1">
-                <li>OAuth 2.0 安全認證</li>
-                <li>資料本地處理</li>
-                <li>不儲存敏感資訊</li>
+                <li>完整保存每次抽獎的得獎名單</li>
+                <li>可匯出 CSV 格式得獎者清單</li>
+                <li>記錄得獎留言內容與當時篩選設定</li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center gap-4">
+              <ShieldCheck className="text-primary h-8 w-8 shrink-0" />
+              <div>
+                <CardTitle className="text-base">黑名單系統</CardTitle>
+                <CardDescription>針對粉絲專頁的排除管理</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ul className="text-muted-foreground text-body list-inside list-disc space-y-1">
+                <li>每個粉絲專頁獨立維護黑名單</li>
+                <li>可從得獎結果頁一鍵將用戶加入黑名單</li>
+                <li>黑名單用戶自動排除於所有抽獎之外</li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center gap-4">
+              <History className="text-primary h-8 w-8 shrink-0" />
+              <div>
+                <CardTitle className="text-base">安全與資料保護</CardTitle>
+                <CardDescription>最小權限原則，保護您的資料</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ul className="text-muted-foreground text-body list-inside list-disc space-y-1">
+                <li>OAuth 2.0 授權，Token 加密儲存</li>
+                <li>貼文留言僅於當次 session 暫存於前端</li>
+                <li>僅儲存抽獎紀錄、黑名單等必要資料</li>
               </ul>
             </CardContent>
           </Card>
