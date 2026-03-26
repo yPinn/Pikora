@@ -6,8 +6,10 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/lib/auth';
-import { getMetaServices } from '@/lib/services';
+import { createLogger } from '@/lib/logger';
+import { getMetaServices, MetaApiException } from '@/lib/services';
 
+const logger = createLogger('facebook/pages');
 export async function GET(_request: NextRequest) {
   try {
     const session = await auth();
@@ -20,12 +22,12 @@ export async function GET(_request: NextRequest) {
 
     return NextResponse.json({ data: pages });
   } catch (error) {
-    console.error('取得專頁列表失敗:', error);
+    logger.error('Failed to fetch pages', error);
 
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error instanceof MetaApiException) {
+      return NextResponse.json({ error: error.getUserFriendlyMessage() }, { status: 500 });
     }
 
-    return NextResponse.json({ error: '未知錯誤' }, { status: 500 });
+    return NextResponse.json({ error: '伺服器發生錯誤，請稍後再試' }, { status: 500 });
   }
 }

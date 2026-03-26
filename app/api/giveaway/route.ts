@@ -2,8 +2,10 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/lib/auth';
 import { validateGiveawayFilters } from '@/lib/giveaway/types';
+import { createLogger } from '@/lib/logger';
 import prisma from '@/lib/prisma';
 
+const logger = createLogger('giveaway');
 // GET /api/giveaway - 取得抽獎活動列表
 export async function GET(request: NextRequest) {
   try {
@@ -32,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: giveaways });
   } catch (error) {
-    console.error('取得抽獎列表失敗:', error);
+    logger.error('Failed to fetch giveaways', error);
     return NextResponse.json({ error: '取得失敗' }, { status: 500 });
   }
 }
@@ -105,7 +107,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: giveaway });
   } catch (error) {
-    console.error('建立抽獎失敗:', error);
+    logger.error('Failed to create giveaway', error);
     return NextResponse.json({ error: '建立失敗' }, { status: 500 });
   }
 }

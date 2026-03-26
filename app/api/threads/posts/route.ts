@@ -6,19 +6,23 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { getMetaServices } from '@/lib/services';
+import { auth } from '@/lib/auth';
+import { createLogger } from '@/lib/logger';
+import { getMetaServices, MetaApiException } from '@/lib/services';
 
+const logger = createLogger('threads/posts');
 export async function GET(request: NextRequest) {
   try {
-    const accessToken = request.headers.get('Authorization')?.replace('Bearer ', '');
+    const session = await auth();
+    if (!session?.accessToken) {
+      return NextResponse.json({ error: '未授權' }, { status: 401 });
+    }
+
+    const accessToken = session.accessToken;
     const { searchParams } = new URL(request.url);
     const threadsUserId = searchParams.get('threadsUserId');
     const limit = parseInt(searchParams.get('limit') || '25', 10);
     const after = searchParams.get('after') || undefined;
-
-    if (!accessToken) {
-      return NextResponse.json({ error: '缺少 Access Token' }, { status: 401 });
-    }
 
     if (!threadsUserId) {
       return NextResponse.json({ error: '缺少 threadsUserId 參數' }, { status: 400 });
@@ -29,25 +33,26 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(posts);
   } catch (error) {
-    console.error('取得 Threads 貼文列表失敗:', error);
+    logger.error('Failed to fetch Threads posts', error);
 
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error instanceof MetaApiException) {
+      return NextResponse.json({ error: error.getUserFriendlyMessage() }, { status: 500 });
     }
 
-    return NextResponse.json({ error: '未知錯誤' }, { status: 500 });
+    return NextResponse.json({ error: '伺服器發生錯誤，請稍後再試' }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const accessToken = request.headers.get('Authorization')?.replace('Bearer ', '');
+    const session = await auth();
+    if (!session?.accessToken) {
+      return NextResponse.json({ error: '未授權' }, { status: 401 });
+    }
+
+    const accessToken = session.accessToken;
     const body = await request.json();
     const { threadsUserId, mediaType, text, imageUrl, videoUrl, replyToId, replyControl } = body;
-
-    if (!accessToken) {
-      return NextResponse.json({ error: '缺少 Access Token' }, { status: 401 });
-    }
 
     if (!threadsUserId) {
       return NextResponse.json({ error: '缺少 threadsUserId' }, { status: 400 });
@@ -98,12 +103,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('發布 Threads 貼文失敗:', error);
+    logger.error('Failed to publish Threads post', error);
 
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error instanceof MetaApiException) {
+      return NextResponse.json({ error: error.getUserFriendlyMessage() }, { status: 500 });
     }
 
-    return NextResponse.json({ error: '未知錯誤' }, { status: 500 });
+    return NextResponse.json({ error: '伺服器發生錯誤，請稍後再試' }, { status: 500 });
   }
 }

@@ -1,8 +1,10 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/lib/auth';
+import { createLogger } from '@/lib/logger';
 import prisma from '@/lib/prisma';
 
+const logger = createLogger('giveaway/blacklist');
 // GET /api/giveaway/blacklist - 取得黑名單
 export async function GET(request: NextRequest) {
   try {
@@ -25,7 +27,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: blacklist });
   } catch (error) {
-    console.error('取得黑名單失敗:', error);
+    logger.error('Failed to fetch blacklist', error);
     return NextResponse.json({ error: '取得失敗' }, { status: 500 });
   }
 }
@@ -74,7 +76,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: entry });
   } catch (error) {
-    console.error('新增黑名單失敗:', error);
+    logger.error('Failed to add to blacklist', error);
     return NextResponse.json({ error: '新增失敗' }, { status: 500 });
   }
 }
@@ -107,7 +109,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('移除黑名單失敗:', error);
+    logger.error('Failed to remove from blacklist', error);
     return NextResponse.json({ error: '移除失敗' }, { status: 500 });
   }
 }

@@ -1,8 +1,10 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/lib/auth';
+import { createLogger } from '@/lib/logger';
 import prisma from '@/lib/prisma';
 
+const logger = createLogger('giveaway/[id]');
 type RouteParams = { params: Promise<{ id: string }> };
 
 // GET /api/giveaway/[id] - 取得單一活動
@@ -29,7 +31,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ data: giveaway });
   } catch (error) {
-    console.error('取得抽獎活動失敗:', error);
+    logger.error('Failed to fetch giveaway', error);
     return NextResponse.json({ error: '取得失敗' }, { status: 500 });
   }
 }
@@ -127,7 +129,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     const updated = await prisma.giveaway.findFirst({
-      where: { id },
+      where: { id, userId: session.user.id },
       include: {
         prizes: { orderBy: { sort_order: 'asc' } },
         winners: { orderBy: { drawnAt: 'asc' } },
@@ -136,7 +138,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ data: updated });
   } catch (error) {
-    console.error('更新抽獎活動失敗:', error);
+    logger.error('Failed to update giveaway', error);
     return NextResponse.json({ error: '更新失敗' }, { status: 500 });
   }
 }
@@ -163,7 +165,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('刪除抽獎活動失敗:', error);
+    logger.error('Failed to delete giveaway', error);
     return NextResponse.json({ error: '刪除失敗' }, { status: 500 });
   }
 }

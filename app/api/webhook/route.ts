@@ -8,8 +8,10 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import crypto from 'crypto';
 
+import { createLogger } from '@/lib/logger';
 import { type WebhookPayload } from '@/lib/services';
 
+const logger = createLogger('webhook');
 const VERIFY_TOKEN = process.env.META_WEBHOOK_VERIFY_TOKEN;
 const APP_SECRET = process.env.META_APP_SECRET;
 
@@ -23,7 +25,7 @@ export async function GET(request: NextRequest) {
   const challenge = searchParams.get('hub.challenge');
 
   if (!VERIFY_TOKEN) {
-    console.error('未設定 META_WEBHOOK_VERIFY_TOKEN 環境變數');
+    logger.error('META_WEBHOOK_VERIFY_TOKEN env var not set');
     return new NextResponse('Server configuration error', { status: 500 });
   }
 
@@ -31,7 +33,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse(challenge, { status: 200 });
   }
 
-  console.warn('Webhook 驗證失敗', { mode, tokenMatch: token === VERIFY_TOKEN });
+  logger.warn('Webhook verification failed', { mode, tokenMatch: token === VERIFY_TOKEN });
   return new NextResponse('Forbidden', { status: 403 });
 }
 
@@ -41,7 +43,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     if (!APP_SECRET) {
-      console.error('未設定 META_APP_SECRET 環境變數');
+      logger.error('META_APP_SECRET env var not set');
       return new NextResponse('Server configuration error', { status: 500 });
     }
 
@@ -49,7 +51,7 @@ export async function POST(request: NextRequest) {
     const signature = request.headers.get('x-hub-signature-256');
 
     if (!signature) {
-      console.warn('缺少 x-hub-signature-256 標頭');
+      logger.warn('Missing x-hub-signature-256 header');
       return new NextResponse('Missing signature', { status: 401 });
     }
 
@@ -57,7 +59,7 @@ export async function POST(request: NextRequest) {
       'sha256=' + crypto.createHmac('sha256', APP_SECRET).update(rawBody).digest('hex');
 
     if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
-      console.warn('Webhook 簽名驗證失敗');
+      logger.warn('Webhook signature verification failed');
       return new NextResponse('Invalid signature', { status: 401 });
     }
 
@@ -66,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     return new NextResponse('OK', { status: 200 });
   } catch (error) {
-    console.error('處理 Webhook 事件失敗:', error);
+    logger.error('Failed to process webhook event', error);
     return new NextResponse('OK', { status: 200 });
   }
 }

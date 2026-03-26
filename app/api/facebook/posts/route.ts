@@ -7,8 +7,10 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/lib/auth';
+import { createLogger } from '@/lib/logger';
 import { getMetaServices } from '@/lib/services';
 
+const logger = createLogger('facebook/posts');
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -38,7 +40,7 @@ export async function GET(request: NextRequest) {
     const posts = await facebook.getPosts(pageId, pageAccessToken, { limit, after });
     return NextResponse.json(posts);
   } catch (error) {
-    console.error('取得貼文失敗:', error);
+    logger.error('Failed to fetch posts', error);
     return NextResponse.json({ error: '操作失敗，請稍後再試' }, { status: 500 });
   }
 }
@@ -72,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('發布貼文失敗:', error);
+    logger.error('Failed to publish post', error);
     return NextResponse.json({ error: '操作失敗，請稍後再試' }, { status: 500 });
   }
 }
