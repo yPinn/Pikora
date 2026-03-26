@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import {
+  ArrowRight,
   Filter,
   Gift,
   History,
@@ -16,32 +17,30 @@ import { SiThreads } from 'react-icons/si';
 import { ModeToggle } from '@/components/mode-toggle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 
 const platforms = [
   {
     icon: FaFacebook,
     name: 'Facebook',
     description: '讀取粉絲專頁貼文留言，進行抽獎篩選與得獎者管理。',
-    color: 'text-blue-600 dark:text-blue-400',
-    bg: 'bg-blue-50 dark:bg-blue-950',
+    iconColor: 'text-blue-400',
+    iconBg: 'bg-blue-500/15',
     available: true,
   },
   {
     icon: FaInstagram,
     name: 'Instagram',
     description: '管理 Instagram 商業帳號的貼文互動與抽獎活動。',
-    color: 'text-pink-600 dark:text-pink-400',
-    bg: 'bg-pink-50 dark:bg-pink-950',
+    iconColor: 'text-pink-400',
+    iconBg: 'bg-pink-500/15',
     available: false,
   },
   {
     icon: SiThreads,
     name: 'Threads',
     description: '針對 Threads 貼文回覆，輕鬆舉辦社群互動抽獎。',
-    color: 'text-foreground',
-    bg: 'bg-muted',
+    iconColor: 'text-slate-300',
+    iconBg: 'bg-white/10',
     available: false,
   },
 ];
@@ -104,13 +103,16 @@ const steps = [
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col">
-      {/* Navbar */}
-      <header className="border-b">
-        <div className="container mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-          <span className="text-lg font-bold tracking-tight">Pikora</span>
+    // Force dark context so all shadcn tokens resolve to dark values throughout
+    <div className="dark flex min-h-screen flex-col bg-slate-900 text-white">
+      {/* ── Navbar ── */}
+      <header className="sticky top-0 z-10 border-b border-white/10 bg-slate-900/95 backdrop-blur-sm">
+        <div className="container mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+          <span className="text-lg font-bold tracking-tight text-white">Pikora</span>
           <div className="flex items-center gap-3">
-            <ModeToggle />
+            <div className="[&>button]:border-white/20 [&>button]:bg-white/10 [&>button]:text-white [&>button]:hover:bg-white/20 [&>button]:hover:text-white">
+              <ModeToggle />
+            </div>
             <Button asChild size="sm">
               <Link href="/login">登入</Link>
             </Button>
@@ -119,137 +121,223 @@ export default function Home() {
       </header>
 
       <main className="flex-1">
-        {/* Hero */}
-        <section className="container mx-auto max-w-5xl px-4 py-20 text-center">
-          <div className="mb-4 flex items-center justify-center gap-2">
-            <FaFacebook className="h-5 w-5 text-blue-500" />
-            <FaInstagram className="h-5 w-5 text-pink-500" />
-            <SiThreads className="h-5 w-5" />
-          </div>
-          <h1 className="mb-4 text-5xl font-bold tracking-tight">
-            跨平台社群抽獎
-            <br />
-            <span className="text-primary">一站管理</span>
-          </h1>
-          <p className="text-muted-foreground mx-auto mb-8 max-w-xl text-lg leading-relaxed">
-            Pikora 整合 Meta
-            生態系——Facebook、Instagram、Threads，自動載入留言、彈性篩選參與者、密碼學安全抽獎，讓每場活動更省力、更公正。
-          </p>
-          <div className="flex items-center justify-center gap-3">
-            <Button asChild size="lg">
-              <Link href="/login">免費開始使用</Link>
-            </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link href="#platforms">支援平台</Link>
-            </Button>
+        {/* ── Hero ── */}
+        <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-40 -bottom-20 h-80 w-80 rounded-full bg-indigo-500/20 blur-3xl"
+          />
+
+          <div className="relative container mx-auto max-w-6xl px-6 py-24 lg:py-32">
+            <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+              {/* Left */}
+              <div>
+                <div className="mb-5 flex items-center gap-2">
+                  <FaFacebook className="h-4 w-4 text-blue-400" />
+                  <FaInstagram className="h-4 w-4 text-pink-400" />
+                  <SiThreads className="h-4 w-4 text-slate-300" />
+                  <span className="text-sm text-slate-400">Meta 生態系全平台</span>
+                </div>
+                <h1 className="mb-5 text-4xl leading-tight font-bold tracking-tight text-white lg:text-5xl xl:text-6xl">
+                  跨平台社群抽獎
+                  <br />
+                  <span className="text-blue-400">一站管理</span>
+                </h1>
+                <p className="mb-8 max-w-md text-base leading-relaxed text-slate-300 lg:text-lg">
+                  整合
+                  Facebook、Instagram、Threads，自動載入留言、彈性篩選參與者、密碼學安全抽獎，讓每場活動更省力、更公正。
+                </p>
+                <div className="flex flex-wrap items-center gap-4">
+                  <Button asChild size="lg">
+                    <Link href="/login">
+                      免費開始使用
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Link
+                    className="inline-flex items-center gap-1 text-sm text-slate-200 transition-colors hover:text-white"
+                    href="#platforms"
+                  >
+                    了解更多
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </div>
+
+              {/* Right: product preview */}
+              <div className="hidden lg:block">
+                <div className="rounded-2xl border border-white/10 bg-slate-800/80 p-6 shadow-2xl">
+                  <div className="mb-5 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-500/20">
+                        <FaFacebook className="h-4 w-4 text-blue-400" />
+                      </div>
+                      <span className="text-sm font-semibold text-white">Facebook 抽獎</span>
+                    </div>
+                    <Badge className="border-0 bg-blue-500/20 text-xs text-blue-300">進行中</Badge>
+                  </div>
+
+                  <div className="mb-5 grid grid-cols-3 gap-3">
+                    {[
+                      { label: '符合資格', value: '1,284' },
+                      { label: '已排除', value: '23' },
+                      { label: '得獎名額', value: '3' },
+                    ].map(({ label, value }) => (
+                      <div
+                        key={label}
+                        className="rounded-lg bg-slate-700/60 px-3 py-2.5 text-center"
+                      >
+                        <div className="text-lg font-bold text-white tabular-nums">{value}</div>
+                        <div className="text-xs text-slate-400">{label}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mb-4 space-y-2">
+                    {[
+                      { rank: '🥇', name: 'Emily Wang', comment: '好期待這個活動！' },
+                      { rank: '🥈', name: 'Jason Lin', comment: '已分享給朋友 @friend' },
+                      { rank: '🥉', name: 'Sarah Chen', comment: '參加抽獎 ❤️' },
+                    ].map(({ rank, name, comment }) => (
+                      <div
+                        key={name}
+                        className="flex items-center gap-3 rounded-lg border border-white/8 bg-slate-700/40 px-3 py-2"
+                      >
+                        <span className="text-base">{rank}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-medium text-white">{name}</div>
+                          <div className="truncate text-xs text-slate-400">{comment}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 px-4 py-3 text-center">
+                    <span className="text-sm font-medium text-blue-300">
+                      ✓ 結果已儲存，可隨時查閱
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
-        <Separator />
-
-        {/* Platforms */}
-        <section className="container mx-auto max-w-5xl px-4 py-16" id="platforms">
-          <div className="mb-10 text-center">
-            <h2 className="mb-2 text-2xl font-bold">支援 Meta 全平台</h2>
-            <p className="text-muted-foreground text-sm">
-              Facebook 已開放使用，Instagram 與 Threads 即將推出
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-            {platforms.map(({ icon: Icon, name, description, color, bg, available }) => (
-              <Card key={name} className={!available ? 'opacity-60' : ''}>
-                <CardContent className="pt-6">
-                  <div className={`mb-3 inline-flex rounded-md p-2 ${bg}`}>
-                    <Icon className={`h-5 w-5 ${color}`} />
+        {/* ── Platforms ── slate-800 */}
+        <section className="bg-slate-800" id="platforms">
+          <div className="container mx-auto max-w-6xl px-6 py-16 lg:py-20">
+            <div className="mb-10 lg:mb-12">
+              <h2 className="mb-2 text-2xl font-bold text-white lg:text-3xl">支援 Meta 全平台</h2>
+              <p className="text-sm text-slate-400 lg:text-base">
+                Facebook 已開放使用，Instagram 與 Threads 即將推出
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 lg:gap-6">
+              {platforms.map(({ icon: Icon, name, description, iconColor, iconBg, available }) => (
+                <div
+                  key={name}
+                  className={`rounded-xl border border-white/10 bg-slate-700/50 p-6 ${!available ? 'opacity-50' : ''}`}
+                >
+                  <div className={`mb-3 inline-flex rounded-md p-2.5 ${iconBg}`}>
+                    <Icon className={`h-5 w-5 ${iconColor}`} />
                   </div>
-                  <div className="mb-1 flex items-center gap-2">
-                    <h3 className="font-semibold">{name}</h3>
+                  <div className="mb-2 flex items-center gap-2">
+                    <h3 className="font-semibold text-white">{name}</h3>
                     {available ? (
-                      <Badge className="text-xs" variant="default">
-                        可用
-                      </Badge>
+                      <Badge className="border-0 bg-blue-500/20 text-xs text-blue-300">可用</Badge>
                     ) : (
-                      <Badge className="text-xs" variant="secondary">
+                      <Badge className="border-0 bg-white/10 text-xs text-slate-400">
                         即將推出
                       </Badge>
                     )}
                   </div>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
-                </CardContent>
-              </Card>
-            ))}
+                  <p className="text-sm leading-relaxed text-slate-400">{description}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
-        <Separator />
-
-        {/* How it works */}
-        <section className="container mx-auto max-w-5xl px-4 py-16" id="how-it-works">
-          <div className="mb-10 text-center">
-            <h2 className="mb-2 text-2xl font-bold">四步驟完成抽獎</h2>
-            <p className="text-muted-foreground text-sm">從設定到結果，流程簡單直覺</p>
-          </div>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {steps.map(({ step, title, description }) => (
-              <div key={step} className="flex flex-col gap-2">
-                <span className="text-primary text-3xl font-bold">{step}</span>
-                <h3 className="font-semibold">{title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <Separator />
-
-        {/* Features */}
-        <section className="container mx-auto max-w-5xl px-4 py-16">
-          <div className="mb-10 text-center">
-            <h2 className="mb-2 text-2xl font-bold">豐富功能一次滿足</h2>
-            <p className="text-muted-foreground text-sm">
-              專為社群版面管理者設計的完整抽獎解決方案
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map(({ icon: Icon, title, description }) => (
-              <Card key={title}>
-                <CardContent className="pt-6">
-                  <div className="bg-primary/10 mb-3 inline-flex rounded-md p-2">
-                    <Icon className="text-primary h-5 w-5" />
+        {/* ── How it works ── slate-900 */}
+        <section className="bg-slate-900" id="how-it-works">
+          <div className="container mx-auto max-w-6xl px-6 py-16 lg:py-20">
+            <div className="mb-10 lg:mb-12">
+              <h2 className="mb-2 text-2xl font-bold text-white lg:text-3xl">四步驟完成抽獎</h2>
+              <p className="text-sm text-slate-400 lg:text-base">從設定到結果，流程簡單直覺</p>
+            </div>
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0">
+              {steps.map(({ step, title, description }, i) => (
+                <div key={step} className="relative flex flex-col gap-3 lg:pr-8">
+                  {i < steps.length - 1 && (
+                    <div className="absolute top-5 left-10 hidden h-px w-[calc(100%-2.5rem)] border-t border-dashed border-slate-700 lg:block" />
+                  )}
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-500/20 text-sm font-bold text-blue-400">
+                    {step}
                   </div>
-                  <h3 className="mb-1 font-semibold">{title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
-                </CardContent>
-              </Card>
-            ))}
+                  <h3 className="font-semibold text-white">{title}</h3>
+                  <p className="text-sm leading-relaxed text-slate-400">{description}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
-        <Separator />
+        {/* ── Features ── slate-800 */}
+        <section className="bg-slate-800">
+          <div className="container mx-auto max-w-6xl px-6 py-16 lg:py-20">
+            <div className="mb-10 lg:mb-12">
+              <h2 className="mb-2 text-2xl font-bold text-white lg:text-3xl">豐富功能一次滿足</h2>
+              <p className="text-sm text-slate-400 lg:text-base">
+                專為社群版面管理者設計的完整抽獎解決方案
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+              {features.map(({ icon: Icon, title, description }) => (
+                <div key={title} className="rounded-xl border border-white/10 bg-slate-700/50 p-6">
+                  <div className="mb-3 inline-flex rounded-md bg-blue-500/15 p-2.5">
+                    <Icon className="h-5 w-5 text-blue-400" />
+                  </div>
+                  <h3 className="mb-1.5 font-semibold text-white">{title}</h3>
+                  <p className="text-sm leading-relaxed text-slate-400">{description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
-        {/* CTA */}
-        <section className="container mx-auto max-w-5xl px-4 py-16 text-center">
-          <Zap className="text-primary mx-auto mb-4 h-8 w-8" />
-          <h2 className="mb-3 text-2xl font-bold">立即開始您的第一場抽獎</h2>
-          <p className="text-muted-foreground mb-6 text-sm">連結 Meta 帳號，幾分鐘內完成設定</p>
-          <Button asChild size="lg">
-            <Link href="/login">
-              <Users className="mr-2 h-4 w-4" />
-              立即登入
-            </Link>
-          </Button>
+        {/* ── CTA ── mirrors hero gradient */}
+        <section className="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900">
+          <div className="container mx-auto max-w-6xl px-6 py-20 text-center lg:py-28">
+            <Zap className="mx-auto mb-4 h-8 w-8 text-blue-400" />
+            <h2 className="mb-3 text-2xl font-bold text-white lg:text-3xl">
+              立即開始您的第一場抽獎
+            </h2>
+            <p className="mb-8 text-sm text-slate-400 lg:text-base">
+              連結 Meta 帳號，幾分鐘內完成設定
+            </p>
+            <Button asChild size="lg">
+              <Link href="/login">
+                <Users className="mr-2 h-4 w-4" />
+                立即登入
+              </Link>
+            </Button>
+          </div>
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t">
-        <div className="container mx-auto flex max-w-5xl flex-col items-center justify-between gap-2 px-4 py-6 text-center sm:flex-row">
-          <span className="text-muted-foreground text-sm">© 2025 Pikora. All rights reserved.</span>
-          <div className="text-muted-foreground flex gap-4 text-sm">
-            <Link className="hover:text-foreground transition-colors" href="/privacy">
+      {/* ── Footer ── */}
+      <footer className="border-t border-white/10 bg-slate-900">
+        <div className="container mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-6 py-6 text-center sm:flex-row">
+          <span className="text-sm text-slate-500">© 2025 Pikora. All rights reserved.</span>
+          <div className="flex gap-4 text-sm text-slate-500">
+            <Link className="transition-colors hover:text-slate-300" href="/privacy">
               隱私政策
             </Link>
-            <Link className="hover:text-foreground transition-colors" href="/terms">
+            <Link className="transition-colors hover:text-slate-300" href="/terms">
               服務條款
             </Link>
           </div>
