@@ -15,12 +15,16 @@ import { facebookNavConfig } from '@/lib/sidebar-config/facebook';
 
 import { PageSwitcher } from './page-switcher';
 
-import type { Session } from 'next-auth';
+interface SidebarUser {
+  name: string;
+  email: string;
+  avatarUrl: string;
+}
 
 export function FacebookSidebar({
-  session,
+  user,
   ...props
-}: { session: Session } & React.ComponentProps<typeof Sidebar>) {
+}: { user: SidebarUser } & React.ComponentProps<typeof Sidebar>) {
   const { isReady } = useFacebookPage();
 
   return (
@@ -44,9 +48,9 @@ export function FacebookSidebar({
       <SidebarFooter>
         <NavUser
           user={{
-            name: session.user?.name || 'User',
-            email: session.user?.email || '',
-            avatar: session.user?.image || '',
+            name: user.name,
+            email: user.email,
+            avatar: user.avatarUrl,
           }}
         />
       </SidebarFooter>

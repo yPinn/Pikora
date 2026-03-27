@@ -26,8 +26,17 @@ export default async function Layout({ children }: { children: React.ReactNode }
     'picture',
   ]);
 
+  // 在 server side 解析頭像 URL，避免將 accessToken 傳至 client
+  const avatarUrl = `https://graph.facebook.com/me/picture?type=square&access_token=${session.accessToken}`;
+
+  const user = {
+    name: session.user?.name ?? 'User',
+    email: session.user?.email ?? '',
+    avatarUrl,
+  };
+
   return (
-    <Shell pages={pages} session={session}>
+    <Shell pages={pages} user={user}>
       {children}
     </Shell>
   );

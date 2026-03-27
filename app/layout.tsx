@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Caveat, Geist, Geist_Mono } from 'next/font/google';
 
 import { SessionProvider } from '@/components/session-provider';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -18,9 +18,30 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+const caveat = Caveat({
+  variable: '--font-caveat',
+  subsets: ['latin'],
+});
+
+const description =
+  '整合 Facebook、Instagram、Threads，密碼學安全抽獎，讓每場社群活動更省力、更公正。';
+
 export const metadata: Metadata = {
-  title: 'Pikora',
-  description: 'Post the Best, Pikora the Rest',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://pikora.app'),
+  title: {
+    default: 'Pikora — 跨平台社群抽獎工具',
+    template: '%s | Pikora',
+  },
+  description,
+  openGraph: {
+    type: 'website',
+    locale: 'zh_TW',
+    siteName: 'Pikora',
+    description,
+  },
+  twitter: {
+    card: 'summary_large_image',
+  },
 };
 
 type RootLayoutProps = Readonly<{
@@ -30,9 +51,11 @@ type RootLayoutProps = Readonly<{
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <>
-      <html suppressHydrationWarning lang="en">
+      <html suppressHydrationWarning lang="zh-TW">
         <head />
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} ${caveat.variable} antialiased`}
+        >
           <SessionProvider>
             <ThemeProvider attribute="class" defaultTheme="light">
               {children}

@@ -7,18 +7,22 @@ import type { FacebookPage } from '@/lib/services/facebook';
 
 import { FacebookSidebar } from './sidebar';
 
-import type { Session } from 'next-auth';
+interface ShellUser {
+  name: string;
+  email: string;
+  avatarUrl: string;
+}
 
 interface ShellProps {
   children: React.ReactNode;
-  session: Session;
+  user: ShellUser;
   pages: FacebookPage[];
 }
 
-export function Shell({ children, session, pages }: ShellProps) {
+export function Shell({ children, user, pages }: ShellProps) {
   return (
     <FacebookPageStore pages={pages}>
-      <FacebookSidebar session={session} />
+      <FacebookSidebar user={user} />
       <SidebarInset>
         <PageTransition>{children}</PageTransition>
       </SidebarInset>

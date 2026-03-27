@@ -68,8 +68,10 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
           <div className="bg-muted relative hidden md:block md:aspect-square">
             <Image
               fill
+              priority
               alt="Login background"
               className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.8]"
+              sizes="(max-width: 768px) 0vw, 50vw"
               src="/Momonga_1.jpg"
             />
           </div>

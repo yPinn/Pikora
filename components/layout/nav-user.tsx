@@ -1,6 +1,6 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -24,17 +24,30 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 
-const UserAvatar = memo(({ src, name }: { src: string; name: string }) => (
-  <div className="bg-muted relative h-8 w-8 shrink-0 overflow-hidden rounded-lg border">
-    {src ? (
-      <Image fill priority alt={name} className="object-cover" sizes="32px" src={src} />
-    ) : (
-      <div className="flex h-full w-full items-center justify-center text-xs">
-        {name.charAt(0).toUpperCase()}
-      </div>
-    )}
-  </div>
-));
+const UserAvatar = memo(({ src, name }: { src: string; name: string }) => {
+  const [imgError, setImgError] = useState(false);
+  const showImage = src && !imgError;
+
+  return (
+    <div className="bg-muted relative h-8 w-8 shrink-0 overflow-hidden rounded-lg border">
+      {showImage ? (
+        <Image
+          fill
+          priority
+          alt={name}
+          className="object-cover"
+          sizes="32px"
+          src={src}
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-xs">
+          {name.charAt(0).toUpperCase()}
+        </div>
+      )}
+    </div>
+  );
+});
 UserAvatar.displayName = 'UserAvatar';
 
 export function NavUser({ user }: { user: { name: string; email: string; avatar: string } }) {

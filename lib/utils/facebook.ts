@@ -72,6 +72,35 @@ export function isFacebookCdnUrl(url: string | undefined): boolean {
 }
 
 /**
+ * 驗證 URL 是否為可公開存取的 HTTPS URL（用於 Instagram/Threads 媒體發布）
+ * 阻擋私有 IP 範圍，防止將內部位址轉發給外部 API。
+ */
+export function isValidPublicMediaUrl(url: string | undefined): boolean {
+  if (!url) return false;
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== 'https:') return false;
+  const hostname = parsed.hostname;
+  // 阻擋 localhost 與私有 IP 範圍（IPv4）
+  if (
+    hostname === 'localhost' ||
+    /^127\./.test(hostname) ||
+    /^10\./.test(hostname) ||
+    /^192\.168\./.test(hostname) ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
+    hostname === '0.0.0.0' ||
+    hostname === '::1'
+  ) {
+    return false;
+  }
+  return true;
+}
+
+/**
  * 驗證 URL 是否為 Facebook 個人頁面連結（用於 href）
  */
 export function isFacebookProfileUrl(url: string | undefined): boolean {

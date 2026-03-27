@@ -588,17 +588,13 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
           ) : (
             <div ref={resultsRef} className="space-y-4">
               {prizes.map((prize, prizeIndex) => {
-                const prizeResults = results.filter((r) => r.prize_id === `prize_${prizeIndex}`);
+                const prizeResults = results.filter((r) => r.prize_id === prize.id);
 
                 return (
                   <div key={prizeIndex}>
                     <div className="mb-2 flex items-center justify-between">
                       <h4 className="text-body font-medium">{prize.name}</h4>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => redraw(`prize_${prizeIndex}`)}
-                      >
+                      <Button size="sm" variant="ghost" onClick={() => redraw(prize.id)}>
                         <RefreshCw className="mr-1 h-3 w-3" />
                         重抽
                       </Button>

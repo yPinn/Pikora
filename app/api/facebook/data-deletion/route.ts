@@ -6,6 +6,8 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { createHash } from 'crypto';
+
 import { createLogger, maskId } from '@/lib/logger';
 import prisma from '@/lib/prisma';
 import { parseSignedRequest } from '@/lib/utils/meta-webhook';
@@ -53,14 +55,14 @@ export async function POST(request: NextRequest) {
     if (account) {
       const { userId } = account;
 
-      // 刪除 Giveaway（Cascade 自動刪除 Prize、Winner）
-      await prisma.giveaway.deleteMany({ where: { userId } });
-
-      // 刪除黑名單
-      await prisma.giveawayBlacklist.deleteMany({ where: { userId } });
-
-      // 刪除 User（Cascade 自動刪除 Account、Session）
-      await prisma.user.delete({ where: { id: userId } });
+      await prisma.$transaction(async (tx) => {
+        // 刪除 Giveaway（Cascade 自動刪除 Prize、Winner）
+        await tx.giveaway.deleteMany({ where: { userId } });
+        // 刪除黑名單
+        await tx.giveawayBlacklist.deleteMany({ where: { userId } });
+        // 刪除 User（Cascade 自動刪除 Account、Session）
+        await tx.user.delete({ where: { id: userId } });
+      });
 
       logger.warn(`Deleted all data for Facebook user ${maskId(facebookUserId)}`);
     } else {
@@ -68,7 +70,8 @@ export async function POST(request: NextRequest) {
       logger.warn(`Facebook user ${maskId(facebookUserId)} not found, skipping`);
     }
 
-    const confirmationCode = `DEL_${facebookUserId}_${Date.now()}`;
+    const idHash = createHash('sha256').update(facebookUserId).digest('hex').slice(0, 12);
+    const confirmationCode = `DEL_${idHash}_${Date.now()}`;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (!appUrl) {
       logger.error('NEXT_PUBLIC_APP_URL is not set');

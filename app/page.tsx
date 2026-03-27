@@ -1,51 +1,34 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import { type ElementType } from 'react';
+
+import Image from 'next/image';
 import Link from 'next/link';
 
 import {
+  ArrowDown,
   ArrowRight,
   Filter,
   Gift,
   History,
+  Info,
   MessageSquare,
   ShieldCheck,
   Shuffle,
-  Users,
-  Zap,
+  X,
 } from 'lucide-react';
 import { FaFacebook, FaInstagram } from 'react-icons/fa';
 import { SiThreads } from 'react-icons/si';
 
 import { ModeToggle } from '@/components/mode-toggle';
-import { Badge } from '@/components/ui/badge';
+import { ScrollIndicator } from '@/components/scroll-indicator';
 import { Button } from '@/components/ui/button';
 
-const platforms = [
-  {
-    icon: FaFacebook,
-    name: 'Facebook',
-    description: '讀取粉絲專頁貼文留言，進行抽獎篩選與得獎者管理。',
-    iconColor: 'text-blue-400',
-    iconBg: 'bg-blue-500/15',
-    available: true,
-  },
-  {
-    icon: FaInstagram,
-    name: 'Instagram',
-    description: '管理 Instagram 商業帳號的貼文互動與抽獎活動。',
-    iconColor: 'text-pink-400',
-    iconBg: 'bg-pink-500/15',
-    available: false,
-  },
-  {
-    icon: SiThreads,
-    name: 'Threads',
-    description: '針對 Threads 貼文回覆，輕鬆舉辦社群互動抽獎。',
-    iconColor: 'text-slate-300',
-    iconBg: 'bg-white/10',
-    available: false,
-  },
-];
+// Navbar is h-14 (3.5rem); each section fills the remainder so header+section = 100dvh
+const SECTION = 'h-[calc(100dvh-3.5rem)] snap-start snap-always';
 
-const features = [
+const features: { icon: ElementType; title: string; description: string }[] = [
   {
     icon: MessageSquare,
     title: '一鍵載入留言',
@@ -54,7 +37,7 @@ const features = [
   {
     icon: Filter,
     title: '多條件進階篩選',
-    description: '依時間區間、留言關鍵字（正規表達式）、@提及人數、按讚反應等條件彈性過濾。',
+    description: '依時間區間、留言關鍵字、@提及人數、按讚反應等條件彈性過濾。',
   },
   {
     icon: Shuffle,
@@ -78,271 +61,578 @@ const features = [
   },
 ];
 
-const steps = [
-  {
-    step: '01',
-    title: '連結帳號',
-    description: '以 Meta 帳號登入，選擇您管理的粉絲專頁或帳號。',
-  },
-  {
-    step: '02',
-    title: '貼上貼文網址',
-    description: '將活動貼文網址貼入，系統自動載入全部留言或回覆。',
-  },
-  {
-    step: '03',
-    title: '設定篩選條件',
-    description: '依需求設定時間、格式、提及人數等參與資格條件。',
-  },
-  {
-    step: '04',
-    title: '抽出得獎者',
-    description: '一鍵公正抽獎，結果即時顯示並可儲存備查。',
-  },
-];
+// expo-out easing matching --ease-expo token
+const easeOutExpo = (t: number) => (t === 1 ? 1 : 1 - 2 ** (-10 * t));
+
+// CSS custom property stagger — read by [data-active] .anim-item animation-delay
+const delay = (s: number) => ({ '--anim-delay': `${s}s` }) as React.CSSProperties;
+
+function scrollToIndex(el: HTMLElement, index: number, onDone?: () => void) {
+  const start = el.scrollTop;
+  const end = index * el.clientHeight;
+  const diff = end - start;
+  if (diff === 0) {
+    onDone?.();
+    return;
+  }
+  const duration = 700; // matches --dur-scroll token
+  let t0: number | null = null;
+  const tick = (now: number) => {
+    t0 ??= now;
+    const t = Math.min((now - t0) / duration, 1);
+    el.scrollTop = start + diff * easeOutExpo(t);
+    if (t < 1) requestAnimationFrame(tick);
+    else onDone?.();
+  };
+  requestAnimationFrame(tick);
+}
+
+// Sticker icon container shared in hero — uses card token for theme-awareness
+function Sticker({
+  children,
+  className,
+  style,
+}: {
+  children: React.ReactNode;
+  className: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div
+      className={`border-card bg-card border-[5px] p-5 shadow-2xl transition-transform duration-300 ${className}`}
+      style={style}
+    >
+      {children}
+    </div>
+  );
+}
 
 export default function Home() {
+  const mainRef = useRef<HTMLElement>(null);
+  // Once a section index is added it is never removed — animations play only once
+  const [seen, setSeen] = useState<Set<number>>(new Set());
+  const [notifVisible, setNotifVisible] = useState(true);
+  const markSeen = (i: number) => setSeen((prev) => (prev.has(i) ? prev : new Set([...prev, i])));
+
+  // setTimeout(0) fires after the browser has committed the first paint, ensuring
+  // .anim-item { opacity: 0 } is rendered before data-active triggers the animation.
+  // rAF fires before paint, so the hidden state was never seen → no animation baseline.
+  useEffect(() => {
+    const id = setTimeout(() => markSeen(0), 0);
+    return () => clearTimeout(id);
+  }, []);
+
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
+    const count = el.querySelectorAll('section').length;
+    let locked = false;
+    let unlockTimer: ReturnType<typeof setTimeout>;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (locked) return;
+      locked = true;
+      clearTimeout(unlockTimer);
+      const cur = Math.round(el.scrollTop / el.clientHeight);
+      const target = e.deltaY > 0 ? Math.min(cur + 1, count - 1) : Math.max(cur - 1, 0);
+      scrollToIndex(el, target, () => markSeen(target));
+      unlockTimer = setTimeout(() => {
+        locked = false;
+      }, 800);
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => {
+      el.removeEventListener('wheel', onWheel);
+      clearTimeout(unlockTimer);
+    };
+  }, []);
+
   return (
-    // Force dark context so all shadcn tokens resolve to dark values throughout
-    <div className="dark flex min-h-screen flex-col bg-slate-900 text-white">
-      {/* ── Navbar ── */}
-      <header className="sticky top-0 z-10 border-b border-white/10 bg-slate-900/95 backdrop-blur-sm">
-        <div className="container mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
-          <span className="text-lg font-bold tracking-tight text-white">Pikora</span>
-          <div className="flex items-center gap-3">
-            <div className="[&>button]:border-white/20 [&>button]:bg-white/10 [&>button]:text-white [&>button]:hover:bg-white/20 [&>button]:hover:text-white">
+    <div className="flex h-dvh flex-col overflow-hidden">
+      {/*
+        ── Navigation bar ──────────────────────────────────────────────
+        Tokens (globals.css): --nav-h 56px, --nav-px 24px,
+        --nav-btn-icon-w 56px (ModeToggle square), --nav-btn-px 24px.
+        overflow-hidden clips buttons to nav height. Button group uses
+        border-l separator — no inner div needed (avoids bleed artifacts).
+        ────────────────────────────────────────────────────────────────
+      */}
+      <header className="bg-background z-20 shrink-0 overflow-hidden border-2 border-black">
+        <div
+          className="flex w-full items-stretch"
+          style={{ height: 'var(--nav-h)' } as React.CSSProperties}
+        >
+          {/* ── Logo ── fills remaining space */}
+          <Link
+            className="flex flex-1 items-center gap-2 transition-opacity hover:opacity-80"
+            href="/"
+            style={{ paddingLeft: 'var(--nav-px)' } as React.CSSProperties}
+          >
+            <Image
+              alt="pikora"
+              className="rounded-full object-cover"
+              height={28}
+              src="/Momonga_1.jpg"
+              width={28}
+            />
+            <span className="text-sm font-semibold text-blue-500">pikora</span>
+          </Link>
+
+          {/*
+            ── Button group ─────────────────────────────────────────────
+            border-l separates logo zone from actions.
+            ModeToggle: !important ensures amber shows in both themes.
+            LOGIN: border-l separates from icon btn cleanly.
+          */}
+          <div className="flex items-stretch border-l-2 border-black">
+            {/* ModeToggle — square: width = nav-h */}
+            <div
+              className="flex items-stretch [&>button]:h-full [&>button]:w-full [&>button]:!rounded-none [&>button]:!border-0 [&>button]:!bg-amber-500 [&>button]:!text-gray-900 [&>button]:!shadow-none [&>button]:transition-colors [&>button]:duration-150 [&>button]:hover:!bg-amber-400"
+              style={{ width: 'var(--nav-btn-icon-w)' } as React.CSSProperties}
+            >
               <ModeToggle />
             </div>
-            <Button asChild size="sm">
-              <Link href="/login">登入</Link>
+
+            {/* LOGIN */}
+            <Button
+              asChild
+              className="h-full rounded-none border-l-2 border-black bg-blue-600 text-sm font-extrabold tracking-[0.15em] text-white uppercase transition-colors duration-150 hover:bg-blue-700"
+              style={{ paddingInline: 'var(--nav-btn-px)' } as React.CSSProperties}
+            >
+              <Link href="/login">Login</Link>
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="flex-1">
+      <main
+        ref={mainRef}
+        className="h-[calc(100dvh-3.5rem)] snap-y snap-mandatory overflow-y-scroll scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {/* ── Hero ── */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-40 -bottom-20 h-80 w-80 rounded-full bg-indigo-500/20 blur-3xl"
-          />
-
-          <div className="relative container mx-auto max-w-6xl px-6 py-24 lg:py-32">
-            <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
-              {/* Left */}
+        <section
+          className={`${SECTION} flex items-center bg-gradient-to-b from-blue-600 to-blue-400`}
+          data-active={seen.has(0) ? '' : undefined}
+        >
+          <div className="mx-auto w-full max-w-screen-xl px-8">
+            <div className="grid items-center gap-8 lg:grid-cols-[1fr_420px]">
               <div>
-                <div className="mb-5 flex items-center gap-2">
-                  <FaFacebook className="h-4 w-4 text-blue-400" />
-                  <FaInstagram className="h-4 w-4 text-pink-400" />
-                  <SiThreads className="h-4 w-4 text-slate-300" />
-                  <span className="text-sm text-slate-400">Meta 生態系全平台</span>
+                <div
+                  className="anim-item mb-6 inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-1.5 backdrop-blur-sm"
+                  style={delay(0.05)}
+                >
+                  <FaFacebook className="h-3.5 w-3.5 text-white" />
+                  <FaInstagram className="h-3.5 w-3.5 text-white" />
+                  <SiThreads className="h-3.5 w-3.5 text-white" />
+                  <span className="mx-0.5 h-3 w-px bg-white/40" />
+                  <span className="text-xs font-semibold tracking-wide text-white">
+                    Meta 生態系全平台
+                  </span>
                 </div>
-                <h1 className="mb-5 text-4xl leading-tight font-bold tracking-tight text-white lg:text-5xl xl:text-6xl">
+                {/* On the always-bright blue gradient: dark in light mode, white in dark mode */}
+                <h1
+                  className="anim-item mb-6 leading-[1.05] text-gray-900 dark:text-white"
+                  style={{ fontSize: 'clamp(3rem, 7vw, 5rem)', ...delay(0.18) }}
+                >
                   跨平台社群抽獎
                   <br />
-                  <span className="text-blue-400">一站管理</span>
+                  一站式管理
                 </h1>
-                <p className="mb-8 max-w-md text-base leading-relaxed text-slate-300 lg:text-lg">
+                <p
+                  className="anim-item mb-8 max-w-md text-base leading-relaxed text-blue-950/80 dark:text-blue-100/80"
+                  style={delay(0.3)}
+                >
                   整合
                   Facebook、Instagram、Threads，自動載入留言、彈性篩選參與者、密碼學安全抽獎，讓每場活動更省力、更公正。
                 </p>
-                <div className="flex flex-wrap items-center gap-4">
-                  <Button asChild size="lg">
+                <div className="anim-item flex flex-wrap items-center gap-4" style={delay(0.42)}>
+                  <Button
+                    asChild
+                    className="rounded-full bg-orange-500 px-7 font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-orange-600 hover:shadow-xl"
+                    size="lg"
+                  >
                     <Link href="/login">
                       免費開始使用
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
                   <Link
-                    className="inline-flex items-center gap-1 text-sm text-slate-200 transition-colors hover:text-white"
+                    className="inline-flex items-center gap-1 text-sm font-semibold text-white/90 underline-offset-4 transition-colors hover:text-white hover:underline"
                     href="#platforms"
                   >
-                    了解更多
-                    <ArrowRight className="h-3.5 w-3.5" />
+                    了解更多 <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </div>
               </div>
 
-              {/* Right: product preview */}
-              <div className="hidden lg:block">
-                <div className="rounded-2xl border border-white/10 bg-slate-800/80 p-6 shadow-2xl">
-                  <div className="mb-5 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-500/20">
-                        <FaFacebook className="h-4 w-4 text-blue-400" />
-                      </div>
-                      <span className="text-sm font-semibold text-white">Facebook 抽獎</span>
-                    </div>
-                    <Badge className="border-0 bg-blue-500/20 text-xs text-blue-300">進行中</Badge>
-                  </div>
-
-                  <div className="mb-5 grid grid-cols-3 gap-3">
-                    {[
-                      { label: '符合資格', value: '1,284' },
-                      { label: '已排除', value: '23' },
-                      { label: '得獎名額', value: '3' },
-                    ].map(({ label, value }) => (
-                      <div
-                        key={label}
-                        className="rounded-lg bg-slate-700/60 px-3 py-2.5 text-center"
-                      >
-                        <div className="text-lg font-bold text-white tabular-nums">{value}</div>
-                        <div className="text-xs text-slate-400">{label}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mb-4 space-y-2">
-                    {[
-                      { rank: '🥇', name: 'Emily Wang', comment: '好期待這個活動！' },
-                      { rank: '🥈', name: 'Jason Lin', comment: '已分享給朋友 @friend' },
-                      { rank: '🥉', name: 'Sarah Chen', comment: '參加抽獎 ❤️' },
-                    ].map(({ rank, name, comment }) => (
-                      <div
-                        key={name}
-                        className="flex items-center gap-3 rounded-lg border border-white/8 bg-slate-700/40 px-3 py-2"
-                      >
-                        <span className="text-base">{rank}</span>
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-medium text-white">{name}</div>
-                          <div className="truncate text-xs text-slate-400">{comment}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 px-4 py-3 text-center">
-                    <span className="text-sm font-medium text-blue-300">
-                      ✓ 結果已儲存，可隨時查閱
-                    </span>
-                  </div>
+              {/* Sticker icons — decorative only, not interactive */}
+              <div className="relative hidden h-80 lg:block">
+                <div
+                  className="anim-item pointer-events-none absolute top-2 right-4"
+                  style={delay(0.55)}
+                >
+                  <Sticker className="rotate-[12deg] [animation:float_3s_ease-in-out_0.2s_infinite] rounded-full">
+                    <SiThreads className="text-card-foreground h-14 w-14" />
+                  </Sticker>
+                </div>
+                <div
+                  className="anim-item pointer-events-none absolute top-1/2 right-28 -translate-y-1/2"
+                  style={delay(0.65)}
+                >
+                  <Sticker className="rotate-[5deg] [animation:float_3.5s_ease-in-out_0.9s_infinite] rounded-[28px]">
+                    <FaFacebook className="text-card-foreground h-14 w-14" />
+                  </Sticker>
+                </div>
+                <div
+                  className="anim-item pointer-events-none absolute bottom-2 left-8"
+                  style={delay(0.75)}
+                >
+                  <Sticker className="rotate-[-8deg] [animation:float_4s_ease-in-out_1.6s_infinite] rounded-[28px]">
+                    <FaInstagram className="text-card-foreground h-14 w-14" />
+                  </Sticker>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* ── Platforms ── slate-800 */}
-        <section className="bg-slate-800" id="platforms">
-          <div className="container mx-auto max-w-6xl px-6 py-16 lg:py-20">
-            <div className="mb-10 lg:mb-12">
-              <h2 className="mb-2 text-2xl font-bold text-white lg:text-3xl">支援 Meta 全平台</h2>
-              <p className="text-sm text-slate-400 lg:text-base">
-                Facebook 已開放使用，Instagram 與 Threads 即將推出
-              </p>
-            </div>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 lg:gap-6">
-              {platforms.map(({ icon: Icon, name, description, iconColor, iconBg, available }) => (
-                <div
-                  key={name}
-                  className={`rounded-xl border border-white/10 bg-slate-700/50 p-6 ${!available ? 'opacity-50' : ''}`}
+        {/* ── Platforms ── */}
+        <section
+          className={`${SECTION} relative overflow-hidden bg-gradient-to-b from-blue-400 to-blue-100 dark:from-blue-800 dark:to-blue-950`}
+          data-active={seen.has(1) ? '' : undefined}
+          id="platforms"
+        >
+          {/* Squiggly top line */}
+          <svg
+            aria-hidden
+            className="anim-item pointer-events-none absolute top-0 left-0 w-full text-slate-900/20 dark:text-slate-200/20"
+            fill="none"
+            height="80"
+            preserveAspectRatio="none"
+            style={delay(0.08)}
+            viewBox="0 0 1200 80"
+          >
+            <path
+              className="[animation:path-draw_2.5s_ease-out_0.3s_both]"
+              d="M 80 65 C 180 20, 320 70, 480 35 C 600 8, 720 55, 860 25 C 980 0, 1100 45, 1160 20"
+              stroke="currentColor"
+              strokeDasharray="1200"
+              strokeLinecap="round"
+              strokeWidth="2.5"
+            />
+          </svg>
+
+          <div className="relative mx-auto flex h-full w-full max-w-screen-xl flex-col px-8 py-12">
+            {/* Title + doodle underline */}
+            <div className="anim-item mb-0 text-center" style={delay(0.05)}>
+              <h2
+                className="relative inline-block text-4xl font-bold text-[#d4f23a] lg:text-5xl"
+                style={{ textShadow: '2px 2px 0 rgba(0,0,0,0.18)' }}
+              >
+                支援 Meta 全平台
+                {/* Hand-drawn underline drawn in after title appears */}
+                <svg
+                  aria-hidden
+                  className="pointer-events-none absolute -bottom-2 left-0 w-full overflow-visible text-white/60"
+                  fill="none"
+                  height="10"
+                  preserveAspectRatio="none"
+                  viewBox="0 0 200 10"
                 >
-                  <div className={`mb-3 inline-flex rounded-md p-2.5 ${iconBg}`}>
-                    <Icon className={`h-5 w-5 ${iconColor}`} />
+                  <path
+                    className="[animation:path-draw_1s_ease-out_0.6s_both]"
+                    d="M2 7 C45 3,95 9,135 5 C162 2,186 8,198 6"
+                    stroke="currentColor"
+                    strokeDasharray="220"
+                    strokeLinecap="round"
+                    strokeWidth="2.5"
+                  />
+                </svg>
+              </h2>
+            </div>
+
+            <div className="relative flex-1">
+              {/* ── Instagram — top-left ── */}
+              <div
+                className="anim-item pointer-events-none absolute top-[15%] left-[4%]"
+                style={delay(0.15)}
+              >
+                <div className="-rotate-12 [animation:float_3.2s_ease-in-out_infinite]">
+                  <FaInstagram className="h-36 w-36 text-slate-900 drop-shadow-xl lg:h-44 lg:w-44 dark:text-slate-100" />
+                  <div className="mt-2 inline-flex -rotate-6 items-center gap-1 rounded-full bg-rose-500 px-3 py-1 text-xs font-bold tracking-wider text-white uppercase shadow-md">
+                    即將推出
                   </div>
+                </div>
+              </div>
+
+              {/* Doodle ✕ over Instagram */}
+              <div
+                className="doodle-item pointer-events-none absolute top-[12%] left-[10%]"
+                style={delay(0.3)}
+              >
+                <svg fill="none" height="40" viewBox="0 0 40 40" width="40">
+                  <path
+                    d="M6 6 L34 34 M34 6 L6 34"
+                    stroke="#ef4444"
+                    strokeLinecap="round"
+                    strokeWidth="3.5"
+                  />
+                </svg>
+              </div>
+
+              {/* ── Threads — top-right ── */}
+              <div
+                className="anim-item pointer-events-none absolute top-[10%] right-[6%]"
+                style={delay(0.2)}
+              >
+                <div className="rotate-[8deg] [animation:float_2.8s_ease-in-out_0.8s_infinite]">
+                  <SiThreads className="h-36 w-36 text-slate-900 drop-shadow-xl lg:h-44 lg:w-44 dark:text-slate-100" />
+                  <div className="mt-2 ml-auto inline-flex rotate-3 items-center gap-1 rounded-full bg-orange-400 px-3 py-1 text-xs font-bold tracking-wider text-white uppercase shadow-md">
+                    即將推出
+                  </div>
+                </div>
+              </div>
+
+              {/* Doodle annotation next to Threads */}
+              <div
+                className="doodle-item pointer-events-none absolute top-[8%] right-[22%]"
+                style={{ ...delay(0.35), fontFamily: 'var(--font-caveat), cursive' }}
+              >
+                <span className="inline-block rotate-[8deg] text-lg font-bold text-slate-700 dark:text-slate-300">
+                  ?!
+                </span>
+                <svg
+                  aria-hidden
+                  className="absolute top-5 left-4 text-slate-600/70 dark:text-slate-400/70"
+                  fill="none"
+                  height="24"
+                  viewBox="0 0 30 24"
+                  width="30"
+                >
+                  <path
+                    d="M2 12 C8 4,20 6,26 14"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeWidth="1.8"
+                  />
+                  <path
+                    d="M22 10 L27 14 L22 17"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.8"
+                  />
+                </svg>
+              </div>
+
+              {/* ── Facebook — center bottom ── */}
+              <div
+                className="anim-item pointer-events-none absolute bottom-[20%] left-1/2 -translate-x-1/2"
+                style={delay(0.28)}
+              >
+                <div className="rotate-[3deg] [animation:float_3.8s_ease-in-out_1.5s_infinite]">
+                  <FaFacebook className="h-44 w-44 text-slate-900 drop-shadow-xl lg:h-52 lg:w-52 dark:text-slate-100" />
+                  <div className="mx-auto mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-400 px-3 py-1 text-xs font-bold tracking-wider text-slate-900 uppercase shadow-md">
+                    <span>✓</span> Facebook
+                  </div>
+                </div>
+              </div>
+
+              {/* Doodle circle around Facebook */}
+              <div
+                className="doodle-item pointer-events-none absolute bottom-[14%] left-1/2 -translate-x-1/2"
+                style={delay(0.42)}
+              >
+                <svg fill="none" height="220" viewBox="0 0 220 220" width="220">
+                  <ellipse
+                    className="text-emerald-400/60"
+                    cx="110"
+                    cy="110"
+                    rx="100"
+                    ry="95"
+                    stroke="currentColor"
+                    strokeDasharray="12 6"
+                    strokeLinecap="round"
+                    strokeWidth="2.5"
+                    transform="rotate(-8 110 110)"
+                  />
+                </svg>
+              </div>
+
+              {/* Hand-written "ok!" annotation */}
+              <div
+                className="doodle-item pointer-events-none absolute right-[28%] bottom-[28%]"
+                style={{ ...delay(0.48), fontFamily: 'var(--font-caveat), cursive' }}
+              >
+                <span className="inline-block -rotate-[10deg] text-2xl font-bold text-slate-700 dark:text-slate-300">
+                  ok!
+                </span>
+                <svg
+                  aria-hidden
+                  className="absolute -bottom-1 left-0 w-full overflow-visible text-slate-600/60 dark:text-slate-400/60"
+                  fill="none"
+                  height="6"
+                  preserveAspectRatio="none"
+                  viewBox="0 0 40 6"
+                >
+                  <path
+                    d="M2 4 C10 1,28 5,38 3"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeWidth="1.8"
+                  />
+                </svg>
+              </div>
+
+              {/* Doodle stars */}
+              <svg
+                aria-hidden
+                className="doodle-item pointer-events-none absolute top-[42%] left-[28%] text-yellow-300/80"
+                fill="currentColor"
+                height="16"
+                style={delay(0.38)}
+                viewBox="0 0 20 20"
+                width="16"
+              >
+                <path d="M10 1l2.5 6.5h6.5L14 11.5l2 6.5-6-3.5-6 3.5 2-6.5-4.5-4h6.5z" />
+              </svg>
+              <svg
+                aria-hidden
+                className="doodle-item pointer-events-none absolute top-[36%] right-[24%] rotate-[20deg] text-yellow-200/80"
+                fill="currentColor"
+                height="12"
+                style={delay(0.44)}
+                viewBox="0 0 20 20"
+                width="12"
+              >
+                <path d="M10 1l2.5 6.5h6.5L14 11.5l2 6.5-6-3.5-6 3.5 2-6.5-4.5-4h6.5z" />
+              </svg>
+            </div>
+
+            {/* Notification card */}
+            {notifVisible && (
+              <div className="anim-item absolute bottom-8 left-8 w-72" style={delay(0.25)}>
+                <div className="rounded-2xl border border-blue-300 bg-yellow-50 px-4 py-3 shadow-lg dark:border-blue-700 dark:bg-yellow-100">
+                  {/* Header */}
                   <div className="mb-2 flex items-center gap-2">
-                    <h3 className="font-semibold text-white">{name}</h3>
-                    {available ? (
-                      <Badge className="border-0 bg-blue-500/20 text-xs text-blue-300">可用</Badge>
-                    ) : (
-                      <Badge className="border-0 bg-white/10 text-xs text-slate-400">
-                        即將推出
-                      </Badge>
-                    )}
+                    <Info className="h-4 w-4 shrink-0 text-blue-500" />
+                    <span className="flex-1 text-sm font-semibold">通知</span>
+                    <button
+                      aria-label="關閉通知"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      onClick={() => setNotifVisible(false)}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                   </div>
-                  <p className="text-sm leading-relaxed text-slate-400">{description}</p>
+                  {/* Body */}
+                  <p className="text-muted-foreground mb-3 text-sm leading-relaxed">
+                    Facebook 已開放使用，
+                    <br />
+                    Instagram 與 Threads 即將推出
+                  </p>
+                  {/* CTA */}
+                  <Button
+                    asChild
+                    className="h-8 rounded-lg bg-orange-500 px-4 text-sm font-bold text-white transition-colors hover:bg-orange-600"
+                    size="sm"
+                  >
+                    <Link href="/login">幫你搞</Link>
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <Link
+              className="anim-item group absolute right-8 bottom-8 flex items-center gap-2"
+              href="#features"
+              style={delay(0.35)}
+            >
+              <span className="text-foreground group-hover:text-foreground/70 text-sm font-extrabold tracking-widest uppercase transition-colors">
+                Next
+              </span>
+              <div className="rounded-xl bg-orange-500 p-2 shadow-lg transition-colors group-hover:bg-orange-600">
+                <ArrowDown className="h-6 w-6 [animation:bounce-arrow_1.2s_ease-in-out_infinite] text-white" />
+              </div>
+            </Link>
+          </div>
+        </section>
+
+        {/* ── Features ── uses bg-muted for theme-aware neutral background */}
+        <section
+          className={`${SECTION} bg-muted flex flex-col justify-center overflow-hidden`}
+          data-active={seen.has(2) ? '' : undefined}
+          id="features"
+        >
+          <div className="mx-auto w-full max-w-screen-xl px-8">
+            <h2
+              className="anim-item text-foreground mb-2 text-3xl font-bold lg:text-4xl"
+              style={delay(0.05)}
+            >
+              豐富功能一次滿足
+            </h2>
+            <p className="anim-item text-muted-foreground mb-8 text-sm" style={delay(0.15)}>
+              專為社群版面管理者設計的完整抽獎解決方案
+            </p>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {features.map(({ icon: Icon, title, description }, i) => (
+                <div
+                  key={title}
+                  className="anim-item border-border bg-card rounded-2xl border p-5 shadow-sm transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md"
+                  style={delay(0.25 + i * 0.08)}
+                >
+                  <div className="mb-3 inline-flex rounded-xl bg-blue-600 p-3">
+                    <Icon className="h-5 w-5 text-white" />
+                  </div>
+                  <h3 className="text-card-foreground mb-1.5 font-semibold">{title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* ── How it works ── slate-900 */}
-        <section className="bg-slate-900" id="how-it-works">
-          <div className="container mx-auto max-w-6xl px-6 py-16 lg:py-20">
-            <div className="mb-10 lg:mb-12">
-              <h2 className="mb-2 text-2xl font-bold text-white lg:text-3xl">四步驟完成抽獎</h2>
-              <p className="text-sm text-slate-400 lg:text-base">從設定到結果，流程簡單直覺</p>
-            </div>
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0">
-              {steps.map(({ step, title, description }, i) => (
-                <div key={step} className="relative flex flex-col gap-3 lg:pr-8">
-                  {i < steps.length - 1 && (
-                    <div className="absolute top-5 left-10 hidden h-px w-[calc(100%-2.5rem)] border-t border-dashed border-slate-700 lg:block" />
-                  )}
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-500/20 text-sm font-bold text-blue-400">
-                    {step}
-                  </div>
-                  <h3 className="font-semibold text-white">{title}</h3>
-                  <p className="text-sm leading-relaxed text-slate-400">{description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── Features ── slate-800 */}
-        <section className="bg-slate-800">
-          <div className="container mx-auto max-w-6xl px-6 py-16 lg:py-20">
-            <div className="mb-10 lg:mb-12">
-              <h2 className="mb-2 text-2xl font-bold text-white lg:text-3xl">豐富功能一次滿足</h2>
-              <p className="text-sm text-slate-400 lg:text-base">
-                專為社群版面管理者設計的完整抽獎解決方案
-              </p>
-            </div>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
-              {features.map(({ icon: Icon, title, description }) => (
-                <div key={title} className="rounded-xl border border-white/10 bg-slate-700/50 p-6">
-                  <div className="mb-3 inline-flex rounded-md bg-blue-500/15 p-2.5">
-                    <Icon className="h-5 w-5 text-blue-400" />
-                  </div>
-                  <h3 className="mb-1.5 font-semibold text-white">{title}</h3>
-                  <p className="text-sm leading-relaxed text-slate-400">{description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── CTA ── mirrors hero gradient */}
-        <section className="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900">
-          <div className="container mx-auto max-w-6xl px-6 py-20 text-center lg:py-28">
-            <Zap className="mx-auto mb-4 h-8 w-8 text-blue-400" />
-            <h2 className="mb-3 text-2xl font-bold text-white lg:text-3xl">
+        {/* ── CTA + Footer ── strong blue gradient looks good in both modes */}
+        <section
+          className={`${SECTION} flex flex-col bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800`}
+          data-active={seen.has(3) ? '' : undefined}
+        >
+          <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
+            <h2
+              className="anim-item mb-4 leading-[1.1] text-white"
+              style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', ...delay(0.05) }}
+            >
               立即開始您的第一場抽獎
             </h2>
-            <p className="mb-8 text-sm text-slate-400 lg:text-base">
+            <p className="anim-item mb-10 text-base text-white/75" style={delay(0.18)}>
               連結 Meta 帳號，幾分鐘內完成設定
             </p>
-            <Button asChild size="lg">
-              <Link href="/login">
-                <Users className="mr-2 h-4 w-4" />
-                立即登入
-              </Link>
-            </Button>
+            <div className="anim-item" style={delay(0.3)}>
+              <Button
+                asChild
+                className="rounded-full bg-white px-10 font-bold text-blue-700 shadow-xl transition-all hover:-translate-y-0.5 hover:bg-slate-100 hover:shadow-2xl"
+                size="lg"
+              >
+                <Link href="/login">立即免費登入</Link>
+              </Button>
+            </div>
           </div>
+          <footer className="shrink-0 border-t border-white/20 px-8 py-5">
+            <div className="mx-auto flex w-full max-w-screen-xl flex-col items-center justify-between gap-2 text-center sm:flex-row">
+              <span className="text-xs text-white/50">© 2025 Pikora. All rights reserved.</span>
+              <div className="flex gap-5 text-xs text-white/50">
+                <Link className="transition-colors hover:text-white/80" href="/privacy">
+                  隱私政策
+                </Link>
+                <Link className="transition-colors hover:text-white/80" href="/terms">
+                  服務條款
+                </Link>
+              </div>
+            </div>
+          </footer>
         </section>
       </main>
-
-      {/* ── Footer ── */}
-      <footer className="border-t border-white/10 bg-slate-900">
-        <div className="container mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-6 py-6 text-center sm:flex-row">
-          <span className="text-sm text-slate-500">© 2025 Pikora. All rights reserved.</span>
-          <div className="flex gap-4 text-sm text-slate-500">
-            <Link className="transition-colors hover:text-slate-300" href="/privacy">
-              隱私政策
-            </Link>
-            <Link className="transition-colors hover:text-slate-300" href="/terms">
-              服務條款
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <ScrollIndicator scrollRef={mainRef} />
     </div>
   );
 }

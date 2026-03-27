@@ -1,6 +1,14 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+@font-face {
+  font-family: 'Dela Gothic One';
+  src: url('/fonts/DelaGothicOne-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -19,6 +27,14 @@
   --spacing-page: var(--gap-page);
   --spacing-section: var(--gap-section);
   --spacing-item: var(--gap-item);
+
+  /* ===== Animation — exposed as Tailwind utilities ===== */
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.45, 0, 0.55, 1);
+  --duration-fast: 0.25s;
+  --duration-base: 0.55s;
+  --duration-slow: 0.85s;
 
   /* ===== Colors ===== */
   --color-background: var(--background);
@@ -95,12 +111,23 @@
   --gap-section: var(--space-3); /* 區塊間距 */
   --gap-item: var(--space-1); /* 元件間距 */
 
+  /* ===== Navigation tokens (Flat Design — 8px grid) ===== */
+  --nav-h: 3.5rem; /* 56px — h-14；icon btn 也用此值做正方形 */
+  --nav-border-w: 1px; /* bottom border 細線 */
+  --nav-px: var(--space-3); /* 24px 左側 logo 內距 */
+  --nav-btn-icon-w: var(--nav-h); /* icon btn 正方形：width = height = 56px */
+  --nav-btn-px: var(--space-3); /* LOGIN btn 水平內距 24px */
+  --nav-divider-w: 1px; /* 按鈕群組左側垂直分隔線寬 */
+
   /* ===== Animation Tokens ===== */
-  --anim-fast: 0.2s; /* 頁面過場、卡片出現 */
-  --anim-normal: 0.3s; /* 強調動畫（winner reveal） */
-  --anim-ease: cubic-bezier(0.25, 0.1, 0.25, 1); /* easeOut */
-  --anim-stagger: 0.04s; /* 列表 stagger 間距 */
-  --anim-stagger-delay: 0.1s; /* stagger 每項延遲 */
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1); /* expo-out — scroll & entrance */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* spring — bounce elements */
+  --ease-smooth: cubic-bezier(0.45, 0, 0.55, 1); /* in-out — modals */
+  --dur-fast: 0.25s; /* hover, micro-interaction */
+  --dur-base: 0.55s; /* section entrance */
+  --dur-slow: 0.85s; /* hero, large reveals */
+  --dur-scroll: 700ms; /* custom RAF scroll */
+  --stagger: 0.08s; /* list stagger unit */
 
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -183,15 +210,130 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Prevent document-level scroll that causes white bleed below the fixed-height app shell */
+    overflow: hidden;
+    height: 100dvh;
+  }
+  h1 {
+    font-family: 'Dela Gothic One', var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(2.5rem, 6vw, 4rem); /* 40px ~ 64px，確保字體清晰 */
+    line-height: 1.15;
   }
   /* Reserve scrollbar gutter on html to prevent layout shift between pages.
      Scroll functionality is preserved; only the visual track is hidden. */
   html {
     overflow-y: scroll;
+    scroll-behavior: smooth;
     scrollbar-width: none; /* Firefox */
   }
   html::-webkit-scrollbar {
     display: none; /* Chrome / Safari */
+  }
+}
+
+/* ─── Section entrance system ───────────────────────────────────────────
+   Usage:
+     Add `anim-item` class to any element that should animate in.
+     Set `--anim-delay` inline style for stagger: style={{ '--anim-delay': '0.2s' }}
+     Each section receives [data-active] when it becomes the visible section.
+   ─────────────────────────────────────────────────────────────────────── */
+/*
+  Entrance system:
+  - @keyframes (not transition) guarantees the animation plays even if React
+    updates the DOM before the browser paints the initial hidden state.
+  - fill-mode: both → element stays at `from` during the delay (opacity 0)
+    and at `to` after the animation ends (opacity 1, no layout shift).
+  - --anim-delay CSS var set inline per element enables stagger without
+    re-triggering styles when data-active never changes after first set.
+*/
+@keyframes anim-in {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.anim-item {
+  opacity: 0; /* hidden before section is seen */
+}
+
+[data-active] .anim-item {
+  /* Explicit 0.7s — do NOT use var() here; CSS var resolution failures silently produce 0s duration */
+  animation: anim-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) var(--anim-delay, 0s) both;
+}
+
+/* ── Doodle section entrance — stamp-in with spring bounce ── */
+@keyframes stamp-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.07);
+  }
+  80% {
+    transform: scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.doodle-item {
+  opacity: 0;
+}
+
+[data-active] .doodle-item {
+  animation: stamp-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--anim-delay, 0s) both;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+@keyframes badge-pop {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.09);
+  }
+}
+@keyframes bounce-arrow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+}
+@keyframes path-draw {
+  from {
+    stroke-dashoffset: 1200;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
@@ -202,12 +344,25 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  /* 保留 infinite 動畫（如 spinner），僅加速一次性動畫 */
-  *:not(.animate-spin):not([class*='animate-spin']),
-  *:not(.animate-spin):not([class*='animate-spin'])::before,
-  *:not(.animate-spin):not([class*='animate-spin'])::after {
+  /* Kill decorative infinite animations (float, badge-pop, bounce-arrow) but NOT entrance animations */
+  *:not(.animate-spin):not([class*='animate-spin']):not(.anim-item),
+  *:not(.animate-spin):not([class*='animate-spin']):not(.anim-item)::before,
+  *:not(.animate-spin):not([class*='animate-spin']):not(.anim-item)::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+  }
+  /* Entrance: fade-only (no slide/scale) so reduced-motion users still see the staggered reveal */
+  @keyframes anim-in-reduced {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  [data-active] .anim-item,
+  [data-active] .doodle-item {
+    animation: anim-in-reduced 0.45s ease-out var(--anim-delay, 0s) both !important;
   }
 }
 

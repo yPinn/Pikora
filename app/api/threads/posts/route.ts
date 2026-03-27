@@ -9,6 +9,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { createLogger } from '@/lib/logger';
 import { getMetaServices, MetaApiException } from '@/lib/services';
+import { isValidPublicMediaUrl } from '@/lib/utils/facebook';
 
 const logger = createLogger('threads/posts');
 export async function GET(request: NextRequest) {
@@ -77,6 +78,9 @@ export async function POST(request: NextRequest) {
         if (!imageUrl) {
           return NextResponse.json({ error: '缺少 imageUrl' }, { status: 400 });
         }
+        if (!isValidPublicMediaUrl(imageUrl)) {
+          return NextResponse.json({ error: '無效的 imageUrl' }, { status: 400 });
+        }
         result = await threads.publishImagePost(threadsUserId, accessToken, {
           image_url: imageUrl,
           text,
@@ -88,6 +92,9 @@ export async function POST(request: NextRequest) {
       case 'VIDEO':
         if (!videoUrl) {
           return NextResponse.json({ error: '缺少 videoUrl' }, { status: 400 });
+        }
+        if (!isValidPublicMediaUrl(videoUrl)) {
+          return NextResponse.json({ error: '無效的 videoUrl' }, { status: 400 });
         }
         result = await threads.publishVideoPost(threadsUserId, accessToken, {
           video_url: videoUrl,

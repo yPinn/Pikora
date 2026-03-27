@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { createLogger } from '@/lib/logger';
 import prisma from '@/lib/prisma';
+import { isFacebookCdnUrl } from '@/lib/utils/facebook';
 
 const logger = createLogger('giveaway/[id]');
 type RouteParams = { params: Promise<{ id: string }> };
@@ -111,8 +112,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
               prizeId: w.prize_id,
               from_id: w.from_id.trim(),
               from_name: w.from_name.trim(),
-              from_picture_url:
-                typeof w.from_picture_url === 'string' ? w.from_picture_url : undefined,
+              from_picture_url: isFacebookCdnUrl(w.from_picture_url)
+                ? w.from_picture_url
+                : undefined,
               comment_id: w.comment_id.trim(),
               comment_message: w.comment_message,
               comment_created_time: new Date(w.comment_created_time),

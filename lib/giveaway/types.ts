@@ -29,6 +29,16 @@ const VALID_FILTER_KEYS = new Set([
 ]);
 
 /**
+ * 伺服器端 ReDoS 防護：檢查正則是否包含巢狀量詞等危險模式
+ */
+function isSafeRegex(pattern: string): boolean {
+  if (pattern.length > 200) return false;
+  if (/\([^)]*[+*][^)]*\)[+*?]/.test(pattern)) return false;
+  if (/\(([^|)]+\|)+[^|)]+\)[+*]/.test(pattern)) return false;
+  return true;
+}
+
+/**
  * 驗證 GiveawayFilters 物件（純 TS，不依賴 zod）
  * 回傳 null 表示驗證通過；否則回傳錯誤訊息。
  */
@@ -51,6 +61,7 @@ export function validateGiveawayFilters(filters: unknown): string | null {
   if (f.pattern !== undefined) {
     if (typeof f.pattern !== 'string' || f.pattern.length > 500)
       return '無效的 pattern（上限 500 字元）';
+    if (f.pattern_type === 'regex' && !isSafeRegex(f.pattern)) return '正則表達式包含不安全的模式';
   }
   if (f.pattern_type !== undefined && f.pattern_type !== 'contains' && f.pattern_type !== 'regex') {
     return '無效的 pattern_type';

@@ -3,6 +3,8 @@
  * 處理粉絲專頁相關操作：貼文管理、留言、Insights 等
  */
 
+import { createHash } from 'crypto';
+
 import { MetaApiBase } from './base';
 import { GRAPH_API_BASE_URL, type MetaServiceConfig, type PaginatedResponse } from './types';
 
@@ -206,7 +208,8 @@ export class FacebookService extends MetaApiBase {
    * 取得專頁 Access Token（帶快取，TTL 55 分鐘）
    */
   async getPageAccessToken(pageId: string, userAccessToken: string): Promise<string> {
-    const cacheKey = `${pageId}:${userAccessToken}`;
+    const tokenHash = createHash('sha256').update(userAccessToken).digest('hex').slice(0, 16);
+    const cacheKey = `${pageId}:${tokenHash}`;
     const cached = this.pageTokenCache.get(cacheKey);
     if (cached && Date.now() < cached.expiresAt) {
       return cached.token;

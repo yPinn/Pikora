@@ -7,6 +7,13 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// API 路由中公開可存取的路徑（不需要登入）
+const PUBLIC_API_PATHS = [
+  '/api/auth', // NextAuth OAuth callback
+  '/api/webhook', // Meta webhook
+  '/api/facebook/data-deletion', // Meta data deletion callback
+];
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -14,6 +21,15 @@ export function proxy(request: NextRequest) {
   const sessionCookie =
     request.cookies.get('authjs.session-token') ||
     request.cookies.get('__Secure-authjs.session-token');
+
+  // API 路由：非公開路徑需有 session cookie（防禦第二層）
+  if (pathname.startsWith('/api/')) {
+    const isPublicApi = PUBLIC_API_PATHS.some((p) => pathname.startsWith(p));
+    if (!isPublicApi && !sessionCookie) {
+      return NextResponse.json({ error: '未授權' }, { status: 401 });
+    }
+    return NextResponse.next();
+  }
 
   const protectedPaths = ['/facebook', '/instagram', '/threads'];
   const isProtectedRoute = protectedPaths.some((path) => pathname.startsWith(path));
@@ -34,8 +50,6 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // 排除靜態檔案與 API，僅針對路由頁面進行檢查
-  matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  // 排除靜態資源，涵蓋頁面路由與 API 路由
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 };
