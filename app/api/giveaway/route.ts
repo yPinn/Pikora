@@ -50,19 +50,27 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { pageId, postId, post_url, name, filters, prizes } = body;
 
-    if (typeof pageId !== 'string' || pageId.trim().length === 0) {
+    const FACEBOOK_ID_PATTERN = /^\d{1,30}$/;
+    if (typeof pageId !== 'string' || !FACEBOOK_ID_PATTERN.test(pageId.trim())) {
       return NextResponse.json({ error: '無效的 pageId' }, { status: 400 });
     }
-    if (typeof postId !== 'string' || postId.trim().length === 0) {
+    if (typeof postId !== 'string' || !FACEBOOK_ID_PATTERN.test(postId.trim())) {
       return NextResponse.json({ error: '無效的 postId' }, { status: 400 });
     }
     if (post_url !== undefined) {
       if (typeof post_url !== 'string') {
         return NextResponse.json({ error: '無效的 post_url 格式' }, { status: 400 });
       }
+      const ALLOWED_FACEBOOK_HOSTS = new Set([
+        'www.facebook.com',
+        'facebook.com',
+        'fb.com',
+        'm.facebook.com',
+      ]);
       try {
         const u = new URL(post_url);
-        if (u.protocol !== 'https:' && u.protocol !== 'http:') throw new Error();
+        if (u.protocol !== 'https:') throw new Error();
+        if (!ALLOWED_FACEBOOK_HOSTS.has(u.hostname)) throw new Error();
       } catch {
         return NextResponse.json({ error: '無效的 post_url 格式' }, { status: 400 });
       }
@@ -78,9 +86,21 @@ export async function POST(request: NextRequest) {
       if (typeof p.name !== 'string' || p.name.trim().length === 0) {
         return NextResponse.json({ error: '獎項名稱不得為空' }, { status: 400 });
       }
+      if (p.name.length > 200) {
+        return NextResponse.json({ error: '獎項名稱超過長度上限 (200)' }, { status: 400 });
+      }
       const qty = Number(p.quantity);
       if (!Number.isInteger(qty) || qty < 1 || qty > 100) {
         return NextResponse.json({ error: '獎項數量需為 1~100 的整數' }, { status: 400 });
+      }
+    }
+
+    if (name !== undefined) {
+      if (typeof name !== 'string' || name.trim().length === 0) {
+        return NextResponse.json({ error: '無效的 name 格式' }, { status: 400 });
+      }
+      if (name.length > 200) {
+        return NextResponse.json({ error: 'name 超過長度上限 (200)' }, { status: 400 });
       }
     }
 
@@ -105,7 +125,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ data: giveaway });
+    return NextResponse.json({ data: giveaway }, { status: 201 });
   } catch (error) {
     logger.error('Failed to create giveaway', error);
     return NextResponse.json({ error: '建立失敗' }, { status: 500 });

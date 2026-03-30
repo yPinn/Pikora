@@ -8,6 +8,8 @@ import { isFacebookCdnUrl } from '@/lib/utils/facebook';
 const logger = createLogger('giveaway/[id]');
 type RouteParams = { params: Promise<{ id: string }> };
 
+const MIN_FACEBOOK_DATE = new Date('2004-01-01').getTime();
+
 // GET /api/giveaway/[id] - 取得單一活動
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
@@ -58,6 +60,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: '找不到活動' }, { status: 404 });
     }
 
+    if (existing.status === 'COMPLETED') {
+      return NextResponse.json({ error: '活動已完成，無法再次儲存' }, { status: 409 });
+    }
+
     // 儲存中獎者
     if (body.winners) {
       // 驗證 winners 陣列
@@ -102,12 +108,24 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         if (isNaN(parsedTime.getTime())) {
           return NextResponse.json({ error: '無效的 comment_created_time' }, { status: 400 });
         }
+        // 合理範圍：Facebook 成立於 2004 年，不接受未來時間
+        if (parsedTime.getTime() < MIN_FACEBOOK_DATE || parsedTime.getTime() > Date.now()) {
+          return NextResponse.json({ error: 'comment_created_time 超出合理範圍' }, { status: 400 });
+        }
       }
 
       await prisma.$transaction(async (tx) => {
-        for (const w of body.winners) {
-          await tx.winner.create({
-            data: {
+        await tx.winner.createMany({
+          data: body.winners.map(
+            (w: {
+              prize_id: string;
+              from_id: string;
+              from_name: string;
+              from_picture_url?: string;
+              comment_id: string;
+              comment_message: string;
+              comment_created_time: string;
+            }) => ({
               giveawayId: id,
               prizeId: w.prize_id,
               from_id: w.from_id.trim(),
@@ -118,9 +136,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
               comment_id: w.comment_id.trim(),
               comment_message: w.comment_message,
               comment_created_time: new Date(w.comment_created_time),
-            },
-          });
-        }
+            })
+          ),
+        });
 
         // 更新狀態為已完成
         await tx.giveaway.update({
