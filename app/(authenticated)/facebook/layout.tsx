@@ -26,8 +26,19 @@ export default async function Layout({ children }: { children: React.ReactNode }
     'picture',
   ]);
 
-  // 在 server side 解析頭像 URL，避免將 accessToken 傳至 client
-  const avatarUrl = `https://graph.facebook.com/me/picture?type=square&access_token=${session.accessToken}`;
+  // Server side 取得 CDN 頭像 URL，避免將 accessToken 序列化至 RSC payload
+  let avatarUrl = '';
+  try {
+    const res = await fetch(
+      `https://graph.facebook.com/me/picture?type=square&redirect=false&access_token=${session.accessToken}`
+    );
+    if (res.ok) {
+      const data = await res.json();
+      avatarUrl = (data as { data?: { url?: string } }).data?.url ?? '';
+    }
+  } catch {
+    // 取得失敗時使用空字串，UI 會顯示 fallback
+  }
 
   const user = {
     name: session.user?.name ?? 'User',

@@ -12,6 +12,7 @@ const PUBLIC_API_PATHS = [
   '/api/auth', // NextAuth OAuth callback
   '/api/webhook', // Meta webhook
   '/api/facebook/data-deletion', // Meta data deletion callback
+  '/api/facebook/deauthorize', // Meta deauthorize callback (server-to-server, no session)
 ];
 
 export function proxy(request: NextRequest) {
