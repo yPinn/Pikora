@@ -236,7 +236,7 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
       if (!activePage?.id) return;
 
       try {
-        const deleteParams = new URLSearchParams({ pageId: activePage.id, fromId });
+        const deleteParams = new URLSearchParams({ pageId: activePage.id, from_id: fromId });
         const res = await fetch(`/api/giveaway/blacklist?${deleteParams}`, { method: 'DELETE' });
 
         if (res.ok) {

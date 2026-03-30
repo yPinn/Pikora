@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/lib/auth';
+import { Prisma } from '@/lib/generated/prisma/client';
 import { createLogger } from '@/lib/logger';
 import prisma from '@/lib/prisma';
 
@@ -74,7 +75,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ data: entry });
+    return NextResponse.json({ data: entry }, { status: 201 });
   } catch (error) {
     logger.error('Failed to add to blacklist', error);
     return NextResponse.json({ error: '新增失敗' }, { status: 500 });
@@ -91,7 +92,7 @@ export async function DELETE(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const pageId = searchParams.get('pageId');
-    const fromId = searchParams.get('fromId');
+    const fromId = searchParams.get('from_id');
 
     if (!pageId || !fromId) {
       return NextResponse.json({ error: '缺少必要參數' }, { status: 400 });
@@ -108,7 +109,10 @@ export async function DELETE(request: NextRequest) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      return NextResponse.json({ error: '找不到黑名單記錄' }, { status: 404 });
+    }
     logger.error('Failed to remove from blacklist', error);
     return NextResponse.json({ error: '移除失敗' }, { status: 500 });
   }
