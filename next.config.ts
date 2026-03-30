@@ -13,7 +13,8 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // unsafe-eval needed by Next.js dev
+      // unsafe-eval 僅在開發模式需要 (HMR)，production 不包含
+      `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://*.fbcdn.net https://platform-lookaside.fbsbx.com https://lookaside.fbsbx.com https://graph.facebook.com",
       "font-src 'self'",
@@ -44,4 +45,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;
