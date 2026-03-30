@@ -58,14 +58,9 @@ export function useFacebookComments(activePage: FacebookPage | null) {
     }
   }, [activePage?.id]);
 
-  // 當 postId 變更且有效時自動抓取
-  // 注意：不依賴 activePage?.id，避免切換專頁時用舊 postId 發請求
-  useEffect(() => {
-    if (postId && activePage?.id) {
-      fetchCommentsInternal(postId);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [postId]);
+  // 持有最新版 fetchCommentsInternal，讓 auto-fetch effect 不需將其列為 dep，
+  // 避免切換專頁時因 ref 變更而用舊 postId 對新頁面發出錯誤請求
+  const fetchCommentsInternalRef = useRef<(id: string) => void>(() => {});
 
   const fetchCommentsInternal = useCallback(
     async (targetPostId: string) => {
@@ -109,6 +104,23 @@ export function useFacebookComments(activePage: FacebookPage | null) {
     },
     [activePage?.id]
   );
+
+  // 每次 render 都同步更新 ref，確保 auto-fetch effect 使用最新版本。
+  // 意圖：刻意無 dependency array（每次 render 都執行），以保持 ref 永遠指向最新 callback。
+  // 若加入 deps 則下方的 postId effect 會透過 ref 呼叫到 stale closure。
+
+  useEffect(() => {
+    fetchCommentsInternalRef.current = fetchCommentsInternal;
+  });
+
+  // 當 postId 變更且有效時自動抓取
+  // 透過 ref 取得最新 fetchCommentsInternal，避免 dep 造成切換專頁時的錯誤請求
+  // fetchCommentsInternal 內部已有 activePage?.id 的 guard
+  useEffect(() => {
+    if (postId) {
+      fetchCommentsInternalRef.current(postId);
+    }
+  }, [postId]);
 
   // 對外的 fetchComments：處理 URL 解析
   const fetchComments = useCallback(

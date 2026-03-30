@@ -16,5 +16,5 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
     redirect('/login');
   }
 
-  return <AuthShell session={session}>{children}</AuthShell>;
+  return <AuthShell>{children}</AuthShell>;
 }
