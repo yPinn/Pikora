@@ -16,14 +16,15 @@ const LEVEL_RANK: Record<LogLevel, number> = {
   error: 3,
 };
 
-function minLevel(): LogLevel {
+// 模組初始化時計算一次，process.env 與執行環境在 runtime 不會改變
+const MIN_LEVEL: LogLevel = (() => {
   const isServer = typeof window === 'undefined';
   const isProd = process.env.NODE_ENV === 'production';
 
   if (!isServer && isProd) return 'warn'; // browser prod: 靜音 debug/info
   if (isServer && isProd) return 'info'; // server prod: 靜音 debug
   return 'debug'; // dev: 全開
-}
+})();
 
 /**
  * 遮蔽 PII 識別碼（Facebook user ID 等）
@@ -38,12 +39,13 @@ export function maskId(id: string | undefined | null): string {
 export function createLogger(module: string) {
   const prefix = `[${module}]`;
 
+  /* eslint-disable no-console */
   function log(level: LogLevel, message: string, context?: unknown): void {
-    if (LEVEL_RANK[level] < LEVEL_RANK[minLevel()]) return;
+    if (LEVEL_RANK[level] < LEVEL_RANK[MIN_LEVEL]) return;
     const args: unknown[] = context !== undefined ? [prefix, message, context] : [prefix, message];
-    // eslint-disable-next-line no-console
     console[level](...(args as [string, ...unknown[]]));
   }
+  /* eslint-enable no-console */
 
   return {
     debug: (msg: string, ctx?: unknown) => log('debug', msg, ctx),

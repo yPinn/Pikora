@@ -12,7 +12,7 @@ import { createLogger, maskId } from '@/lib/logger';
 import prisma from '@/lib/prisma';
 import { parseSignedRequest } from '@/lib/utils/meta-webhook';
 
-const logger = createLogger('data-deletion');
+const logger = createLogger('facebook/data-deletion');
 
 export async function POST(request: NextRequest) {
   try {
@@ -64,10 +64,10 @@ export async function POST(request: NextRequest) {
         await tx.user.delete({ where: { id: userId } });
       });
 
-      logger.warn(`Deleted all data for Facebook user ${maskId(facebookUserId)}`);
+      logger.info(`Deleted all data for Facebook user ${maskId(facebookUserId)}`);
     } else {
       // 用戶不存在於系統中，視為已刪除
-      logger.warn(`Facebook user ${maskId(facebookUserId)} not found, skipping`);
+      logger.info(`Facebook user ${maskId(facebookUserId)} not found, skipping`);
     }
 
     const idHash = createHash('sha256').update(facebookUserId).digest('hex').slice(0, 12);

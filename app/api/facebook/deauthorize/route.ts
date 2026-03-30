@@ -10,7 +10,7 @@ import { createLogger, maskId } from '@/lib/logger';
 import prisma from '@/lib/prisma';
 import { parseSignedRequest } from '@/lib/utils/meta-webhook';
 
-const logger = createLogger('deauthorize');
+const logger = createLogger('facebook/deauthorize');
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,11 +55,14 @@ export async function POST(request: NextRequest) {
       await prisma.account.delete({ where: { id: account.id } });
 
       // 刪除所有 Sessions（強制登出）
+      // 注意：本專案使用 JWT session strategy，JWT 本身無法即時撤銷，
+      // 需等待 token 自然過期（expiresAt）。已刪除 DB Sessions 僅對
+      // database strategy 有即時效果。請確保 JWT maxAge 設定較短。
       await prisma.session.deleteMany({ where: { userId: account.userId } });
 
-      logger.warn(`Revoked tokens and sessions for Facebook user ${maskId(facebookUserId)}`);
+      logger.info(`Revoked tokens and sessions for Facebook user ${maskId(facebookUserId)}`);
     } else {
-      logger.warn(`Facebook user ${maskId(facebookUserId)} not found, skipping`);
+      logger.info(`Facebook user ${maskId(facebookUserId)} not found, skipping`);
     }
 
     return NextResponse.json({ success: true });
