@@ -40,11 +40,11 @@ export class MetaApiBase {
 
     const url = new URL(`${this.baseUrl}${endpoint}`);
 
-    // GET 請求: 所有參數放 URL
-    // POST 請求: access_token 放 URL，其他參數放 body (form-urlencoded)
-    url.searchParams.set('access_token', accessToken);
-
-    const fetchOptions: RequestInit = { method };
+    // access_token 透過 Authorization header 傳遞，避免出現在 URL log 中
+    const fetchOptions: RequestInit = {
+      method,
+      headers: { Authorization: `Bearer ${accessToken}` },
+    };
 
     if (method === 'GET') {
       // GET: 參數放 URL query string
@@ -58,6 +58,7 @@ export class MetaApiBase {
     } else if (method === 'POST') {
       // POST: 使用 form-urlencoded (Meta API 標準格式)
       fetchOptions.headers = {
+        ...(fetchOptions.headers as Record<string, string>),
         'Content-Type': 'application/x-www-form-urlencoded',
       };
 

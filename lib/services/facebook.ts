@@ -260,7 +260,9 @@ export class FacebookService extends MetaApiBase {
       before,
     } = options;
 
-    const cacheKey = `${pageId}:${limit}:${after ?? ''}:${before ?? ''}`;
+    // 包含 token hash 確保不同用戶不共享快取（避免洩漏受限貼文）
+    const tokenHash = createHash('sha256').update(accessToken).digest('hex').slice(0, 16);
+    const cacheKey = `${pageId}:${tokenHash}:${limit}:${after ?? ''}:${before ?? ''}`;
     const cached = this.postsCache.get(cacheKey);
     if (cached && Date.now() < cached.expiresAt) {
       return cached.data;
