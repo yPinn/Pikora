@@ -1,5 +1,6 @@
 import type { FacebookComment } from '@/lib/services/facebook';
 
+import { isSafeRegex } from './regex-guard';
 import { toDrawEntry } from './types';
 
 import type { DrawEntry, GiveawayFilters, FilterStats } from './types';
@@ -73,16 +74,6 @@ function secureRandomIndex(max: number): number {
     value = array[0];
   } while (value >= limit);
   return value % max;
-}
-
-// 檢查正則表達式是否可能造成 ReDoS（catastrophic backtracking）
-function isSafeRegex(pattern: string): boolean {
-  if (pattern.length > 200) return false;
-  // 拒絕巢狀量詞：(X+)+、(X*)* 等
-  if (/\([^)]*[+*][^)]*\)[+*?]/.test(pattern)) return false;
-  // 拒絕 (a|a)+ 類型的重疊交替量詞
-  if (/\(([^|)]+\|)+[^|)]+\)[+*]/.test(pattern)) return false;
-  return true;
 }
 
 // 建立抽獎池

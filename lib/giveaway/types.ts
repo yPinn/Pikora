@@ -1,5 +1,9 @@
 import type { FacebookComment } from '@/lib/services/facebook';
 
+import { isSafeRegex } from './regex-guard';
+
+export { isSafeRegex };
+
 // 篩選條件
 export interface GiveawayFilters {
   time_start?: string;
@@ -27,16 +31,6 @@ const VALID_FILTER_KEYS = new Set([
   'require_reaction',
   'allowed_reactions',
 ]);
-
-/**
- * 伺服器端 ReDoS 防護：檢查正則是否包含巢狀量詞等危險模式
- */
-function isSafeRegex(pattern: string): boolean {
-  if (pattern.length > 200) return false;
-  if (/\([^)]*[+*][^)]*\)[+*?]/.test(pattern)) return false;
-  if (/\(([^|)]+\|)+[^|)]+\)[+*]/.test(pattern)) return false;
-  return true;
-}
 
 /**
  * 驗證 GiveawayFilters 物件（純 TS，不依賴 zod）
