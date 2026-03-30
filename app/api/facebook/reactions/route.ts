@@ -7,7 +7,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/lib/auth';
 import { createLogger } from '@/lib/logger';
-import { getMetaServices } from '@/lib/services';
+import { getMetaServices, MetaApiException } from '@/lib/services';
 import type { ReactionType } from '@/lib/services/facebook';
 
 const logger = createLogger('facebook/reactions');
@@ -51,6 +51,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(reactions);
   } catch (error) {
     logger.error('Failed to fetch reactions', error);
+    if (error instanceof MetaApiException) {
+      return NextResponse.json({ error: error.getUserFriendlyMessage() }, { status: 500 });
+    }
     return NextResponse.json({ error: '操作失敗，請稍後再試' }, { status: 500 });
   }
 }

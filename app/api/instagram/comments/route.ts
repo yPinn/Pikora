@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     const { instagram } = getMetaServices();
     const result = await instagram.replyToComment(mediaId, accessToken, commentId, message);
 
-    return NextResponse.json(result);
+    return NextResponse.json({ data: result }, { status: 201 });
   } catch (error) {
     logger.error('Failed to reply to Instagram comment', error);
 

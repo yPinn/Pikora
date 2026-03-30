@@ -8,7 +8,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/lib/auth';
 import { createLogger } from '@/lib/logger';
-import { getMetaServices } from '@/lib/services';
+import { getMetaServices, MetaApiException } from '@/lib/services';
 
 const logger = createLogger('facebook/comments');
 export async function GET(request: NextRequest) {
@@ -46,6 +46,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(comments);
   } catch (error) {
     logger.error('Failed to fetch comments', error);
+    if (error instanceof MetaApiException) {
+      return NextResponse.json({ error: error.getUserFriendlyMessage() }, { status: 500 });
+    }
     return NextResponse.json({ error: '操作失敗，請稍後再試' }, { status: 500 });
   }
 }
@@ -68,9 +71,12 @@ export async function POST(request: NextRequest) {
     const pageAccessToken = await facebook.getPageAccessToken(pageId, session.accessToken);
     const result = await facebook.replyToComment(commentId, pageAccessToken, message);
 
-    return NextResponse.json(result);
+    return NextResponse.json({ data: result }, { status: 201 });
   } catch (error) {
     logger.error('Failed to reply to comment', error);
+    if (error instanceof MetaApiException) {
+      return NextResponse.json({ error: error.getUserFriendlyMessage() }, { status: 500 });
+    }
     return NextResponse.json({ error: '操作失敗，請稍後再試' }, { status: 500 });
   }
 }

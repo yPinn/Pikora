@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: '不支援的 mediaType' }, { status: 400 });
     }
 
-    return NextResponse.json(result);
+    return NextResponse.json({ data: result }, { status: 201 });
   } catch (error) {
     logger.error('Failed to publish Instagram media', error);
 

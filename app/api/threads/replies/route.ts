@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     const { threads } = getMetaServices();
     const result = await threads.replyToPost(threadsUserId, accessToken, replyToId, text);
 
-    return NextResponse.json(result);
+    return NextResponse.json({ data: result }, { status: 201 });
   } catch (error) {
     logger.error('Failed to reply to Threads post', error);
 
