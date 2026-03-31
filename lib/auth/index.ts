@@ -9,9 +9,7 @@ import NextAuth from 'next-auth';
 import prisma from '@/lib/prisma';
 
 import { authConfig } from './config';
-import { SESSION_COOKIE_NAME } from './cookie-names';
-
-const isProd = process.env.NEXT_PUBLIC_DEPLOYMENT_ENV === 'production';
+import { SESSION_COOKIE_NAME, IS_PROD, APP_BASE_PATH } from './cookie-names';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -24,8 +22,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       options: {
         httpOnly: true,
         sameSite: 'lax',
-        path: isProd ? '/pikora' : '/',
-        secure: isProd,
+        path: APP_BASE_PATH || '/',
+        secure: IS_PROD,
       },
     },
   },

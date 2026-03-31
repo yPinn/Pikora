@@ -24,8 +24,19 @@ const securityHeaders = [
   },
 ];
 
+function deriveBasePath(): string {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) return '';
+  try {
+    const { pathname } = new URL(appUrl);
+    return pathname === '/' ? '' : pathname.replace(/\/$/, '');
+  } catch {
+    return '';
+  }
+}
+
 const nextConfig: NextConfig = {
-  basePath: process.env.NEXT_PUBLIC_DEPLOYMENT_ENV === 'production' ? '/pikora' : '',
+  basePath: deriveBasePath(),
   images: {
     remotePatterns: [
       // Facebook CDN (用戶大頭貼、貼文圖片) - 單層萬用字元，不允許任意子網域深度

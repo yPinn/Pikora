@@ -7,7 +7,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-import { SESSION_COOKIE_NAME } from './lib/auth/cookie-names';
+import { SESSION_COOKIE_NAME_SECURE, SESSION_COOKIE_NAME_INSECURE } from './lib/auth/cookie-names';
 
 // API 路由中公開可存取的路徑（不需要登入）
 const PUBLIC_API_PATHS = [
@@ -20,8 +20,10 @@ const PUBLIC_API_PATHS = [
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 獲取 Session Cookie (相容 HTTP/HTTPS)
-  const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME);
+  // 同時接受兩種 cookie 名稱，防止 NEXT_PUBLIC_DEPLOYMENT_ENV 漏設時鎖用戶
+  const sessionCookie =
+    request.cookies.get(SESSION_COOKIE_NAME_SECURE) ??
+    request.cookies.get(SESSION_COOKIE_NAME_INSECURE);
 
   // API 路由：非公開路徑需有 session cookie（防禦第二層）
   if (pathname.startsWith('/api/')) {
