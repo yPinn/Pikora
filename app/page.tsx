@@ -188,7 +188,7 @@ export default function Home() {
           <div className="flex items-stretch border-l-2 border-black">
             {/* ModeToggle — square: width = nav-h */}
             <div
-              className="flex items-stretch [&>button]:h-full [&>button]:w-full [&>button]:!rounded-none [&>button]:!border-0 [&>button]:!bg-amber-500 [&>button]:!text-gray-900 [&>button]:!shadow-none [&>button]:transition-colors [&>button]:duration-150 [&>button]:hover:!bg-amber-400"
+              className="flex items-stretch [&>button]:h-full [&>button]:w-full [&>button]:rounded-none! [&>button]:border-0! [&>button]:bg-amber-500! [&>button]:text-gray-900! [&>button]:shadow-none! [&>button]:transition-colors [&>button]:duration-150 [&>button]:hover:bg-amber-400!"
               style={{ width: 'var(--nav-btn-icon-w)' } as React.CSSProperties}
             >
               <ModeToggle />
@@ -212,10 +212,10 @@ export default function Home() {
       >
         {/* ── Hero ── */}
         <section
-          className={`${SECTION} flex items-center bg-gradient-to-b from-blue-600 to-blue-400`}
+          className={`${SECTION} flex items-center bg-linear-to-b from-blue-600 to-blue-400`}
           data-active={seen.has(0) ? '' : undefined}
         >
-          <div className="mx-auto w-full max-w-screen-xl px-8">
+          <div className="mx-auto w-full max-w-7xl px-8">
             <div className="grid items-center gap-8 lg:grid-cols-[1fr_420px]">
               <div>
                 <div
@@ -272,7 +272,7 @@ export default function Home() {
                   className="anim-item pointer-events-none absolute top-2 right-4"
                   style={delay(0.55)}
                 >
-                  <Sticker className="rotate-[12deg] [animation:float_3s_ease-in-out_0.2s_infinite] rounded-full">
+                  <Sticker className="rotate-12 animate-[float_3s_ease-in-out_0.2s_infinite] rounded-full">
                     <SiThreads className="text-card-foreground h-14 w-14" />
                   </Sticker>
                 </div>
@@ -280,7 +280,7 @@ export default function Home() {
                   className="anim-item pointer-events-none absolute top-1/2 right-28 -translate-y-1/2"
                   style={delay(0.65)}
                 >
-                  <Sticker className="rotate-[5deg] [animation:float_3.5s_ease-in-out_0.9s_infinite] rounded-[28px]">
+                  <Sticker className="rotate-[5deg] animate-[float_3.5s_ease-in-out_0.9s_infinite] rounded-[28px]">
                     <FaFacebook className="text-card-foreground h-14 w-14" />
                   </Sticker>
                 </div>
@@ -288,7 +288,7 @@ export default function Home() {
                   className="anim-item pointer-events-none absolute bottom-2 left-8"
                   style={delay(0.75)}
                 >
-                  <Sticker className="rotate-[-8deg] [animation:float_4s_ease-in-out_1.6s_infinite] rounded-[28px]">
+                  <Sticker className="rotate-[-8deg] animate-[float_4s_ease-in-out_1.6s_infinite] rounded-[28px]">
                     <FaInstagram className="text-card-foreground h-14 w-14" />
                   </Sticker>
                 </div>
@@ -299,7 +299,7 @@ export default function Home() {
 
         {/* ── Platforms ── */}
         <section
-          className={`${SECTION} relative overflow-hidden bg-gradient-to-b from-blue-400 to-blue-100 dark:from-blue-800 dark:to-blue-950`}
+          className={`${SECTION} relative overflow-hidden bg-linear-to-b from-blue-400 to-blue-100 dark:from-blue-800 dark:to-blue-950`}
           data-active={seen.has(1) ? '' : undefined}
           id="platforms"
         >
@@ -314,7 +314,7 @@ export default function Home() {
             viewBox="0 0 1200 80"
           >
             <path
-              className="[animation:path-draw_2.5s_ease-out_0.3s_both]"
+              className="animate-[path-draw_2.5s_ease-out_0.3s_both]"
               d="M 80 65 C 180 20, 320 70, 480 35 C 600 8, 720 55, 860 25 C 980 0, 1100 45, 1160 20"
               stroke="currentColor"
               strokeDasharray="1200"
@@ -323,7 +323,7 @@ export default function Home() {
             />
           </svg>
 
-          <div className="relative mx-auto flex h-full w-full max-w-screen-xl flex-col px-8 py-12">
+          <div className="relative mx-auto flex h-full w-full max-w-7xl flex-col px-8 py-12">
             {/* Title + doodle underline */}
             <div className="anim-item mb-0 text-center" style={delay(0.05)}>
               <h2
@@ -341,7 +341,7 @@ export default function Home() {
                   viewBox="0 0 200 10"
                 >
                   <path
-                    className="[animation:path-draw_1s_ease-out_0.6s_both]"
+                    className="animate-[path-draw_1s_ease-out_0.6s_both]"
                     d="M2 7 C45 3,95 9,135 5 C162 2,186 8,198 6"
                     stroke="currentColor"
                     strokeDasharray="220"
@@ -358,7 +358,7 @@ export default function Home() {
                 className="anim-item pointer-events-none absolute top-[15%] left-[4%]"
                 style={delay(0.15)}
               >
-                <div className="-rotate-12 [animation:float_3.2s_ease-in-out_infinite]">
+                <div className="-rotate-12 animate-[float_3.2s_ease-in-out_infinite]">
                   <FaInstagram className="h-36 w-36 text-slate-900 drop-shadow-xl lg:h-44 lg:w-44 dark:text-slate-100" />
                   <div className="mt-2 inline-flex -rotate-6 items-center gap-1 rounded-full bg-rose-500 px-3 py-1 text-xs font-bold tracking-wider text-white uppercase shadow-md">
                     即將推出
@@ -386,7 +386,7 @@ export default function Home() {
                 className="anim-item pointer-events-none absolute top-[10%] right-[6%]"
                 style={delay(0.2)}
               >
-                <div className="rotate-[8deg] [animation:float_2.8s_ease-in-out_0.8s_infinite]">
+                <div className="rotate-[8deg] animate-[float_2.8s_ease-in-out_0.8s_infinite]">
                   <SiThreads className="h-36 w-36 text-slate-900 drop-shadow-xl lg:h-44 lg:w-44 dark:text-slate-100" />
                   <div className="mt-2 ml-auto inline-flex rotate-3 items-center gap-1 rounded-full bg-orange-400 px-3 py-1 text-xs font-bold tracking-wider text-white uppercase shadow-md">
                     即將推出
@@ -431,7 +431,7 @@ export default function Home() {
                 className="anim-item pointer-events-none absolute bottom-[20%] left-1/2 -translate-x-1/2"
                 style={delay(0.28)}
               >
-                <div className="rotate-[3deg] [animation:float_3.8s_ease-in-out_1.5s_infinite]">
+                <div className="rotate-3 animate-[float_3.8s_ease-in-out_1.5s_infinite]">
                   <FaFacebook className="h-44 w-44 text-slate-900 drop-shadow-xl lg:h-52 lg:w-52 dark:text-slate-100" />
                   <div className="mx-auto mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-400 px-3 py-1 text-xs font-bold tracking-wider text-slate-900 uppercase shadow-md">
                     <span>✓</span> Facebook
@@ -465,7 +465,7 @@ export default function Home() {
                 className="doodle-item pointer-events-none absolute right-[28%] bottom-[28%]"
                 style={{ ...delay(0.48), fontFamily: 'var(--font-caveat), cursive' }}
               >
-                <span className="inline-block -rotate-[10deg] text-2xl font-bold text-slate-700 dark:text-slate-300">
+                <span className="inline-block -rotate-10 text-2xl font-bold text-slate-700 dark:text-slate-300">
                   ok!
                 </span>
                 <svg
@@ -499,7 +499,7 @@ export default function Home() {
               </svg>
               <svg
                 aria-hidden
-                className="doodle-item pointer-events-none absolute top-[36%] right-[24%] rotate-[20deg] text-yellow-200/80"
+                className="doodle-item pointer-events-none absolute top-[36%] right-[24%] rotate-20 text-yellow-200/80"
                 fill="currentColor"
                 height="12"
                 style={delay(0.44)}
@@ -553,7 +553,7 @@ export default function Home() {
                 Next
               </span>
               <div className="rounded-xl bg-orange-500 p-2 shadow-lg transition-colors group-hover:bg-orange-600">
-                <ArrowDown className="h-6 w-6 [animation:bounce-arrow_1.2s_ease-in-out_infinite] text-white" />
+                <ArrowDown className="h-6 w-6 animate-[bounce-arrow_1.2s_ease-in-out_infinite] text-white" />
               </div>
             </Link>
           </div>
@@ -565,7 +565,7 @@ export default function Home() {
           data-active={seen.has(2) ? '' : undefined}
           id="features"
         >
-          <div className="mx-auto w-full max-w-screen-xl px-8">
+          <div className="mx-auto w-full max-w-7xl px-8">
             <h2
               className="anim-item text-foreground mb-2 text-3xl font-bold lg:text-4xl"
               style={delay(0.05)}
@@ -595,7 +595,7 @@ export default function Home() {
 
         {/* ── CTA + Footer ── strong blue gradient looks good in both modes */}
         <section
-          className={`${SECTION} flex flex-col bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800`}
+          className={`${SECTION} flex flex-col bg-linear-to-br from-blue-600 via-blue-700 to-blue-800`}
           data-active={seen.has(3) ? '' : undefined}
         >
           <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
@@ -619,7 +619,7 @@ export default function Home() {
             </div>
           </div>
           <footer className="shrink-0 border-t border-white/20 px-8 py-5">
-            <div className="mx-auto flex w-full max-w-screen-xl flex-col items-center justify-between gap-2 text-center sm:flex-row">
+            <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-2 text-center sm:flex-row">
               <span className="text-xs text-white/50">© 2025 Pikora. All rights reserved.</span>
               <div className="flex gap-5 text-xs text-white/50">
                 <Link className="transition-colors hover:text-white/80" href="/privacy">

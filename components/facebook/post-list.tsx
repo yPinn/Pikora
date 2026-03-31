@@ -160,7 +160,7 @@ function PostCard({ post, priority = false }: { post: FacebookPost; priority?: b
             src={momonga2}
           />
           {/* 覆蓋層 */}
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-200/70 to-slate-300/70 dark:from-slate-800/80 dark:to-slate-900/80" />
+          <div className="absolute inset-0 bg-linear-to-br from-slate-200/70 to-slate-300/70 dark:from-slate-800/80 dark:to-slate-900/80" />
         </div>
       )}
 
@@ -215,7 +215,7 @@ function PostCard({ post, priority = false }: { post: FacebookPost; priority?: b
       {/* Hover / Focus / Touch 時顯示互動數據與文字預覽 */}
       <div
         aria-hidden="true"
-        className={`pointer-events-none absolute inset-0 z-10 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/50 to-transparent p-2 text-white transition-opacity motion-reduce:transition-none ${showOverlay ? 'opacity-100' : 'opacity-0'}`}
+        className={`pointer-events-none absolute inset-0 z-10 flex flex-col justify-end bg-linear-to-t from-black/90 via-black/50 to-transparent p-2 text-white transition-opacity motion-reduce:transition-none ${showOverlay ? 'opacity-100' : 'opacity-0'}`}
       >
         {/* 貼文文字預覽 */}
         {post.message && (
