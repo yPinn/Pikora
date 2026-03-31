@@ -82,11 +82,11 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
       </Card>
       <div className="text-muted-foreground text-body px-6 text-center">
         登入即表示您同意我們的{' '}
-        <a className="underline-offset-2 hover:underline" href="/terms">
+        <a className="underline-offset-2 hover:underline" href={`${appUrl}/terms`}>
           服務條款
         </a>{' '}
         和{' '}
-        <a className="underline-offset-2 hover:underline" href="/privacy">
+        <a className="underline-offset-2 hover:underline" href={`${appUrl}/privacy`}>
           隱私政策
         </a>
         。

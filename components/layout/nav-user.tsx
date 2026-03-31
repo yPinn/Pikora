@@ -110,7 +110,9 @@ export function NavUser({ user }: { user: { name: string; email: string; avatar:
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => signOut({ callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/login` })}
+              onClick={() =>
+                signOut({ callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/login` })
+              }
             >
               <LogOut className="mr-2 size-4" />
               登出
