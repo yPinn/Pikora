@@ -217,9 +217,11 @@
   html {
     overflow-y: scroll;
     scroll-behavior: smooth;
+  }
+  * {
     scrollbar-width: none; /* Firefox */
   }
-  html::-webkit-scrollbar {
+  *::-webkit-scrollbar {
     display: none; /* Chrome / Safari */
   }
 }

@@ -42,7 +42,7 @@ export function FacebookSidebar({
           </div>
         )}
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="[scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <NavMain items={facebookNavConfig.navMain} />
       </SidebarContent>
       <SidebarFooter>

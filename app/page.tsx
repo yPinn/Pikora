@@ -633,7 +633,12 @@ export default function Home() {
           </footer>
         </section>
       </main>
-      <ScrollIndicator scrollRef={mainRef} />
+      <ScrollIndicator
+        className="top-14"
+        scrollRef={mainRef}
+        thumbClassName="border border-white/60"
+        trackClassName="bg-white/10"
+      />
     </div>
   );
 }

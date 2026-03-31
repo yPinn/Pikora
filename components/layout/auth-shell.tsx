@@ -9,7 +9,7 @@ interface AuthShellProps {
 
 export function AuthShell({ children }: AuthShellProps) {
   return (
-    <SidebarProvider>
+    <SidebarProvider className="h-dvh">
       <TestingPhaseModal />
       {children}
     </SidebarProvider>
