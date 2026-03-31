@@ -7,6 +7,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+import { SESSION_COOKIE_NAME } from './lib/auth/cookie-names';
+
 // API 路由中公開可存取的路徑（不需要登入）
 const PUBLIC_API_PATHS = [
   '/api/auth', // NextAuth OAuth callback
@@ -19,9 +21,7 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 獲取 Session Cookie (相容 HTTP/HTTPS)
-  const sessionCookie =
-    request.cookies.get('next-auth.session-token.pikora') ||
-    request.cookies.get('__Secure-next-auth.session-token.pikora');
+  const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME);
 
   // API 路由：非公開路徑需有 session cookie（防禦第二層）
   if (pathname.startsWith('/api/')) {

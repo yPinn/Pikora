@@ -9,13 +9,12 @@ import type { NextRequest } from 'next/server';
 
 import { getToken } from 'next-auth/jwt';
 
+import { SESSION_COOKIE_NAME } from './cookie-names';
+
 const secret = process.env.AUTH_SECRET;
 if (!secret) throw new Error('AUTH_SECRET environment variable is required');
 
-const cookieName =
-  process.env.NODE_ENV === 'production'
-    ? '__Secure-next-auth.session-token.pikora'
-    : 'next-auth.session-token.pikora';
+const cookieName = SESSION_COOKIE_NAME;
 
 /**
  * API routes 用：從 NextRequest 讀取 JWT 並回傳 accessToken。
@@ -33,9 +32,14 @@ export async function getRequestAccessToken(req: NextRequest): Promise<string | 
  */
 export async function getComponentAccessToken(): Promise<string | null> {
   const cookieStore = await cookies();
-  // getToken 接受 { headers, cookies } 形式的 request-like 物件
+  // getToken 從 req.headers.get("cookie") 解析 cookie，不讀 req.cookies
+  const cookieHeader = cookieStore
+    .getAll()
+    .map(({ name, value }) => `${name}=${value}`)
+    .join('; ');
+  const headers = new Headers({ cookie: cookieHeader });
   const token = await getToken({
-    req: { headers: new Headers(), cookies: cookieStore } as unknown as NextRequest,
+    req: { headers } as unknown as NextRequest,
     secret,
     cookieName,
   });

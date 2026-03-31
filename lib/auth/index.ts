@@ -9,23 +9,23 @@ import NextAuth from 'next-auth';
 import prisma from '@/lib/prisma';
 
 import { authConfig } from './config';
+import { SESSION_COOKIE_NAME } from './cookie-names';
+
+const isProd = process.env.NEXT_PUBLIC_DEPLOYMENT_ENV === 'production';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
   basePath: '/api/auth',
-  // 加上這個可以確保獨立性
+  // 加上這個可以確保獨立性（隔離 cookie，避免同一來源下多個 Next.js 應用互相干擾）
   cookies: {
     sessionToken: {
-      name:
-        process.env.NODE_ENV === 'production'
-          ? '__Secure-next-auth.session-token.pikora'
-          : 'next-auth.session-token.pikora',
+      name: SESSION_COOKIE_NAME,
       options: {
         httpOnly: true,
         sameSite: 'lax',
-        path: process.env.NODE_ENV === 'production' ? '/pikora' : '/',
-        secure: process.env.NODE_ENV === 'production',
+        path: isProd ? '/pikora' : '/',
+        secure: isProd,
       },
     },
   },
