@@ -315,7 +315,7 @@ export function PostList() {
         variants={staggerContainer}
       >
         {posts.map((post, index) => (
-          <PostCard key={post.id} post={post} priority={index < 4} />
+          <PostCard key={post.id} post={post} priority={index < 8} />
         ))}
       </motion.div>
 
