@@ -6,6 +6,11 @@ import { createLogger } from '@/lib/logger';
 import prisma from '@/lib/prisma';
 
 const logger = createLogger('giveaway');
+
+const FACEBOOK_ID_PATTERN = /^\d{1,30}$/;
+// Facebook post ID 格式為 {pageId}_{postId}（如 123456789_987654321）
+const FACEBOOK_POST_ID_PATTERN = /^\d{1,30}(_\d{1,30})?$/;
+
 // GET /api/giveaway - 取得抽獎活動列表
 export async function GET(request: NextRequest) {
   try {
@@ -50,11 +55,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { pageId, postId, post_url, name, filters, prizes } = body;
 
-    const FACEBOOK_ID_PATTERN = /^\d{1,30}$/;
     if (typeof pageId !== 'string' || !FACEBOOK_ID_PATTERN.test(pageId.trim())) {
       return NextResponse.json({ error: '無效的 pageId' }, { status: 400 });
     }
-    if (typeof postId !== 'string' || !FACEBOOK_ID_PATTERN.test(postId.trim())) {
+    if (typeof postId !== 'string' || !FACEBOOK_POST_ID_PATTERN.test(postId.trim())) {
       return NextResponse.json({ error: '無效的 postId' }, { status: 400 });
     }
     if (post_url !== undefined) {
@@ -81,6 +85,9 @@ export async function POST(request: NextRequest) {
     }
     if (!Array.isArray(prizes) || prizes.length === 0) {
       return NextResponse.json({ error: '缺少獎項' }, { status: 400 });
+    }
+    if (prizes.length > 20) {
+      return NextResponse.json({ error: '獎項數量超過上限 (20)' }, { status: 400 });
     }
     for (const p of prizes) {
       if (typeof p.name !== 'string' || p.name.trim().length === 0) {

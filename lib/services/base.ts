@@ -116,7 +116,12 @@ export class MetaApiBase {
           }
         }
 
-        const data = await response.json();
+        let data: unknown;
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error(`API 回應無法解析 (HTTP ${response.status})`);
+        }
 
         // 檢查 API 錯誤
         if (this.isErrorResponse(data)) {

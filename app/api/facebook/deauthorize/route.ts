@@ -66,7 +66,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    logger.error('Failed to process deauthorize request', error);
     return NextResponse.json({ error: 'Failed to process deauthorize request' }, { status: 500 });
   }
 }
