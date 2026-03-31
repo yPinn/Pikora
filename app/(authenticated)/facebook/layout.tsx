@@ -1,6 +1,9 @@
+import { redirect } from 'next/navigation';
+
 import { Shell } from '@/components/facebook/shell';
 import { auth } from '@/lib/auth';
 import { getComponentAccessToken } from '@/lib/auth/get-server-token';
+import { MetaApiException } from '@/lib/services/base';
 import { createFacebookService } from '@/lib/services/facebook';
 
 export default async function Layout({ children }: { children: React.ReactNode }) {
@@ -14,13 +17,25 @@ export default async function Layout({ children }: { children: React.ReactNode }
 
   const facebookService = createFacebookService({ appId, appSecret });
 
-  const pages = await facebookService.getPages(accessToken, [
-    'id',
-    'name',
-    'category',
-    'tasks',
-    'picture',
-  ]);
+  if (!accessToken) {
+    redirect('/login');
+  }
+
+  let pages;
+  try {
+    pages = await facebookService.getPages(accessToken, [
+      'id',
+      'name',
+      'category',
+      'tasks',
+      'picture',
+    ]);
+  } catch (error) {
+    if (error instanceof MetaApiException && error.isTokenError()) {
+      redirect('/login');
+    }
+    throw error;
+  }
 
   // session.user.image 是 OAuth 授權時由 Facebook 提供的頭像 CDN URL，不含 access token
   const user = {
