@@ -186,12 +186,13 @@ export class MetaApiBase {
 
   /**
    * 驗證 Access Token
+   * appAccessToken 必須由呼叫方顯式提供（格式：appId|appSecret），
+   * 不在此方法內自動組合，避免 appSecret 出現在 URL log 中。
    */
-  async debugToken(inputToken: string, accessToken?: string): Promise<TokenDebugInfo> {
-    const appToken = accessToken || `${this.config.appId}|${this.config.appSecret}`;
+  async debugToken(inputToken: string, appAccessToken: string): Promise<TokenDebugInfo> {
     const response = await this.request<{ data: TokenDebugInfo }>('/debug_token', {
       params: { input_token: inputToken },
-      accessToken: appToken,
+      accessToken: appAccessToken,
     });
     return response.data;
   }

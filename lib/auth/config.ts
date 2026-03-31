@@ -72,9 +72,9 @@ export const authConfig: NextAuthConfig = {
       return token;
     },
     async session({ session, token }) {
-      // 將 token 資訊傳遞到 session
+      // accessToken 刻意不加入 session，避免透過 /api/auth/session 暴露至前端。
+      // API routes 請改用 getRequestAccessToken()，Server Components 用 getComponentAccessToken()。
       if (token) {
-        session.accessToken = token.accessToken as string | undefined;
         session.provider = token.provider as string;
         session.providerAccountId = token.providerAccountId as string;
         if (token.error) {
@@ -100,12 +100,15 @@ export const authConfig: NextAuthConfig = {
 // 擴展 Session 和 JWT 類型
 declare module 'next-auth' {
   interface Session {
-    accessToken?: string;
+    // accessToken 不暴露至 session（避免透過 /api/auth/session 送至前端）
     provider?: string;
     providerAccountId?: string;
     error?: string;
   }
+}
 
+// JWT 型別擴充（存於 HTTP-only cookie，不傳至前端）
+declare module 'next-auth/jwt' {
   interface JWT {
     accessToken?: string;
     refreshToken?: string;

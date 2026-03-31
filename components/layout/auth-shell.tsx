@@ -1,5 +1,6 @@
 'use client';
 
+import { TestingPhaseModal } from '@/components/testing-phase-modal';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
 interface AuthShellProps {
@@ -7,5 +8,10 @@ interface AuthShellProps {
 }
 
 export function AuthShell({ children }: AuthShellProps) {
-  return <SidebarProvider>{children}</SidebarProvider>;
+  return (
+    <SidebarProvider>
+      <TestingPhaseModal />
+      {children}
+    </SidebarProvider>
+  );
 }

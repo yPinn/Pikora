@@ -9,6 +9,7 @@ import { SiThreads } from 'react-icons/si';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import momonga1 from '@/public/Momonga_1.jpg';
 
 export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) {
   const handleFacebookLogin = () => {
@@ -72,7 +73,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
               alt="Login background"
               className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.8]"
               sizes="(max-width: 768px) 0vw, 50vw"
-              src="/Momonga_1.jpg"
+              src={momonga1}
             />
           </div>
         </CardContent>

@@ -13,5 +13,6 @@ import { authConfig } from './config';
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
+  basePath: '/pikora/api/auth',
   debug: process.env.NODE_ENV === 'development',
 });

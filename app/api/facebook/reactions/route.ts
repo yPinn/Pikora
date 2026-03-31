@@ -5,7 +5,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { auth } from '@/lib/auth';
+import { getRequestAccessToken } from '@/lib/auth/get-server-token';
 import { createLogger } from '@/lib/logger';
 import { getMetaServices, MetaApiException } from '@/lib/services';
 import type { ReactionType } from '@/lib/services/facebook';
@@ -13,8 +13,8 @@ import type { ReactionType } from '@/lib/services/facebook';
 const logger = createLogger('facebook/reactions');
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.accessToken) {
+    const accessToken = await getRequestAccessToken(request);
+    if (!accessToken) {
       return NextResponse.json({ error: '未授權' }, { status: 401 });
     }
 
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { facebook } = getMetaServices();
-    const pageAccessToken = await facebook.getPageAccessToken(pageId, session.accessToken);
+    const pageAccessToken = await facebook.getPageAccessToken(pageId, accessToken);
 
     if (fetchAll) {
       const reactions = await facebook.getAllPostReactions(postId, pageAccessToken, { type });

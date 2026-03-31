@@ -25,6 +25,7 @@ import { useFacebookPage } from '@/contexts/facebook-page-store';
 import { useFacebookPosts } from '@/hooks/use-facebook-posts';
 import { ANIM, scaleIn, staggerContainer } from '@/lib/animation';
 import type { FacebookPost } from '@/lib/services/facebook';
+import momonga2 from '@/public/Momonga_2.jpg';
 
 // 從貼文中提取所有媒體圖片
 function getMediaImages(post: FacebookPost): string[] {
@@ -154,7 +155,7 @@ function PostCard({ post }: { post: FacebookPost }) {
             alt=""
             className="object-cover opacity-75 blur-[2px] saturate-0 dark:opacity-75"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"
-            src="/Momonga_2.jpg"
+            src={momonga2}
           />
           {/* 覆蓋層 */}
           <div className="absolute inset-0 bg-gradient-to-br from-slate-200/70 to-slate-300/70 dark:from-slate-800/80 dark:to-slate-900/80" />

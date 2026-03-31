@@ -1,4 +1,5 @@
 import { Caveat, Geist, Geist_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 
 import { SessionProvider } from '@/components/session-provider';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -21,6 +22,13 @@ const geistMono = Geist_Mono({
 const caveat = Caveat({
   variable: '--font-caveat',
   subsets: ['latin'],
+});
+
+const delaGothicOne = localFont({
+  src: '../public/fonts/DelaGothicOne-Regular.woff2',
+  variable: '--font-dela-gothic-one',
+  weight: '400',
+  display: 'swap',
 });
 
 const description =
@@ -51,10 +59,10 @@ type RootLayoutProps = Readonly<{
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <>
-      <html suppressHydrationWarning lang="zh-TW">
+      <html suppressHydrationWarning data-scroll-behavior="smooth" lang="zh-TW">
         <head />
         <body
-          className={`${geistSans.variable} ${geistMono.variable} ${caveat.variable} antialiased`}
+          className={`${geistSans.variable} ${geistMono.variable} ${caveat.variable} ${delaGothicOne.variable} antialiased`}
         >
           <SessionProvider>
             <ThemeProvider attribute="class" defaultTheme="light">

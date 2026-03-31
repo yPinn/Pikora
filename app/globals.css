@@ -1,14 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-@font-face {
-  font-family: 'Dela Gothic One';
-  src: url('/fonts/DelaGothicOne-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -215,7 +207,8 @@
     height: 100dvh;
   }
   h1 {
-    font-family: 'Dela Gothic One', var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+    font-family:
+      var(--font-dela-gothic-one), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
     font-size: clamp(2.5rem, 6vw, 4rem); /* 40px ~ 64px，確保字體清晰 */
     line-height: 1.15;
   }

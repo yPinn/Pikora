@@ -6,15 +6,15 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { auth } from '@/lib/auth';
+import { getRequestAccessToken } from '@/lib/auth/get-server-token';
 import { createLogger } from '@/lib/logger';
 import { getMetaServices, MetaApiException } from '@/lib/services';
 
 const logger = createLogger('facebook/comments');
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.accessToken) {
+    const accessToken = await getRequestAccessToken(request);
+    if (!accessToken) {
       return NextResponse.json({ error: '未授權' }, { status: 401 });
     }
 
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { facebook } = getMetaServices();
-    const pageAccessToken = await facebook.getPageAccessToken(pageId, session.accessToken);
+    const pageAccessToken = await facebook.getPageAccessToken(pageId, accessToken);
 
     if (fetchAll) {
       const comments = await facebook.getAllComments(postId, pageAccessToken);
@@ -55,8 +55,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.accessToken) {
+    const accessToken = await getRequestAccessToken(request);
+    if (!accessToken) {
       return NextResponse.json({ error: '未授權' }, { status: 401 });
     }
 
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { facebook } = getMetaServices();
-    const pageAccessToken = await facebook.getPageAccessToken(pageId, session.accessToken);
+    const pageAccessToken = await facebook.getPageAccessToken(pageId, accessToken);
     const result = await facebook.replyToComment(commentId, pageAccessToken, message);
 
     return NextResponse.json({ data: result }, { status: 201 });

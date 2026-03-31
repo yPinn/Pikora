@@ -66,6 +66,11 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     // 儲存中獎者
     if (body.winners) {
+      // 防止重複執行：已完成的活動不可再次儲存中獎者
+      if (existing.status === 'COMPLETED') {
+        return NextResponse.json({ error: '活動已完成，無法再次儲存中獎者' }, { status: 409 });
+      }
+
       // 驗證 winners 陣列
       if (!Array.isArray(body.winners)) {
         return NextResponse.json({ error: 'winners 格式錯誤' }, { status: 400 });

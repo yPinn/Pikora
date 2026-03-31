@@ -66,6 +66,7 @@ function getMentionKey(message: string): string {
 
 // 加密安全的隨機索引（rejection sampling 消除 modulo bias）
 function secureRandomIndex(max: number): number {
+  if (max <= 0) throw new RangeError(`secureRandomIndex: max must be positive, got ${max}`);
   const limit = Math.floor(0x100000000 / max) * max;
   const array = new Uint32Array(1);
   let value: number;

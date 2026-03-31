@@ -5,20 +5,20 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { auth } from '@/lib/auth';
+import { getRequestAccessToken } from '@/lib/auth/get-server-token';
 import { createLogger } from '@/lib/logger';
 import { getMetaServices, MetaApiException } from '@/lib/services';
 
 const logger = createLogger('facebook/pages');
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.accessToken) {
+    const accessToken = await getRequestAccessToken(request);
+    if (!accessToken) {
       return NextResponse.json({ error: '未授權' }, { status: 401 });
     }
 
     const { facebook } = getMetaServices();
-    const pages = await facebook.getPages(session.accessToken);
+    const pages = await facebook.getPages(accessToken);
 
     return NextResponse.json({ data: pages });
   } catch (error) {

@@ -24,6 +24,7 @@ import { SiThreads } from 'react-icons/si';
 import { ModeToggle } from '@/components/mode-toggle';
 import { ScrollIndicator } from '@/components/scroll-indicator';
 import { Button } from '@/components/ui/button';
+import momonga1 from '@/public/Momonga_1.jpg';
 
 // Navbar is h-14 (3.5rem); each section fills the remainder so header+section = 100dvh
 const SECTION = 'h-[calc(100dvh-3.5rem)] snap-start snap-always';
@@ -172,7 +173,7 @@ export default function Home() {
               alt="pikora"
               className="rounded-full object-cover"
               height={28}
-              src="/Momonga_1.jpg"
+              src={momonga1}
               width={28}
             />
             <span className="text-sm font-semibold text-blue-500">pikora</span>

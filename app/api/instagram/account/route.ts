@@ -5,19 +5,18 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { auth } from '@/lib/auth';
+import { getRequestAccessToken } from '@/lib/auth/get-server-token';
 import { createLogger } from '@/lib/logger';
 import { getMetaServices, MetaApiException } from '@/lib/services';
 
 const logger = createLogger('instagram/account');
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.accessToken) {
+    const accessToken = await getRequestAccessToken(request);
+    if (!accessToken) {
       return NextResponse.json({ error: '未授權' }, { status: 401 });
     }
 
-    const accessToken = session.accessToken;
     const { searchParams } = new URL(request.url);
     const igUserId = searchParams.get('igUserId');
 
