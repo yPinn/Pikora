@@ -17,7 +17,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
 
   const facebookService = createFacebookService({ appId, appSecret });
 
-  if (!accessToken) {
+  if (!session || !accessToken) {
     redirect('/login');
   }
 

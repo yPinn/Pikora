@@ -35,7 +35,7 @@ export async function getComponentAccessToken(): Promise<string | null> {
   // getToken 從 req.headers.get("cookie") 解析 cookie，不讀 req.cookies
   const cookieHeader = cookieStore
     .getAll()
-    .map(({ name, value }) => `${name}=${value}`)
+    .map(({ name, value }) => `${encodeURIComponent(name)}=${encodeURIComponent(value)}`)
     .join('; ');
   const headers = new Headers({ cookie: cookieHeader });
   const token = await getToken({
