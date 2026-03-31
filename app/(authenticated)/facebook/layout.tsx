@@ -1,5 +1,3 @@
-import { redirect } from 'next/navigation';
-
 import { Shell } from '@/components/facebook/shell';
 import { auth } from '@/lib/auth';
 import { getComponentAccessToken } from '@/lib/auth/get-server-token';
@@ -7,11 +5,6 @@ import { createFacebookService } from '@/lib/services/facebook';
 
 export default async function Layout({ children }: { children: React.ReactNode }) {
   const [session, accessToken] = await Promise.all([auth(), getComponentAccessToken()]);
-
-  // 提前處理無權限狀態
-  if (!session?.user || !accessToken) {
-    redirect('/login');
-  }
 
   const appId = process.env.META_APP_ID;
   const appSecret = process.env.META_APP_SECRET;

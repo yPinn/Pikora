@@ -20,8 +20,7 @@ export function proxy(request: NextRequest) {
 
   // 獲取 Session Cookie (相容 HTTP/HTTPS)
   const sessionCookie =
-    request.cookies.get('authjs.session-token') ||
-    request.cookies.get('__Secure-authjs.session-token') ||
+    request.cookies.get('next-auth.session-token.pikora') ||
     request.cookies.get('__Secure-next-auth.session-token.pikora');
 
   // API 路由：非公開路徑需有 session cookie（防禦第二層）
@@ -37,15 +36,12 @@ export function proxy(request: NextRequest) {
   const isProtectedRoute = protectedPaths.some((path) => pathname.startsWith(path));
 
   // 未登入攔截：訪問保護頁面時強制跳轉登入
+  // 使用 basePath 確保重定向 URL 正確（含 /pikora 前綴）
   if (isProtectedRoute && !sessionCookie) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('callbackUrl', pathname);
+    const basePath = request.nextUrl.basePath;
+    const loginUrl = new URL(`${basePath}/login`, request.url);
+    loginUrl.searchParams.set('callbackUrl', `${basePath}${pathname}`);
     return NextResponse.redirect(loginUrl);
-  }
-
-  // 已登入跳轉：避免已登入使用者重複訪問登入頁
-  if (pathname === '/login' && sessionCookie) {
-    return NextResponse.redirect(new URL('/facebook/content/posts', request.url));
   }
 
   return NextResponse.next();

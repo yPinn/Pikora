@@ -3,5 +3,6 @@
 import { SessionProvider as NextAuthSessionProvider } from 'next-auth/react';
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-  return <NextAuthSessionProvider basePath="/pikora/api/auth">{children}</NextAuthSessionProvider>;
+  const basePath = process.env.NODE_ENV === 'production' ? '/pikora/api/auth' : '/api/auth';
+  return <NextAuthSessionProvider basePath={basePath}>{children}</NextAuthSessionProvider>;
 }

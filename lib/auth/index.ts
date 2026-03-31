@@ -17,12 +17,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   // 加上這個可以確保獨立性
   cookies: {
     sessionToken: {
-      name: `__Secure-next-auth.session-token.pikora`,
+      name:
+        process.env.NODE_ENV === 'production'
+          ? '__Secure-next-auth.session-token.pikora'
+          : 'next-auth.session-token.pikora',
       options: {
         httpOnly: true,
         sameSite: 'lax',
-        path: '/pikora', // 讓瀏覽器只在 /pikora 下發送這個 Cookie
-        secure: true,
+        path: process.env.NODE_ENV === 'production' ? '/pikora' : '/',
+        secure: process.env.NODE_ENV === 'production',
       },
     },
   },

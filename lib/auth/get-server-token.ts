@@ -12,12 +12,17 @@ import { getToken } from 'next-auth/jwt';
 const secret = process.env.AUTH_SECRET;
 if (!secret) throw new Error('AUTH_SECRET environment variable is required');
 
+const cookieName =
+  process.env.NODE_ENV === 'production'
+    ? '__Secure-next-auth.session-token.pikora'
+    : 'next-auth.session-token.pikora';
+
 /**
  * API routes 用：從 NextRequest 讀取 JWT 並回傳 accessToken。
  * 回傳 null 表示未登入或 token 已過期。
  */
 export async function getRequestAccessToken(req: NextRequest): Promise<string | null> {
-  const token = await getToken({ req, secret });
+  const token = await getToken({ req, secret, cookieName });
   if (!token?.accessToken) return null;
   return token.accessToken as string;
 }
@@ -32,6 +37,7 @@ export async function getComponentAccessToken(): Promise<string | null> {
   const token = await getToken({
     req: { headers: new Headers(), cookies: cookieStore } as unknown as NextRequest,
     secret,
+    cookieName,
   });
   if (!token?.accessToken) return null;
   return token.accessToken as string;

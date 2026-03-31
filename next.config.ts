@@ -25,7 +25,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  basePath: '/pikora',
+  basePath: process.env.NODE_ENV === 'production' ? '/pikora' : '',
   images: {
     remotePatterns: [
       // Facebook CDN (用戶大頭貼、貼文圖片) - 單層萬用字元，不允許任意子網域深度
