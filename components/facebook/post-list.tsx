@@ -66,7 +66,7 @@ export const SELECTED_POST_URL_KEY = 'pikora_selected_post_url';
 export const SELECTED_POST_ID_KEY = 'pikora_selected_post_id';
 
 // 單一貼文卡片元件
-function PostCard({ post }: { post: FacebookPost }) {
+function PostCard({ post, priority = false }: { post: FacebookPost; priority?: boolean }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showOverlay, setShowOverlay] = useState(false);
   const images = getMediaImages(post);
@@ -143,6 +143,8 @@ function PostCard({ post }: { post: FacebookPost }) {
           fill
           alt={post.message ? post.message.slice(0, 60) : 'Facebook 貼文圖片'}
           className="object-cover transition-transform group-hover:scale-105 motion-reduce:transition-none"
+          loading={priority ? 'eager' : 'lazy'}
+          priority={priority}
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"
           src={images[currentIndex]}
         />
@@ -312,8 +314,8 @@ export function PostList() {
         initial="hidden"
         variants={staggerContainer}
       >
-        {posts.map((post) => (
-          <PostCard key={post.id} post={post} />
+        {posts.map((post, index) => (
+          <PostCard key={post.id} post={post} priority={index < 4} />
         ))}
       </motion.div>
 
