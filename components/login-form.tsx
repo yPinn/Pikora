@@ -12,18 +12,20 @@ import { cn } from '@/lib/utils';
 import momonga1 from '@/public/Momonga_1.jpg';
 
 export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+
   const handleFacebookLogin = () => {
-    signIn('facebook', { callbackUrl: '/facebook/content/posts' });
+    signIn('facebook', { callbackUrl: `${appUrl}/facebook/content/posts` });
   };
 
   const handleInstagramLogin = () => {
     // Instagram 使用相同的 Facebook OAuth，之後取得 IG 帳號
-    signIn('facebook', { callbackUrl: '/instagram/dashboard' });
+    signIn('facebook', { callbackUrl: `${appUrl}/instagram/dashboard` });
   };
 
   const handleThreadsLogin = () => {
     // Threads 使用相同的 Facebook OAuth，之後取得 Threads 帳號
-    signIn('facebook', { callbackUrl: '/threads/dashboard' });
+    signIn('facebook', { callbackUrl: `${appUrl}/threads/dashboard` });
   };
 
   return (
