@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation';
+
 import { Shell } from '@/components/facebook/shell';
 import { auth } from '@/lib/auth';
 import { getComponentAccessToken } from '@/lib/auth/get-server-token';
@@ -8,7 +10,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
 
   // 提前處理無權限狀態
   if (!session?.user || !accessToken) {
-    return <div>請先登入</div>;
+    redirect('/login');
   }
 
   const appId = process.env.META_APP_ID;

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default async function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
 
-  if (!session?.user) {
+  if (!session?.user || session.error === 'AccessTokenExpired') {
     redirect('/login');
   }
 
