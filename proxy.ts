@@ -21,7 +21,8 @@ export function proxy(request: NextRequest) {
   // 獲取 Session Cookie (相容 HTTP/HTTPS)
   const sessionCookie =
     request.cookies.get('authjs.session-token') ||
-    request.cookies.get('__Secure-authjs.session-token');
+    request.cookies.get('__Secure-authjs.session-token') ||
+    request.cookies.get('__Secure-next-auth.session-token.pikora');
 
   // API 路由：非公開路徑需有 session cookie（防禦第二層）
   if (pathname.startsWith('/api/')) {
