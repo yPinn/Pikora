@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 
 import { useFacebookPage } from '@/contexts/facebook-page-store';
 import type { FacebookPost } from '@/lib/services/facebook';
+import { apiPath } from '@/lib/utils';
 
 interface UseFacebookPostsOptions {
   /** 每次載入數量，預設 12 */
@@ -64,7 +65,7 @@ export function useFacebookPosts(options: UseFacebookPostsOptions = {}): UseFace
         });
         if (cursor) params.set('after', cursor);
 
-        const res = await fetch(`/api/facebook/posts?${params}`, {
+        const res = await fetch(apiPath(`/api/facebook/posts?${params}`), {
           signal: abortControllerRef.current.signal,
         });
 

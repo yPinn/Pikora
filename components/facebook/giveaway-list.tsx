@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFacebookPage } from '@/contexts/facebook-page-store';
 import type { FacebookComment } from '@/lib/services/facebook';
+import { apiPath } from '@/lib/utils';
 import { extractPostIdFromUrl, parseFacebookErrorMessage } from '@/lib/utils/facebook';
 
 export function GiveawayList() {
@@ -61,7 +62,7 @@ export function GiveawayList() {
           pageId: activePage.id,
           fetchAll: 'true',
         });
-        const res = await fetch(`/api/facebook/comments?${commentsParams}`);
+        const res = await fetch(apiPath(`/api/facebook/comments?${commentsParams}`));
 
         const data = await res.json();
         if (!res.ok) {

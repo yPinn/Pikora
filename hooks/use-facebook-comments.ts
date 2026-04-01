@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 
 import { SELECTED_POST_ID_KEY, SELECTED_POST_URL_KEY } from '@/components/facebook/post-list';
 import type { FacebookComment, FacebookPage } from '@/lib/services/facebook';
+import { apiPath } from '@/lib/utils';
 import {
   extractPostIdFromUrl,
   parseFacebookErrorMessage,
@@ -77,8 +78,8 @@ export function useFacebookComments(activePage: FacebookPage | null) {
         });
         const postParams = new URLSearchParams({ postId: targetPostId, pageId: activePage.id });
         const [commentsRes, postRes] = await Promise.all([
-          fetch(`/api/facebook/comments?${commentsParams}`),
-          fetch(`/api/facebook/posts?${postParams}`),
+          fetch(apiPath(`/api/facebook/comments?${commentsParams}`)),
+          fetch(apiPath(`/api/facebook/posts?${postParams}`)),
         ]);
 
         const commentsData = await commentsRes.json();

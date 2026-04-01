@@ -15,6 +15,7 @@ import {
 } from '@/lib/giveaway';
 import { createLogger } from '@/lib/logger';
 import type { FacebookComment, FacebookReaction } from '@/lib/services/facebook';
+import { apiPath } from '@/lib/utils';
 
 const logger = createLogger('use-giveaway');
 
@@ -208,7 +209,7 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
         pageId: activePage.id,
         fetchAll: 'true',
       });
-      const res = await fetch(`/api/facebook/reactions?${reactionsParams}`);
+      const res = await fetch(apiPath(`/api/facebook/reactions?${reactionsParams}`));
       const data = await res.json();
       if (res.ok) {
         setReactions(data.data || []);
@@ -228,7 +229,7 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
       if (!activePage?.id) return;
 
       try {
-        const res = await fetch('/api/giveaway/blacklist', {
+        const res = await fetch(apiPath('/api/giveaway/blacklist'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ pageId: activePage.id, ...entry }),
@@ -251,7 +252,9 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
 
       try {
         const deleteParams = new URLSearchParams({ pageId: activePage.id, from_id: fromId });
-        const res = await fetch(`/api/giveaway/blacklist?${deleteParams}`, { method: 'DELETE' });
+        const res = await fetch(apiPath(`/api/giveaway/blacklist?${deleteParams}`), {
+          method: 'DELETE',
+        });
 
         if (res.ok) {
           setBlacklist((prev) => prev.filter((b) => b.from_id !== fromId));
@@ -274,13 +277,13 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
 
       // 重抽後再存：先刪舊記錄，以同一次行為取代
       if (savedId && isDirty) {
-        await fetch(`/api/giveaway/${savedId}`, { method: 'DELETE' }).catch(() => null);
+        await fetch(apiPath(`/api/giveaway/${savedId}`), { method: 'DELETE' }).catch(() => null);
         setSavedId(null);
       }
 
       try {
         // 建立活動
-        const createRes = await fetch('/api/giveaway', {
+        const createRes = await fetch(apiPath('/api/giveaway'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -314,7 +317,7 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
           comment_created_time: r.winner.comment_created_time,
         }));
 
-        const patchRes = await fetch(`/api/giveaway/${giveawayId}`, {
+        const patchRes = await fetch(apiPath(`/api/giveaway/${giveawayId}`), {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ winners }),
@@ -322,7 +325,9 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
         const patchData = await patchRes.json();
         if (!patchRes.ok) {
           // PATCH 失敗：清理剛建立的 giveaway 避免留下空殼資料
-          await fetch(`/api/giveaway/${giveawayId}`, { method: 'DELETE' }).catch(() => null);
+          await fetch(apiPath(`/api/giveaway/${giveawayId}`), { method: 'DELETE' }).catch(
+            () => null
+          );
           throw new Error(patchData.error || '儲存中獎者失敗');
         }
 

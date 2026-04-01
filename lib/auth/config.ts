@@ -63,7 +63,15 @@ export const authConfig: NextAuthConfig = {
         token.providerAccountId = account.providerAccountId;
         // 使用 server-side proxy 取頭像，避免 CDN URL 過期問題
         if (account.provider === 'facebook') {
-          token.picture = '/api/user/avatar';
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+          let basePath = '';
+          try {
+            const { pathname } = new URL(appUrl);
+            basePath = pathname === '/' ? '' : pathname.replace(/\/$/, '');
+          } catch {
+            basePath = '';
+          }
+          token.picture = `${basePath}/api/user/avatar`;
         }
         return token;
       }

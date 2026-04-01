@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 
 import { useFacebookPage } from '@/contexts/facebook-page-store';
 import { createLogger } from '@/lib/logger';
+import { apiPath } from '@/lib/utils';
 
 const logger = createLogger('use-giveaway-history');
 
@@ -73,7 +74,7 @@ export function useGiveawayHistory(): UseGiveawayHistoryReturn {
 
     try {
       const params = new URLSearchParams({ pageId: activePage.id });
-      const res = await fetch(`/api/giveaway?${params}`);
+      const res = await fetch(apiPath(`/api/giveaway?${params}`));
       const data = await res.json();
 
       if (res.ok) {
@@ -91,7 +92,7 @@ export function useGiveawayHistory(): UseGiveawayHistoryReturn {
 
   const deleteRecord = useCallback(async (id: string): Promise<boolean> => {
     try {
-      const res = await fetch(`/api/giveaway/${id}`, {
+      const res = await fetch(apiPath(`/api/giveaway/${id}`), {
         method: 'DELETE',
       });
 

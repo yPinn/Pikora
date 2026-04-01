@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 
 import type { FacebookPage } from '@/lib/services/facebook';
+import { apiPath } from '@/lib/utils';
 
 interface UseFacebookPagesReturn {
   pages: FacebookPage[];
@@ -37,7 +38,7 @@ export function useFacebookPages(): UseFacebookPagesReturn {
     setError(null);
 
     try {
-      const response = await fetch('/api/facebook/pages');
+      const response = await fetch(apiPath('/api/facebook/pages'));
 
       if (!response.ok) {
         const data = await response.json();
