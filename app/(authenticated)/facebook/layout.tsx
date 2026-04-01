@@ -39,9 +39,9 @@ export default async function Layout({ children }: { children: React.ReactNode }
 
   // session.user.image 是 OAuth 授權時由 Facebook 提供的頭像 CDN URL，不含 access token
   const user = {
-    name: session.user.name ?? 'User',
-    email: session.user.email ?? '',
-    avatarUrl: session.user.image ?? '',
+    name: session.user?.name ?? 'User',
+    email: session.user?.email ?? '',
+    avatarUrl: session.user?.image ?? '',
   };
 
   return (

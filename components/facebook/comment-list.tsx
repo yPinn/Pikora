@@ -64,7 +64,7 @@ const StatusView = ({ icon: Icon, title, desc, variant = 'default' }: StatusView
 );
 
 // --- 原子組件：留言單項目 (Facebook 風格) ---
-const CommentItem = ({ comment }: { comment: FacebookComment }) => {
+const CommentItem = ({ comment, pageId }: { comment: FacebookComment; pageId?: string }) => {
   const hasReplies = comment.comments?.data && comment.comments.data.length > 0;
 
   return (
@@ -72,7 +72,14 @@ const CommentItem = ({ comment }: { comment: FacebookComment }) => {
       <div className="relative flex gap-2">
         {hasReplies && <div className="bg-border absolute top-9 bottom-0 left-[15px] w-0.5" />}
         <Avatar className="h-8 w-8 shrink-0">
-          <AvatarImage alt={comment.from?.name} src={comment.from?.picture?.data?.url} />
+          <AvatarImage
+            alt={comment.from?.name}
+            src={
+              comment.from?.id
+                ? `/api/facebook/picture?userId=${comment.from.id}${pageId ? `&pageId=${pageId}` : ''}`
+                : undefined
+            }
+          />
           <AvatarFallback className="text-xs font-medium" delayMs={300}>
             {comment.from?.name?.[0] || '?'}
           </AvatarFallback>
@@ -128,7 +135,7 @@ const CommentItem = ({ comment }: { comment: FacebookComment }) => {
                 {/* 水平連接線 */}
                 <div className="bg-border absolute top-5 left-[15px] h-0.5 w-[20px]" />
                 <div className="pl-10">
-                  <CommentItem comment={reply} />
+                  <CommentItem comment={reply} pageId={pageId} />
                 </div>
               </div>
             );
@@ -285,7 +292,7 @@ export function CommentList() {
           </div>
           <div className="space-y-1 px-2">
             {state.paginatedComments.map((c) => (
-              <CommentItem key={c.id} comment={c} />
+              <CommentItem key={c.id} comment={c} pageId={activePage?.id} />
             ))}
           </div>
           {state.totalPages > 1 && (

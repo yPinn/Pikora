@@ -61,15 +61,23 @@ import { useGiveaway } from '@/hooks/use-giveaway';
 import { ANIM, cardReveal } from '@/lib/animation';
 import type { FacebookComment } from '@/lib/services/facebook';
 import { cn } from '@/lib/utils';
-import { isFacebookCdnUrl, isFacebookProfileUrl } from '@/lib/utils/facebook';
+import { isFacebookProfileUrl } from '@/lib/utils/facebook';
 
 interface GiveawayPanelProps {
   comments: FacebookComment[];
   postId: string;
   postUrl?: string;
+  postMessage?: string;
+  pageId?: string;
 }
 
-export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps) {
+export function GiveawayPanel({
+  comments,
+  postId,
+  postUrl,
+  postMessage,
+  pageId,
+}: GiveawayPanelProps) {
   const {
     filters,
     setFilters,
@@ -88,9 +96,11 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
     isDrawing,
     draw,
     redraw,
-    reset,
+    reset: _reset,
     fetchBlacklist,
     isSaving,
+    isSaved,
+    saveMode,
     save,
   } = useGiveaway({ comments, postId, postUrl });
 
@@ -163,7 +173,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
   // 儲存結果
   const handleSave = async () => {
     try {
-      const id = await save();
+      const id = await save(postMessage || undefined);
       if (id) {
         toast.success('抽獎結果已儲存！');
       }
@@ -415,6 +425,18 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                     允許重複參加
                   </Label>
                 </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    checked={filters.allow_multi_win || false}
+                    id="allow_multi_win"
+                    onCheckedChange={(checked) =>
+                      setFilters({ ...filters, allow_multi_win: checked === true })
+                    }
+                  />
+                  <Label className="cursor-pointer text-sm font-normal" htmlFor="allow_multi_win">
+                    允許重複得獎
+                  </Label>
+                </div>
               </div>
             </div>
           </Card>
@@ -464,11 +486,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                             >
                               <Avatar className="h-8 w-8">
                                 <AvatarImage
-                                  src={
-                                    isFacebookCdnUrl(entry.from_picture_url)
-                                      ? entry.from_picture_url
-                                      : undefined
-                                  }
+                                  src={`/api/facebook/picture?userId=${entry.from_id}${pageId ? `&pageId=${pageId}` : ''}`}
                                 />
                                 <AvatarFallback>{entry.from_name[0]}</AvatarFallback>
                               </Avatar>
@@ -567,18 +585,35 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
               <Trophy className="h-4 w-4" />
               抽獎結果
             </h3>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={reset}>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                title="重新隨機抽出所有獎項，儲存後將建立全新紀錄"
+                variant="outline"
+                onClick={draw}
+              >
                 <RefreshCw className="mr-1 h-3 w-3" />
-                重置
+                再抽一輪
               </Button>
-              <Button disabled={results.length === 0 || isSaving} size="sm" onClick={handleSave}>
+              <Button
+                disabled={results.length === 0 || isSaving || isSaved}
+                size="sm"
+                title={
+                  saveMode === 'replace'
+                    ? '局部重抽後儲存將取代現有紀錄'
+                    : saveMode === 'new'
+                      ? '儲存為新紀錄'
+                      : undefined
+                }
+                variant={isSaved ? 'secondary' : saveMode === 'replace' ? 'outline' : 'default'}
+                onClick={handleSave}
+              >
                 {isSaving ? (
                   <Loader2 className="mr-1 h-3 w-3 animate-spin" />
                 ) : (
                   <Save className="mr-1 h-3 w-3" />
                 )}
-                儲存
+                {isSaved ? '已儲存' : saveMode === 'replace' ? '更新紀錄' : '儲存'}
               </Button>
             </div>
           </div>
@@ -593,7 +628,17 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                 return (
                   <div key={prize.id}>
                     <div className="mb-2 flex items-center justify-between">
-                      <h4 className="text-body font-medium">{prize.name}</h4>
+                      <h4 className="text-body flex items-center gap-2 font-medium">
+                        {prize.name}
+                        <span className="text-muted-foreground text-caption font-normal">
+                          {prizeResults.length}/{prize.quantity} 名
+                        </span>
+                        {prizeResults.length < prize.quantity && (
+                          <span className="text-caption rounded-full bg-amber-100 px-1.5 py-0.5 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                            {prize.quantity - prizeResults.length} 空缺
+                          </span>
+                        )}
+                      </h4>
                       <Button size="sm" variant="ghost" onClick={() => redraw(prize.id)}>
                         <RefreshCw className="mr-1 h-3 w-3" />
                         重抽
@@ -624,11 +669,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                               >
                                 <Avatar className="h-10 w-10">
                                   <AvatarImage
-                                    src={
-                                      isFacebookCdnUrl(result.winner.from_picture_url)
-                                        ? result.winner.from_picture_url
-                                        : undefined
-                                    }
+                                    src={`/api/facebook/picture?userId=${result.winner.from_id}${pageId ? `&pageId=${pageId}` : ''}`}
                                   />
                                   <AvatarFallback>{result.winner.from_name[0]}</AvatarFallback>
                                 </Avatar>
@@ -636,11 +677,7 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                             ) : (
                               <Avatar className="h-10 w-10">
                                 <AvatarImage
-                                  src={
-                                    isFacebookCdnUrl(result.winner.from_picture_url)
-                                      ? result.winner.from_picture_url
-                                      : undefined
-                                  }
+                                  src={`/api/facebook/picture?userId=${result.winner.from_id}${pageId ? `&pageId=${pageId}` : ''}`}
                                 />
                                 <AvatarFallback>{result.winner.from_name[0]}</AvatarFallback>
                               </Avatar>
@@ -700,11 +737,19 @@ export function GiveawayPanel({ comments, postId, postUrl }: GiveawayPanelProps)
                           </motion.div>
                         ))}
 
-                        {prizeResults.length === 0 && (
-                          <p className="text-muted-foreground text-caption text-center">
-                            名額不足，無法抽出
-                          </p>
-                        )}
+                        {Array.from({
+                          length: prize.quantity - prizeResults.length,
+                        }).map((_, i) => (
+                          <div
+                            key={`empty-${i}`}
+                            className="border-muted-foreground/20 text-muted-foreground flex items-center gap-3 rounded-lg border border-dashed p-3"
+                          >
+                            <div className="bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+                              <Users className="h-4 w-4 opacity-40" />
+                            </div>
+                            <p className="text-caption">空缺 #{prizeResults.length + i + 1}</p>
+                          </div>
+                        ))}
                       </div>
                     </AnimatePresence>
                   </div>

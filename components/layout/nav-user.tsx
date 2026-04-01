@@ -34,6 +34,7 @@ const UserAvatar = memo(({ src, name }: { src: string; name: string }) => {
         <Image
           fill
           priority
+          unoptimized
           alt={name}
           className="object-cover"
           sizes="32px"

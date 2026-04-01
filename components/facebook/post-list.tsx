@@ -64,6 +64,7 @@ function isVideoPost(post: FacebookPost): boolean {
 // Session storage key for selected post
 export const SELECTED_POST_URL_KEY = 'pikora_selected_post_url';
 export const SELECTED_POST_ID_KEY = 'pikora_selected_post_id';
+export const SELECTED_POST_MESSAGE_KEY = 'pikora_selected_post_message';
 
 // 單一貼文卡片元件
 function PostCard({ post, priority = false }: { post: FacebookPost; priority?: boolean }) {
@@ -106,13 +107,14 @@ function PostCard({ post, priority = false }: { post: FacebookPost; priority?: b
       // 存入 sessionStorage 供其他頁面使用
       sessionStorage.setItem(SELECTED_POST_URL_KEY, post.permalink_url || '');
       sessionStorage.setItem(SELECTED_POST_ID_KEY, post.id);
+      sessionStorage.setItem(SELECTED_POST_MESSAGE_KEY, post.message?.slice(0, 50) || '');
 
       // 複製到剪貼簿
       navigator.clipboard.writeText(post.permalink_url || '').then(() => {
         toast.success('已複製 URL');
       });
     },
-    [post.permalink_url, post.id]
+    [post.permalink_url, post.id, post.message]
   );
 
   return (
@@ -315,7 +317,7 @@ export function PostList() {
         variants={staggerContainer}
       >
         {posts.map((post, index) => (
-          <PostCard key={post.id} post={post} priority={index < 8} />
+          <PostCard key={post.id} post={post} priority={index < 2} />
         ))}
       </motion.div>
 

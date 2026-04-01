@@ -5,7 +5,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { Gift, Search, Loader2, X, Clipboard, AlertCircle } from 'lucide-react';
 
 import { GiveawayPanel } from '@/components/facebook/giveaway-panel';
-import { SELECTED_POST_ID_KEY, SELECTED_POST_URL_KEY } from '@/components/facebook/post-list';
+import {
+  SELECTED_POST_ID_KEY,
+  SELECTED_POST_MESSAGE_KEY,
+  SELECTED_POST_URL_KEY,
+} from '@/components/facebook/post-list';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -20,6 +24,7 @@ export function GiveawayList() {
   // 新抽獎：留言載入
   const [postUrl, setPostUrl] = useState('');
   const [postId, setPostId] = useState('');
+  const [postMessage, setPostMessage] = useState('');
   const [comments, setComments] = useState<FacebookComment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsError, setCommentsError] = useState<string | null>(null);
@@ -33,10 +38,13 @@ export function GiveawayList() {
 
     if (savedUrl) setPostUrl(savedUrl);
     if (savedId) setPostId(savedId);
+    const savedMessage = sessionStorage.getItem(SELECTED_POST_MESSAGE_KEY);
+    if (savedMessage) setPostMessage(savedMessage);
 
     // 讀取後清除
     sessionStorage.removeItem(SELECTED_POST_URL_KEY);
     sessionStorage.removeItem(SELECTED_POST_ID_KEY);
+    sessionStorage.removeItem(SELECTED_POST_MESSAGE_KEY);
   }, []);
 
   // 當 postId 有值且有 activePage 時自動載入留言
@@ -158,7 +166,13 @@ export function GiveawayList() {
       {/* 留言已載入：顯示抽獎面板 */}
       {comments.length > 0 && (
         <div className="mt-4 border-t pt-4">
-          <GiveawayPanel comments={comments} postId={postId} postUrl={postUrl} />
+          <GiveawayPanel
+            comments={comments}
+            pageId={activePage?.id}
+            postId={postId}
+            postMessage={postMessage}
+            postUrl={postUrl}
+          />
         </div>
       )}
 
