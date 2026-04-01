@@ -1,6 +1,7 @@
 import { Caveat, Geist, Geist_Mono } from 'next/font/google';
 import localFont from 'next/font/local';
 
+import { HashCleaner } from '@/components/hash-cleaner';
 import { SessionProvider } from '@/components/session-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${caveat.variable} ${delaGothicOne.variable} antialiased`}
         >
+          <HashCleaner />
           <SessionProvider>
             <ThemeProvider attribute="class" defaultTheme="light">
               {children}
