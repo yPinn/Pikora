@@ -190,7 +190,7 @@ const sections: Section[] = [
       body: (
         <p>
           我們採取以下技術與組織措施保護您的資料：HTTPS 全程加密傳輸、OAuth
-          權杖加密儲存、最小權限原則的資料庫存取控制，以及透過 Meta Webhook HMAC
+          權杖以存取控制保護儲存於資料庫、最小權限原則的資料庫存取控制，以及透過 Meta Webhook HMAC
           簽章驗證確保回調請求的真實性。儘管如此，網路傳輸無法保證絕對安全。如您發現任何安全疑慮，請立即聯絡我們。
         </p>
       ),
@@ -200,10 +200,11 @@ const sections: Section[] = [
       body: (
         <p>
           We implement the following technical and organizational measures to protect your data:
-          HTTPS encryption for all data in transit, encrypted storage of OAuth tokens,
-          least-privilege database access controls, and HMAC signature verification for Meta Webhook
-          callbacks to ensure authenticity. Despite these measures, no internet transmission is
-          completely secure. If you identify any security concern, please contact us immediately.
+          HTTPS encryption for all data in transit, OAuth tokens stored in database with access
+          controls, least-privilege database access controls, and HMAC signature verification for
+          Meta Webhook callbacks to ensure authenticity. Despite these measures, no internet
+          transmission is completely secure. If you identify any security concern, please contact us
+          immediately.
         </p>
       ),
     },
@@ -266,7 +267,7 @@ const sections: Section[] = [
       body: (
         <p>
           本服務使用 HTTP-only Session Cookie 維持您的登入狀態，Cookie 中以 JWT
-          格式儲存加密的身份驗證資訊。我們不使用任何追蹤用途或廣告用途的
+          格式儲存經簽署的身份驗證資訊。我們不使用任何追蹤用途或廣告用途的
           Cookie，亦不使用第三方分析工具。
         </p>
       ),
@@ -276,7 +277,7 @@ const sections: Section[] = [
       body: (
         <p>
           The Service uses an HTTP-only session cookie to maintain your authenticated state, storing
-          encrypted authentication information in JWT format. We do not use tracking or advertising
+          signed authentication information in JWT format. We do not use tracking or advertising
           cookies, nor any third-party analytics tools.
         </p>
       ),
