@@ -24,6 +24,8 @@ interface UseGiveawayOptions {
   postUrl?: string;
 }
 
+export type SaveMode = 'new' | 'replace' | 'saved';
+
 interface UseGiveawayReturn {
   // 設定
   filters: GiveawayFilters;
@@ -56,6 +58,8 @@ interface UseGiveawayReturn {
 
   // 儲存
   isSaving: boolean;
+  isSaved: boolean;
+  saveMode: SaveMode; // 'new' = 建立新紀錄, 'replace' = 取代現有, 'saved' = 已儲存無變更
   save: (name?: string) => Promise<string | null>;
 }
 
@@ -73,6 +77,9 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
   const [results, setResults] = useState<DrawResult[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [savedId, setSavedId] = useState<string | null>(null);
+  // 重抽後結果已變更，需要重新儲存（取代舊記錄）
+  const [isDirty, setIsDirty] = useState(false);
 
   // 黑名單 Set (for filtering)
   const blacklistSet = useMemo(() => new Set(blacklist.map((b) => b.from_id)), [blacklist]);
@@ -96,33 +103,36 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
   const draw = useCallback(() => {
     setIsDrawing(true);
     const allResults: DrawResult[] = [];
+    const allowDuplicate = filters.allow_duplicate || false;
+    const allowMultiWin = filters.allow_multi_win || false;
+
+    // allow_multi_win：每個獎項皆從完整 pool 重新抽，不跨獎項排除用戶
+    // 否則：依序抽，上一獎項中獎者排除在後續獎項之外
     let currentPool = [...pool];
     const excludedUsers = new Set<string>();
 
-    for (let i = 0; i < prizes.length; i++) {
-      const prize = prizes[i];
+    for (const prize of prizes) {
       const { winners, remainingPool } = drawWinners(
-        currentPool,
+        allowMultiWin ? pool : currentPool,
         prize.quantity,
-        excludedUsers,
-        filters.allow_duplicate || false
+        allowMultiWin ? new Set() : excludedUsers,
+        allowDuplicate,
+        allowMultiWin
       );
 
       for (const winner of winners) {
-        allResults.push({
-          prize_id: prize.id,
-          prize_name: prize.name,
-          winner,
-        });
-        excludedUsers.add(winner.from_id);
+        allResults.push({ prize_id: prize.id, prize_name: prize.name, winner });
+        if (!allowMultiWin) excludedUsers.add(winner.from_id);
       }
 
-      currentPool = remainingPool;
+      if (!allowMultiWin) currentPool = remainingPool;
     }
 
     setResults(allResults);
     setIsDrawing(false);
-  }, [pool, prizes, filters.allow_duplicate]);
+    setSavedId(null);
+    setIsDirty(false);
+  }, [pool, prizes, filters.allow_duplicate, filters.allow_multi_win]);
 
   // 重抽單一獎項
   const redraw = useCallback(
@@ -130,17 +140,18 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
       const prize = prizes.find((p) => p.id === prizeId);
       if (!prize) return;
 
-      // 取得其他獎項的中獎者 (需排除)
-      const otherWinnerIds = new Set(
-        results.filter((r) => r.prize_id !== prizeId).map((r) => r.winner.from_id)
-      );
+      const allowMultiWin = filters.allow_multi_win || false;
+      // allow_multi_win：不排除任何人；否則排除其他獎項的中獎者
+      const otherWinnerIds = allowMultiWin
+        ? new Set<string>()
+        : new Set(results.filter((r) => r.prize_id !== prizeId).map((r) => r.winner.from_id));
 
-      // 重抽
       const { winners } = drawWinners(
         pool,
         prize.quantity,
         otherWinnerIds,
-        filters.allow_duplicate || false
+        filters.allow_duplicate || false,
+        allowMultiWin
       );
 
       // 更新結果
@@ -157,13 +168,16 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
           return ia - ib;
         });
       });
+      setIsDirty(true);
     },
-    [pool, prizes, results, filters.allow_duplicate]
+    [pool, prizes, results, filters.allow_duplicate, filters.allow_multi_win]
   );
 
   // 重置
   const reset = useCallback(() => {
     setResults([]);
+    setSavedId(null);
+    setIsDirty(false);
   }, []);
 
   // 取得黑名單
@@ -253,8 +267,16 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
   const save = useCallback(
     async (name?: string): Promise<string | null> => {
       if (!activePage?.id || results.length === 0) return null;
+      // 已儲存且結果未變動，直接回傳
+      if (savedId && !isDirty) return savedId;
 
       setIsSaving(true);
+
+      // 重抽後再存：先刪舊記錄，以同一次行為取代
+      if (savedId && isDirty) {
+        await fetch(`/api/giveaway/${savedId}`, { method: 'DELETE' }).catch(() => null);
+        setSavedId(null);
+      }
 
       try {
         // 建立活動
@@ -304,6 +326,8 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
           throw new Error(patchData.error || '儲存中獎者失敗');
         }
 
+        setSavedId(giveawayId);
+        setIsDirty(false);
         return giveawayId;
       } catch (error) {
         logger.error('Failed to save giveaway', error);
@@ -312,7 +336,7 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
         setIsSaving(false);
       }
     },
-    [activePage?.id, postId, postUrl, filters, prizes, results]
+    [activePage?.id, postId, postUrl, filters, prizes, results, savedId, isDirty]
   );
 
   return {
@@ -336,6 +360,12 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
     removeFromBlacklist,
     fetchBlacklist,
     isSaving,
+    isSaved: savedId !== null && !isDirty,
+    saveMode: (savedId !== null && !isDirty
+      ? 'saved'
+      : savedId !== null && isDirty
+        ? 'replace'
+        : 'new') as SaveMode,
     save,
   };
 }

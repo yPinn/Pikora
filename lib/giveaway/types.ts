@@ -14,6 +14,7 @@ export interface GiveawayFilters {
   min_mentions?: number;
   allow_duplicate?: boolean;
   duplicate_condition?: 'unique_mentions';
+  allow_multi_win?: boolean; // 允許同一人重複得獎（跨獎項或多名額）
   // 反應篩選
   require_reaction?: boolean;
   allowed_reactions?: string[]; // 空陣列 = 全部反應類型皆可
@@ -28,6 +29,7 @@ const VALID_FILTER_KEYS = new Set([
   'min_mentions',
   'allow_duplicate',
   'duplicate_condition',
+  'allow_multi_win',
   'require_reaction',
   'allowed_reactions',
 ]);
@@ -69,6 +71,9 @@ export function validateGiveawayFilters(filters: unknown): string | null {
   }
   if (f.allow_duplicate !== undefined && typeof f.allow_duplicate !== 'boolean') {
     return '無效的 allow_duplicate';
+  }
+  if (f.allow_multi_win !== undefined && typeof f.allow_multi_win !== 'boolean') {
+    return '無效的 allow_multi_win';
   }
   if (f.duplicate_condition !== undefined && f.duplicate_condition !== 'unique_mentions') {
     return '無效的 duplicate_condition';

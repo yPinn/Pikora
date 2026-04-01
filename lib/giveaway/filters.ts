@@ -161,19 +161,20 @@ export function drawWinners(
   pool: DrawEntry[],
   count: number,
   excludeUserIds: Set<string> = new Set(),
-  allowDuplicate: boolean = false
+  allowDuplicate: boolean = false,
+  allowMultiWin: boolean = false
 ): { winners: DrawEntry[]; remainingPool: DrawEntry[] } {
-  // 複製 pool 並排除已中獎者
-  let available = pool.filter((e) => !excludeUserIds.has(e.from_id));
+  // 複製 pool 並排除已中獎者（allowMultiWin 時忽略 excludeUserIds）
+  let available = allowMultiWin ? [...pool] : pool.filter((e) => !excludeUserIds.has(e.from_id));
   const winners: DrawEntry[] = [];
 
-  if (allowDuplicate) {
-    // 允許重複：直接從 pool 隨機選
+  if (allowDuplicate || allowMultiWin) {
+    // 允許重複參加但不允許重複得獎：從 pool 隨機選，同一用戶只能得獎一次
     for (let i = 0; i < count && available.length > 0; i++) {
       const randomIndex = secureRandomIndex(available.length);
       const winner = available[randomIndex];
       winners.push(winner);
-      // 移除該用戶的所有 entries（同一用戶不能重複中獎）
+      // 移除該用戶的所有 entries
       available = available.filter((e) => e.from_id !== winner.from_id);
     }
   } else {

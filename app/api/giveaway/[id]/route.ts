@@ -43,16 +43,20 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    const userId = session?.user?.id;
+    if (!userId) {
       return NextResponse.json({ error: '未授權' }, { status: 401 });
     }
 
     const { id } = await params;
     const body = await request.json();
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json({ error: '無效的請求格式' }, { status: 400 });
+    }
 
     // 驗證權限，同時取得 prizes 以驗證 prizeId 所有權
     const existing = await prisma.giveaway.findFirst({
-      where: { id, userId: session.user.id },
+      where: { id, userId },
       include: { prizes: { select: { id: true } } },
     });
 
@@ -114,8 +118,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         }
       }
 
-      await prisma.$transaction(async (tx) => {
+      const updated = await prisma.$transaction(async (tx) => {
         await tx.winner.createMany({
+          skipDuplicates: true, // 冪等：同一留言重複送出時忽略（依 @@unique[giveawayId, comment_id]）
           data: body.winners.map(
             (w: {
               prize_id: string;
@@ -140,16 +145,26 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
           ),
         });
 
-        // 更新狀態為已完成
+        // 更新狀態為已完成，並在同一 transaction 內讀取最終狀態
         await tx.giveaway.update({
           where: { id },
           data: { status: 'COMPLETED' },
         });
+
+        return tx.giveaway.findFirst({
+          where: { id, userId },
+          include: {
+            prizes: { orderBy: { sort_order: 'asc' } },
+            winners: { orderBy: { drawnAt: 'asc' } },
+          },
+        });
       });
+
+      return NextResponse.json({ data: updated });
     }
 
     const updated = await prisma.giveaway.findFirst({
-      where: { id, userId: session.user.id },
+      where: { id, userId },
       include: {
         prizes: { orderBy: { sort_order: 'asc' } },
         winners: { orderBy: { drawnAt: 'asc' } },
