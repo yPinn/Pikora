@@ -60,7 +60,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGiveaway } from '@/hooks/use-giveaway';
 import { ANIM, cardReveal } from '@/lib/animation';
 import type { FacebookComment } from '@/lib/services/facebook';
-import { cn } from '@/lib/utils';
+import { cn, apiPath } from '@/lib/utils';
 import { isFacebookProfileUrl } from '@/lib/utils/facebook';
 
 interface GiveawayPanelProps {
@@ -486,7 +486,9 @@ export function GiveawayPanel({
                             >
                               <Avatar className="h-8 w-8">
                                 <AvatarImage
-                                  src={`/api/facebook/picture?userId=${entry.from_id}${pageId ? `&pageId=${pageId}` : ''}`}
+                                  src={apiPath(
+                                    `/api/facebook/picture?userId=${entry.from_id}${pageId ? `&pageId=${pageId}` : ''}`
+                                  )}
                                 />
                                 <AvatarFallback>{entry.from_name[0]}</AvatarFallback>
                               </Avatar>
@@ -669,7 +671,9 @@ export function GiveawayPanel({
                               >
                                 <Avatar className="h-10 w-10">
                                   <AvatarImage
-                                    src={`/api/facebook/picture?userId=${result.winner.from_id}${pageId ? `&pageId=${pageId}` : ''}`}
+                                    src={apiPath(
+                                      `/api/facebook/picture?userId=${result.winner.from_id}${pageId ? `&pageId=${pageId}` : ''}`
+                                    )}
                                   />
                                   <AvatarFallback>{result.winner.from_name[0]}</AvatarFallback>
                                 </Avatar>
@@ -677,7 +681,9 @@ export function GiveawayPanel({
                             ) : (
                               <Avatar className="h-10 w-10">
                                 <AvatarImage
-                                  src={`/api/facebook/picture?userId=${result.winner.from_id}${pageId ? `&pageId=${pageId}` : ''}`}
+                                  src={apiPath(
+                                    `/api/facebook/picture?userId=${result.winner.from_id}${pageId ? `&pageId=${pageId}` : ''}`
+                                  )}
                                 />
                                 <AvatarFallback>{result.winner.from_name[0]}</AvatarFallback>
                               </Avatar>

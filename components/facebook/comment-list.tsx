@@ -38,7 +38,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useFacebookPage } from '@/contexts/facebook-page-store';
 import { useFacebookComments } from '@/hooks/use-facebook-comments';
 import type { FacebookComment } from '@/lib/services/facebook';
-import { cn } from '@/lib/utils';
+import { cn, apiPath } from '@/lib/utils';
 
 // --- 原子組件：狀態顯示 ---
 interface StatusViewProps {
@@ -76,7 +76,9 @@ const CommentItem = ({ comment, pageId }: { comment: FacebookComment; pageId?: s
             alt={comment.from?.name}
             src={
               comment.from?.id
-                ? `/api/facebook/picture?userId=${comment.from.id}${pageId ? `&pageId=${pageId}` : ''}`
+                ? apiPath(
+                    `/api/facebook/picture?userId=${comment.from.id}${pageId ? `&pageId=${pageId}` : ''}`
+                  )
                 : undefined
             }
           />

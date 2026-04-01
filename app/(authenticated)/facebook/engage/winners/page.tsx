@@ -42,6 +42,7 @@ import {
   type GiveawayRecord,
   type GiveawayWinner,
 } from '@/hooks/use-giveaway-history';
+import { apiPath } from '@/lib/utils';
 
 export default function FacebookWinnersPage() {
   const { records, isLoading, refresh, deleteRecord } = useGiveawayHistory();
@@ -372,7 +373,9 @@ export default function FacebookWinnersPage() {
                                   >
                                     <Avatar className="h-8 w-8">
                                       <AvatarImage
-                                        src={`/api/facebook/picture?userId=${winner.from_id}&pageId=${record.pageId}`}
+                                        src={apiPath(
+                                          `/api/facebook/picture?userId=${winner.from_id}&pageId=${record.pageId}`
+                                        )}
                                       />
                                       <AvatarFallback>{winner.from_name[0]}</AvatarFallback>
                                     </Avatar>

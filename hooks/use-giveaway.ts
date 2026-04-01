@@ -187,7 +187,7 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
 
     try {
       const res = await fetch(
-        `/api/giveaway/blacklist?${new URLSearchParams({ pageId: activePage.id })}`
+        apiPath(`/api/giveaway/blacklist?${new URLSearchParams({ pageId: activePage.id })}`)
       );
       const data = await res.json();
       if (res.ok) {
