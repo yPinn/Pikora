@@ -14,7 +14,7 @@ const securityHeaders = [
     value: [
       "default-src 'self'",
       // unsafe-eval 僅在開發模式需要 (HMR)，production 不包含
-      `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
+      `script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://*.fbcdn.net https://platform-lookaside.fbsbx.com https://lookaside.fbsbx.com https://graph.facebook.com",
       "font-src 'self'",
