@@ -37,7 +37,7 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const hasTokenError = auth?.error === 'AccessTokenExpired';
+      const hasTokenError = auth?.error === 'AccessTokenExpired' || auth?.error === 'TokenRevoked';
 
       // 定義需要保護的路由
       const protectedPaths = ['/facebook', '/instagram', '/threads'];
@@ -61,6 +61,10 @@ export const authConfig: NextAuthConfig = {
         token.expiresAt = account.expires_at;
         token.provider = account.provider;
         token.providerAccountId = account.providerAccountId;
+        // 使用 server-side proxy 取頭像，避免 CDN URL 過期問題
+        if (account.provider === 'facebook') {
+          token.picture = '/api/user/avatar';
+        }
         return token;
       }
 
@@ -94,6 +98,7 @@ export const authConfig: NextAuthConfig = {
   },
   session: {
     strategy: 'jwt',
+    maxAge: 24 * 60 * 60, // 24 小時，縮短 JWT 暴露窗口（預設 30 天過長）
   },
 };
 
@@ -116,5 +121,6 @@ declare module 'next-auth/jwt' {
     provider?: string;
     providerAccountId?: string;
     error?: string;
+    iat?: number; // JWT 簽發時間（Unix 秒），用於與 tokenRevokedAt 比對
   }
 }

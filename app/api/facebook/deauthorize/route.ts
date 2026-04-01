@@ -51,14 +51,18 @@ export async function POST(request: NextRequest) {
     });
 
     if (account) {
-      // 刪除 OAuth Account（撤銷 access/refresh token 儲存）
-      await prisma.account.delete({ where: { id: account.id } });
-
-      // 刪除所有 Sessions（強制登出）
-      // 注意：本專案使用 JWT session strategy，JWT 本身無法即時撤銷，
-      // 需等待 token 自然過期（expiresAt）。已刪除 DB Sessions 僅對
-      // database strategy 有即時效果。請確保 JWT maxAge 設定較短。
-      await prisma.session.deleteMany({ where: { userId: account.userId } });
+      const now = new Date();
+      await prisma.$transaction([
+        // 刪除 OAuth Account（移除 access/refresh token 儲存）
+        prisma.account.delete({ where: { id: account.id } }),
+        // 刪除 DB Sessions
+        prisma.session.deleteMany({ where: { userId: account.userId } }),
+        // 設定撤銷時間戳：此時間點之前簽發的 JWT 在下次 jwt callback 時將被拒絕
+        prisma.user.update({
+          where: { id: account.userId },
+          data: { tokenRevokedAt: now },
+        }),
+      ]);
 
       logger.info(`Revoked tokens and sessions for Facebook user ${maskId(facebookUserId)}`);
     } else {

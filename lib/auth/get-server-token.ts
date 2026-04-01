@@ -9,21 +9,31 @@ import type { NextRequest } from 'next/server';
 
 import { getToken } from 'next-auth/jwt';
 
-import { SESSION_COOKIE_NAME } from './cookie-names';
+import {
+  SESSION_COOKIE_NAME,
+  SESSION_COOKIE_NAME_SECURE,
+  SESSION_COOKIE_NAME_INSECURE,
+} from './cookie-names';
 
 const secret = process.env.AUTH_SECRET;
 if (!secret) throw new Error('AUTH_SECRET environment variable is required');
 
-const cookieName = SESSION_COOKIE_NAME;
+// 依序嘗試兩個 cookie 名稱，與 proxy 的雙讀邏輯一致，
+// 防止 NEXT_PUBLIC_DEPLOYMENT_ENV 設定偏移造成 server component 讀不到 token。
+const COOKIE_NAME_CANDIDATES = Array.from(
+  new Set([SESSION_COOKIE_NAME, SESSION_COOKIE_NAME_SECURE, SESSION_COOKIE_NAME_INSECURE])
+);
 
 /**
  * API routes 用：從 NextRequest 讀取 JWT 並回傳 accessToken。
  * 回傳 null 表示未登入或 token 已過期。
  */
 export async function getRequestAccessToken(req: NextRequest): Promise<string | null> {
-  const token = await getToken({ req, secret, cookieName });
-  if (!token?.accessToken) return null;
-  return token.accessToken as string;
+  for (const cookieName of COOKIE_NAME_CANDIDATES) {
+    const token = await getToken({ req, secret, cookieName });
+    if (token?.accessToken) return token.accessToken as string;
+  }
+  return null;
 }
 
 /**
@@ -38,11 +48,13 @@ export async function getComponentAccessToken(): Promise<string | null> {
     .map(({ name, value }) => `${encodeURIComponent(name)}=${encodeURIComponent(value)}`)
     .join('; ');
   const headers = new Headers({ cookie: cookieHeader });
-  const token = await getToken({
-    req: { headers } as unknown as NextRequest,
-    secret,
-    cookieName,
-  });
-  if (!token?.accessToken) return null;
-  return token.accessToken as string;
+  for (const cookieName of COOKIE_NAME_CANDIDATES) {
+    const token = await getToken({
+      req: { headers } as unknown as NextRequest,
+      secret,
+      cookieName,
+    });
+    if (token?.accessToken) return token.accessToken as string;
+  }
+  return null;
 }

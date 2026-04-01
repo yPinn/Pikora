@@ -58,7 +58,9 @@ export async function POST(request: NextRequest) {
     const expectedSignature =
       'sha256=' + crypto.createHmac('sha256', APP_SECRET).update(rawBody).digest('hex');
 
-    if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
+    const sigBuf = Buffer.from(signature);
+    const expBuf = Buffer.from(expectedSignature);
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
       logger.warn('Webhook signature verification failed');
       return new NextResponse('Invalid signature', { status: 401 });
     }
@@ -69,7 +71,7 @@ export async function POST(request: NextRequest) {
     return new NextResponse('OK', { status: 200 });
   } catch (error) {
     logger.error('Failed to process webhook event', error);
-    return new NextResponse('OK', { status: 200 });
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
 
