@@ -1,6 +1,5 @@
 'use client';
 
-import { TestingPhaseModal } from '@/components/testing-phase-modal';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
 interface AuthShellProps {
@@ -8,10 +7,5 @@ interface AuthShellProps {
 }
 
 export function AuthShell({ children }: AuthShellProps) {
-  return (
-    <SidebarProvider className="h-dvh">
-      <TestingPhaseModal />
-      {children}
-    </SidebarProvider>
-  );
+  return <SidebarProvider className="h-dvh">{children}</SidebarProvider>;
 }

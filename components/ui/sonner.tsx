@@ -11,10 +11,11 @@ import { useTheme } from 'next-themes';
 import { Toaster as Sonner, type ToasterProps } from 'sonner';
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = 'system' } = useTheme();
+  const { resolvedTheme = 'light' } = useTheme();
 
   return (
     <Sonner
+      richColors
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4" />,
@@ -28,10 +29,19 @@ const Toaster = ({ ...props }: ToasterProps) => {
           '--normal-bg': 'var(--popover)',
           '--normal-text': 'var(--popover-foreground)',
           '--normal-border': 'var(--border)',
+          '--success-bg': 'var(--toast-success-bg)',
+          '--success-text': 'var(--toast-success-text)',
+          '--success-border': 'var(--toast-success-border)',
+          '--error-bg': 'var(--toast-error-bg)',
+          '--error-text': 'var(--toast-error-text)',
+          '--error-border': 'var(--toast-error-border)',
+          '--warning-bg': 'var(--toast-warning-bg)',
+          '--warning-text': 'var(--toast-warning-text)',
+          '--warning-border': 'var(--toast-warning-border)',
           '--border-radius': 'var(--radius)',
         } as React.CSSProperties
       }
-      theme={theme as ToasterProps['theme']}
+      theme={resolvedTheme as ToasterProps['theme']}
       {...props}
     />
   );
