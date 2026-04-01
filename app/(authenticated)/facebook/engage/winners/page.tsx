@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { format } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
+import ExcelJS from 'exceljs';
 import {
   Trophy,
   ChevronDown,
@@ -70,34 +71,133 @@ export default function FacebookWinnersPage() {
     setDeletingId(null);
   };
 
-  const exportCSV = (record: GiveawayRecord) => {
-    const rows = [['獎項', '名次', '中獎者', '用戶ID', '留言內容', '留言時間']];
+  const exportXLSX = async (record: GiveawayRecord) => {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('中獎名單');
 
-    // 按獎項分組
-    const prizeMap = new Map(record.prizes.map((p) => [p.id, p]));
+    // ── 顏色 tokens ──────────────────────────────
+    const C = {
+      titleBg: 'FF0F172A', // slate-900
+      titleFg: 'FFFFFFFF',
+      headerBg: 'FF1E293B', // slate-800
+      headerFg: 'FFFFFFFF',
+      prizeABg: 'FFEFF6FF', // blue-50
+      prizeBBg: 'FFF0FDF4', // green-50
+      rowAlt: 'FFF8FAFC', // slate-50
+      fillBg: 'FFFEFCE8', // yellow-50
+      fillFg: 'FF94A3B8', // slate-400
+      linkFg: 'FF2563EB', // blue-600
+      border: 'FFCBD5E1', // slate-300
+    };
 
-    record.winners.forEach((winner, index) => {
-      const prize = prizeMap.get(winner.prize.id);
-      rows.push([
-        prize?.name || '',
-        String(index + 1),
+    const border: Partial<ExcelJS.Borders> = {
+      top: { style: 'thin', color: { argb: C.border } },
+      bottom: { style: 'thin', color: { argb: C.border } },
+      left: { style: 'thin', color: { argb: C.border } },
+      right: { style: 'thin', color: { argb: C.border } },
+    };
+
+    // ── 欄寬 ─────────────────────────────────────
+    ws.columns = [
+      { key: 'prize', width: 14 },
+      { key: 'name', width: 20 },
+      { key: 'message', width: 44 },
+      { key: 'time', width: 18 },
+      { key: 'link', width: 12 },
+      { key: 'status', width: 14 },
+      { key: 'note', width: 26 },
+    ];
+
+    // ── 第 1 列：標題（合併全欄） ─────────────────
+    const titleText =
+      (record.name ? `${record.name}　` : '') +
+      `中獎名單　${format(new Date(record.createdAt), 'yyyy/MM/dd HH:mm')}`;
+
+    const titleRow = ws.addRow([titleText]);
+    titleRow.height = 28;
+    ws.mergeCells(1, 1, 1, 7);
+    const titleCell = titleRow.getCell(1);
+    titleCell.font = { bold: true, size: 13, color: { argb: C.titleFg } };
+    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.titleBg } };
+    titleCell.alignment = { vertical: 'middle', horizontal: 'left' };
+
+    // ── 第 2 列：欄位標頭 ─────────────────────────
+    const headers = ['獎項', '中獎者', '留言內容', '留言時間', '留言連結', '領獎狀態', '備註'];
+    const headerRow = ws.addRow(headers);
+    headerRow.height = 22;
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: C.headerFg } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.headerBg } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.border = border;
+    });
+
+    // ── 凍結前 2 列 ───────────────────────────────
+    ws.views = [{ state: 'frozen', xSplit: 0, ySplit: 2 }];
+
+    // ── 資料列 ────────────────────────────────────
+    const prizeOrder = new Map(record.prizes.map((p, i) => [p.id, i]));
+    const sortedWinners = [...record.winners].sort(
+      (a, b) => (prizeOrder.get(a.prize.id) ?? 0) - (prizeOrder.get(b.prize.id) ?? 0)
+    );
+
+    sortedWinners.forEach((winner, rowIdx) => {
+      const prizeIdx = prizeOrder.get(winner.prize.id) ?? 0;
+      const groupBg = prizeIdx % 2 === 0 ? C.prizeABg : C.prizeBBg;
+      const rowBg = rowIdx % 2 === 0 ? groupBg : C.rowAlt;
+
+      const commentUrl =
+        record.post_url && winner.comment_id
+          ? `${record.post_url}?comment_id=${winner.comment_id}`
+          : '';
+
+      const dataRow = ws.addRow([
+        winner.prize.name,
         winner.from_name,
-        winner.from_id,
         winner.comment_message || '',
         winner.comment_created_time
           ? format(new Date(winner.comment_created_time), 'yyyy/MM/dd HH:mm')
           : '',
+        commentUrl ? '查看留言' : '',
+        '',
+        '',
       ]);
+      dataRow.height = 20;
+
+      dataRow.eachCell({ includeEmpty: true }, (cell, colNum) => {
+        const isFill = colNum >= 6; // 領獎狀態、備註
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: isFill ? C.fillBg : rowBg },
+        };
+        cell.border = border;
+        cell.alignment = {
+          vertical: 'middle',
+          horizontal: colNum === 3 ? 'left' : 'center',
+          wrapText: colNum === 3,
+        };
+        if (isFill) {
+          cell.font = { italic: true, color: { argb: C.fillFg } };
+        }
+        // 留言連結：超連結樣式
+        if (colNum === 5 && commentUrl) {
+          cell.value = { text: '查看留言', hyperlink: commentUrl };
+          cell.font = { color: { argb: C.linkFg }, underline: true };
+        }
+      });
     });
 
-    const csvContent = rows
-      .map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(','))
-      .join('\n');
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    // ── 匯出 ─────────────────────────────────────
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `抽獎名單_${format(new Date(record.createdAt), 'yyyyMMdd_HHmm')}.csv`;
+    const namePrefix = record.name ? `${record.name}_` : '';
+    link.download = `抽獎名單_${namePrefix}${format(new Date(record.createdAt), 'yyyyMMdd_HHmm')}.xlsx`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -154,7 +254,7 @@ export default function FacebookWinnersPage() {
                   <Card className="overflow-hidden">
                     {/* Header */}
                     <CollapsibleTrigger asChild>
-                      <div className="hover:bg-muted/50 flex cursor-pointer items-center gap-3 p-4">
+                      <div className="hover:bg-muted/50 flex cursor-pointer items-center gap-3 px-4 py-3">
                         <div className="text-muted-foreground">
                           {isExpanded ? (
                             <ChevronDown className="h-5 w-5" />
@@ -165,8 +265,9 @@ export default function FacebookWinnersPage() {
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">
-                              {record.name || `抽獎 #${record.id.slice(-6)}`}
+                            <span className="font-medium">{record.name || '未命名抽獎'}</span>
+                            <span className="text-muted-foreground text-caption font-mono">
+                              #{record.id.slice(-6)}
                             </span>
                             <Badge variant="secondary">
                               {record.status === 'COMPLETED' ? '已完成' : '草稿'}
@@ -198,7 +299,7 @@ export default function FacebookWinnersPage() {
                             size="sm"
                             title="匯出 CSV"
                             variant="ghost"
-                            onClick={() => exportCSV(record)}
+                            onClick={() => void exportXLSX(record)}
                           >
                             <Download className="h-4 w-4" />
                           </Button>
@@ -247,9 +348,9 @@ export default function FacebookWinnersPage() {
 
                     {/* Content */}
                     <CollapsibleContent>
-                      <div className="border-t px-4 pb-4">
+                      <div className="border-t px-4 pb-3">
                         {winnerGroups.map(({ prize, winners }) => (
-                          <div key={prize.id} className="mt-4">
+                          <div key={prize.id} className="mt-3">
                             <h4 className="text-body mb-2 flex items-center gap-2 font-medium">
                               <Trophy className="text-primary h-4 w-4" />
                               {prize.name}
@@ -267,10 +368,12 @@ export default function FacebookWinnersPage() {
                                 {winners.map((winner) => (
                                   <div
                                     key={winner.id}
-                                    className="bg-muted/50 flex items-center gap-3 rounded-lg p-3"
+                                    className="bg-muted/50 flex items-center gap-3 rounded-lg px-3 py-2"
                                   >
-                                    <Avatar className="h-9 w-9">
-                                      <AvatarImage src={winner.from_picture_url} />
+                                    <Avatar className="h-8 w-8">
+                                      <AvatarImage
+                                        src={`/api/facebook/picture?userId=${winner.from_id}&pageId=${record.pageId}`}
+                                      />
                                       <AvatarFallback>{winner.from_name[0]}</AvatarFallback>
                                     </Avatar>
                                     <div className="min-w-0 flex-1">
