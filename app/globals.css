@@ -17,16 +17,6 @@
 
   /* ===== Spacing - 語義化間距 ===== */
   --spacing-page: var(--gap-page);
-  --spacing-section: var(--gap-section);
-  --spacing-item: var(--gap-item);
-
-  /* ===== Animation — exposed as Tailwind utilities ===== */
-  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-smooth: cubic-bezier(0.45, 0, 0.55, 1);
-  --duration-fast: 0.25s;
-  --duration-base: 0.55s;
-  --duration-slow: 0.85s;
 
   /* ===== Colors ===== */
   --color-background: var(--background);
@@ -53,6 +43,11 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
 
+  /* ===== Platform ===== */
+  --color-facebook: var(--facebook);
+  --color-instagram: var(--instagram);
+  --color-threads: var(--threads);
+
   /* ===== Sidebar ===== */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
@@ -74,52 +69,33 @@
 }
 
 :root {
-  /* Typography */
+  /* Typography — raw scale (僅作語義 token 的底層引用) */
   --text-xs: 0.75rem; /* 12px */
-  --text-sm: 0.875rem; /* 14px */
   --text-base: 1rem; /* 16px */
-  --text-lg: 1.125rem; /* 18px */
   --text-xl: 1.25rem; /* 20px */
   --text-2xl: 1.5rem; /* 24px */
   --text-3xl: 2rem; /* 32px */
 
-  /* Typography Ref - 語義化字級 */
-  --text-hero: var(--text-3xl); /* 首頁大標題 */
-  --text-title: var(--text-2xl); /* 頁面標題 */
-  --text-heading: var(--text-lg); /* 區塊標題 */
-  --text-body: var(--text-sm); /* 內文 */
-  --text-caption: var(--text-xs); /* 輔助文字 */
+  /* Typography — 語義化字級 */
+  --text-hero: var(--text-3xl); /* 首頁大標題 32px */
+  --text-title: var(--text-2xl); /* 頁面大標題 24px */
+  --text-heading: var(--text-xl); /* 區塊標題   20px */
+  --text-body: var(--text-base); /* 內文       16px */
+  --text-caption: var(--text-xs); /* 輔助文字   12px */
 
-  /* Spacing (8px 倍數) */
+  /* Spacing — raw scale */
   --space-1: 0.5rem; /* 8px */
   --space-2: 1rem; /* 16px */
   --space-3: 1.5rem; /* 24px */
-  --space-4: 2rem; /* 32px */
-  --space-5: 2.5rem; /* 40px */
-  --space-6: 3rem; /* 48px */
 
-  /* Spacing Ref - 語義化間距 */
-  --gap-page: var(--space-2); /* 頁面內距 */
-  --gap-section: var(--space-3); /* 區塊間距 */
-  --gap-item: var(--space-1); /* 元件間距 */
+  /* Spacing — 語義化間距 */
+  --gap-page: var(--space-2); /* 頁面內距，desktop 升為 space-3 */
 
-  /* ===== Navigation tokens (Flat Design — 8px grid) ===== */
-  --nav-h: 3.5rem; /* 56px — h-14；icon btn 也用此值做正方形 */
-  --nav-border-w: 1px; /* bottom border 細線 */
+  /* ===== Navigation tokens (Landing Page) ===== */
+  --nav-h: 3.5rem; /* 56px — h-14 */
   --nav-px: var(--space-3); /* 24px 左側 logo 內距 */
-  --nav-btn-icon-w: var(--nav-h); /* icon btn 正方形：width = height = 56px */
-  --nav-btn-px: var(--space-3); /* LOGIN btn 水平內距 24px */
-  --nav-divider-w: 1px; /* 按鈕群組左側垂直分隔線寬 */
-
-  /* ===== Animation Tokens ===== */
-  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1); /* expo-out — scroll & entrance */
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* spring — bounce elements */
-  --ease-smooth: cubic-bezier(0.45, 0, 0.55, 1); /* in-out — modals */
-  --dur-fast: 0.25s; /* hover, micro-interaction */
-  --dur-base: 0.55s; /* section entrance */
-  --dur-slow: 0.85s; /* hero, large reveals */
-  --dur-scroll: 700ms; /* custom RAF scroll */
-  --stagger: 0.08s; /* list stagger unit */
+  --nav-btn-icon-w: var(--nav-h); /* icon btn 正方形 */
+  --nav-btn-px: var(--space-3); /* LOGIN btn 水平內距 */
 
   /* ===== Toast (Sonner) ===== */
   --toast-success-bg: oklch(0.93 0.095 145);
@@ -133,7 +109,7 @@
   --toast-warning-border: oklch(0.82 0.14 85);
 
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
+  --background: oklch(0.993 0.004 255);
   --foreground: oklch(0.129 0.042 264.695);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
@@ -141,11 +117,11 @@
   --popover-foreground: oklch(0.129 0.042 264.695);
   --primary: oklch(0.208 0.042 265.755);
   --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
+  --secondary: oklch(0.96 0.009 255);
   --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
+  --muted: oklch(0.972 0.004 248);
   --muted-foreground: oklch(0.48 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
+  --accent: oklch(0.946 0.018 255);
   --accent-foreground: oklch(0.208 0.042 265.755);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.929 0.013 255.508);
@@ -164,6 +140,11 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
+
+  /* ===== Platform Brand Colors ===== */
+  --facebook: oklch(0.56 0.2 255);
+  --instagram: oklch(0.58 0.22 330);
+  --threads: oklch(0.15 0 0);
 }
 
 .dark {
@@ -179,11 +160,11 @@
   --primary: oklch(0.68 0.17 255);
   --primary-foreground: oklch(0.97 0.003 248);
 
-  --secondary: oklch(0.23 0.008 55);
+  --secondary: oklch(0.22 0.007 55);
   --secondary-foreground: oklch(0.97 0.003 248);
-  --muted: oklch(0.23 0.008 55);
+  --muted: oklch(0.2 0.006 55);
   --muted-foreground: oklch(0.65 0.015 60);
-  --accent: oklch(0.23 0.008 55);
+  --accent: oklch(0.27 0.015 255);
   --accent-foreground: oklch(0.97 0.003 248);
 
   --destructive: oklch(0.65 0.22 22);
@@ -216,6 +197,11 @@
   --sidebar-accent-foreground: oklch(0.97 0.003 248);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.68 0.17 255);
+
+  /* ===== Platform Brand Colors (dark) ===== */
+  --facebook: oklch(0.72 0.18 255);
+  --instagram: oklch(0.74 0.2 330);
+  --threads: oklch(0.9 0 0);
 }
 
 @layer base {
@@ -240,10 +226,16 @@
     overflow-y: scroll;
     scroll-behavior: smooth;
   }
-  * {
+  html,
+  body,
+  [data-slot='scroll-area-viewport'],
+  [data-radix-scroll-area-viewport] {
     scrollbar-width: none; /* Firefox */
   }
-  *::-webkit-scrollbar {
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  [data-slot='scroll-area-viewport']::-webkit-scrollbar,
+  [data-radix-scroll-area-viewport]::-webkit-scrollbar {
     display: none; /* Chrome / Safari */
   }
 }
@@ -280,7 +272,7 @@
 
 [data-active] .anim-item {
   /* Explicit 0.7s — do NOT use var() here; CSS var resolution failures silently produce 0s duration */
-  animation: anim-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) var(--anim-delay, 0s) both;
+  animation: anim-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) var(--anim-delay, 0s) both;
 }
 
 /* ── Doodle section entrance — stamp-in with spring bounce ── */
@@ -307,7 +299,7 @@
 }
 
 [data-active] .doodle-item {
-  animation: stamp-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--anim-delay, 0s) both;
+  animation: stamp-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) var(--anim-delay, 0s) both;
 }
 
 @keyframes float {
@@ -379,7 +371,7 @@
   }
   [data-active] .anim-item,
   [data-active] .doodle-item {
-    animation: anim-in-reduced 0.45s ease-out var(--anim-delay, 0s) both !important;
+    animation: anim-in-reduced 0.3s ease-out var(--anim-delay, 0s) both !important;
   }
 }
 

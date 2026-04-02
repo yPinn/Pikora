@@ -54,3 +54,9 @@ export const staggerContainer = {
   hidden: {},
   show: { transition: { staggerChildren: ANIM.stagger } },
 } as const;
+
+/** 列表 stagger 子項目 — 與 staggerContainer 搭配使用 */
+export const scaleInItem = {
+  hidden: { opacity: 0, scale: ANIM.scale.from },
+  show: { opacity: 1, scale: 1, transition: { duration: ANIM.fast, ease: ANIM.ease } },
+} as const;
