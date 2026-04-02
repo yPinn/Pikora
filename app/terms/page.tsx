@@ -293,7 +293,7 @@ const sections: Section[] = [
 
 function SectionBody({ body }: { body: React.ReactNode }) {
   return (
-    <div className="[&_li]:text-muted-foreground [&_p]:text-muted-foreground [&_strong]:text-foreground text-sm leading-[1.75] [&_li+li]:mt-1 [&_p]:mb-0 [&_p+ul]:mt-2 [&_ul]:list-disc [&_ul]:pl-5">
+    <div className="[&_li]:text-muted-foreground [&_p]:text-muted-foreground [&_strong]:text-foreground text-body leading-[1.75] [&_li+li]:mt-1 [&_p]:mb-0 [&_p+ul]:mt-2 [&_ul]:list-disc [&_ul]:pl-5">
       {body}
     </div>
   );
@@ -307,7 +307,7 @@ export default function TermsOfService() {
       {/* Top bar */}
       <div className="mb-10 flex items-center justify-between gap-4">
         <Link
-          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm transition-colors"
+          className="text-body text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 transition-colors"
           href="/login"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -320,7 +320,7 @@ export default function TermsOfService() {
             <button
               key={opt.value}
               className={cn(
-                'rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-150',
+                'text-caption rounded-md px-3 py-1.5 font-medium transition-all duration-150',
                 lang === opt.value
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -338,29 +338,29 @@ export default function TermsOfService() {
         {lang === 'en' ? (
           <>
             <h1 className="text-title mb-1 font-bold">Terms of Service</h1>
-            <p className="text-muted-foreground text-sm">Last updated: March 2026</p>
+            <p className="text-body text-muted-foreground">Last updated: March 2026</p>
           </>
         ) : (
           <>
             <h1 className="text-title mb-1 font-bold">服務條款</h1>
-            <p className="text-muted-foreground text-sm">最後更新：2026 年 3 月</p>
+            <p className="text-body text-muted-foreground">最後更新：2026 年 3 月</p>
           </>
         )}
       </div>
 
       {/* TOC */}
       <nav className="bg-muted/50 border-border mb-10 rounded-xl border p-5">
-        <p className="text-foreground mb-3 text-xs font-semibold tracking-widest uppercase">
+        <p className="text-foreground text-caption mb-3 font-semibold tracking-widest uppercase">
           {lang === 'en' ? 'Contents' : '目錄'}
         </p>
-        <ol className="text-muted-foreground space-y-1.5 text-sm">
+        <ol className="text-body text-muted-foreground space-y-1.5">
           {sections.map((s, i) => (
             <li key={s.id}>
               <a
                 className="hover:text-foreground inline-flex items-baseline gap-2 transition-colors"
                 href={`#${s.id}`}
               >
-                <span className="text-muted-foreground/50 w-5 shrink-0 text-xs tabular-nums">
+                <span className="text-muted-foreground/50 text-caption w-5 shrink-0 tabular-nums">
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <span>{lang === 'en' ? s.en.title : s.zh.title}</span>
@@ -380,11 +380,11 @@ export default function TermsOfService() {
           >
             {/* Heading */}
             <div className="mb-4 flex items-start gap-3">
-              <span className="bg-muted text-muted-foreground mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-semibold tabular-nums">
+              <span className="bg-muted text-muted-foreground text-caption mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md font-semibold tabular-nums">
                 {i + 1}
               </span>
               <div>
-                <h2 className="text-foreground text-sm font-semibold">
+                <h2 className="text-body text-foreground font-semibold">
                   {lang === 'en' ? s.en.title : s.zh.title}
                 </h2>
               </div>
@@ -399,7 +399,7 @@ export default function TermsOfService() {
       </div>
 
       {/* Footer */}
-      <p className="text-muted-foreground/60 mt-10 text-center text-xs">
+      <p className="text-muted-foreground/60 text-caption mt-10 text-center">
         {lang === 'en'
           ? 'In the event of any discrepancy between the Traditional Chinese and English versions, the Traditional Chinese version shall prevail.'
           : '如中英文版本有任何歧異，以正體中文版本為準。'}

@@ -517,7 +517,7 @@ export default function Home() {
                   {/* Header */}
                   <div className="mb-2 flex items-center gap-2">
                     <Info className="h-4 w-4 shrink-0 text-blue-500" />
-                    <span className="flex-1 text-sm font-semibold">通知</span>
+                    <span className="text-body flex-1 font-semibold">通知</span>
                     <button
                       aria-label="關閉通知"
                       className="text-muted-foreground hover:text-foreground transition-colors"
@@ -527,7 +527,7 @@ export default function Home() {
                     </button>
                   </div>
                   {/* Body */}
-                  <p className="text-muted-foreground mb-3 text-sm leading-relaxed">
+                  <p className="text-body text-muted-foreground mb-3 leading-relaxed">
                     Facebook 已開放使用，
                     <br />
                     Instagram 與 Threads 即將推出
@@ -572,7 +572,7 @@ export default function Home() {
             >
               豐富功能一次滿足
             </h2>
-            <p className="anim-item text-muted-foreground mb-8 text-sm" style={delay(0.15)}>
+            <p className="anim-item text-body text-muted-foreground mb-8" style={delay(0.15)}>
               專為社群版面管理者設計的完整抽獎解決方案
             </p>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -586,7 +586,7 @@ export default function Home() {
                     <Icon className="h-5 w-5 text-white" />
                   </div>
                   <h3 className="text-card-foreground mb-1.5 font-semibold">{title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
+                  <p className="text-body text-muted-foreground leading-relaxed">{description}</p>
                 </div>
               ))}
             </div>

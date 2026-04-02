@@ -37,6 +37,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   useGiveawayHistory,
   type GiveawayRecord,
@@ -296,32 +297,41 @@ export default function FacebookWinnersPage() {
                           className="flex items-center gap-1"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <Button
-                            size="sm"
-                            title="匯出 CSV"
-                            variant="ghost"
-                            onClick={() => void exportXLSX(record)}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                          {record.post_url && (
-                            <a
-                              href={record.post_url}
-                              rel="noopener noreferrer"
-                              target="_blank"
-                              title="查看貼文"
-                            >
-                              <Button size="sm" variant="ghost">
-                                <ExternalLink className="h-4 w-4" />
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => void exportXLSX(record)}
+                              >
+                                <Download className="h-4 w-4" />
                               </Button>
-                            </a>
+                            </TooltipTrigger>
+                            <TooltipContent>匯出 CSV</TooltipContent>
+                          </Tooltip>
+                          {record.post_url && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <a href={record.post_url} rel="noopener noreferrer" target="_blank">
+                                  <Button size="sm" variant="ghost">
+                                    <ExternalLink className="h-4 w-4" />
+                                  </Button>
+                                </a>
+                              </TooltipTrigger>
+                              <TooltipContent>查看貼文</TooltipContent>
+                            </Tooltip>
                           )}
                           <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button size="sm" title="刪除" variant="ghost">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <AlertDialogTrigger asChild>
+                                  <Button size="sm" variant="ghost">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                              </TooltipTrigger>
+                              <TooltipContent>刪除</TooltipContent>
+                            </Tooltip>
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>確定要刪除嗎？</AlertDialogTitle>
@@ -397,15 +407,19 @@ export default function FacebookWinnersPage() {
                                         </span>
                                       )}
                                       {record.post_url && winner.comment_id && (
-                                        <a
-                                          className="text-muted-foreground hover:text-primary"
-                                          href={`${record.post_url}?comment_id=${winner.comment_id}`}
-                                          rel="noopener noreferrer"
-                                          target="_blank"
-                                          title="查看留言"
-                                        >
-                                          <ExternalLink className="h-4 w-4" />
-                                        </a>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <a
+                                              className="text-muted-foreground hover:text-primary"
+                                              href={`${record.post_url}?comment_id=${winner.comment_id}`}
+                                              rel="noopener noreferrer"
+                                              target="_blank"
+                                            >
+                                              <ExternalLink className="h-4 w-4" />
+                                            </a>
+                                          </TooltipTrigger>
+                                          <TooltipContent>查看留言</TooltipContent>
+                                        </Tooltip>
                                       )}
                                     </div>
                                   </div>

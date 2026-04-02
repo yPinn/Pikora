@@ -27,14 +27,14 @@ export default function SystemInfoPage() {
           </CardContent>
         </Card>
 
-        <h3 className="mt-2 font-semibold">主要功能模組</h3>
+        <h3 className="text-heading font-semibold">主要功能模組</h3>
 
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader className="flex flex-row items-center gap-4">
               <Layers className="text-primary h-8 w-8 shrink-0" />
               <div>
-                <CardTitle className="text-base">Content — 內容管理</CardTitle>
+                <CardTitle className="text-heading">Content — 內容管理</CardTitle>
                 <CardDescription>貼文與留言的瀏覽與管理</CardDescription>
               </div>
             </CardHeader>
@@ -51,7 +51,7 @@ export default function SystemInfoPage() {
             <CardHeader className="flex flex-row items-center gap-4">
               <Filter className="text-primary h-8 w-8 shrink-0" />
               <div>
-                <CardTitle className="text-base">進階篩選條件</CardTitle>
+                <CardTitle className="text-heading">進階篩選條件</CardTitle>
                 <CardDescription>精準定義符合資格的留言</CardDescription>
               </div>
             </CardHeader>
@@ -69,7 +69,7 @@ export default function SystemInfoPage() {
             <CardHeader className="flex flex-row items-center gap-4">
               <Shuffle className="text-primary h-8 w-8 shrink-0" />
               <div>
-                <CardTitle className="text-base">Engage — 抽獎系統</CardTitle>
+                <CardTitle className="text-heading">Engage — 抽獎系統</CardTitle>
                 <CardDescription>公正透明的隨機抽獎</CardDescription>
               </div>
             </CardHeader>
@@ -87,7 +87,7 @@ export default function SystemInfoPage() {
             <CardHeader className="flex flex-row items-center gap-4">
               <Gift className="text-primary h-8 w-8 shrink-0" />
               <div>
-                <CardTitle className="text-base">得獎者管理</CardTitle>
+                <CardTitle className="text-heading">得獎者管理</CardTitle>
                 <CardDescription>紀錄與追蹤每場活動結果</CardDescription>
               </div>
             </CardHeader>
@@ -104,7 +104,7 @@ export default function SystemInfoPage() {
             <CardHeader className="flex flex-row items-center gap-4">
               <ShieldCheck className="text-primary h-8 w-8 shrink-0" />
               <div>
-                <CardTitle className="text-base">黑名單系統</CardTitle>
+                <CardTitle className="text-heading">黑名單系統</CardTitle>
                 <CardDescription>針對粉絲專頁的排除管理</CardDescription>
               </div>
             </CardHeader>
@@ -121,7 +121,7 @@ export default function SystemInfoPage() {
             <CardHeader className="flex flex-row items-center gap-4">
               <History className="text-primary h-8 w-8 shrink-0" />
               <div>
-                <CardTitle className="text-base">安全與資料保護</CardTitle>
+                <CardTitle className="text-heading">安全與資料保護</CardTitle>
                 <CardDescription>最小權限原則，保護您的資料</CardDescription>
               </div>
             </CardHeader>

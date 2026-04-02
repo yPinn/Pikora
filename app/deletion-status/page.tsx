@@ -21,11 +21,11 @@ export default async function DeletionStatusPage({ searchParams }: Props) {
           提出的資料刪除請求，並已刪除您在本服務中的所有相關資料，包含抽獎記錄及帳號資訊。
         </p>
         {code && (
-          <p className="text-muted-foreground text-sm">
+          <p className="text-body text-muted-foreground">
             確認代碼：<code className="font-mono">{code}</code>
           </p>
         )}
-        <p className="text-muted-foreground text-sm">
+        <p className="text-body text-muted-foreground">
           如有疑問，請透過隱私政策頁面上的聯絡方式與我們聯繫。
         </p>
       </div>
