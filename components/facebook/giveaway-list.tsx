@@ -128,8 +128,8 @@ export function GiveawayList() {
           <div className="absolute top-1/2 right-1 flex -translate-y-1/2 gap-0.5">
             {postUrl && (
               <Button
-                className="text-muted-foreground hover:text-foreground h-7 w-7"
-                size="icon"
+                className="text-muted-foreground hover:text-foreground"
+                size="icon-sm"
                 variant="ghost"
                 onClick={clearGiveaway}
               >
@@ -137,8 +137,8 @@ export function GiveawayList() {
               </Button>
             )}
             <Button
-              className="text-muted-foreground hover:text-foreground h-7 w-7"
-              size="icon"
+              className="text-muted-foreground hover:text-foreground"
+              size="icon-sm"
               variant="ghost"
               onClick={async () => setPostUrl(await navigator.clipboard.readText())}
             >

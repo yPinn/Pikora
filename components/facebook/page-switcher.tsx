@@ -90,7 +90,7 @@ export function PageSwitcher() {
                   />
                 )}
               </div>
-              <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
+              <div className="text-body grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-semibold">{activePage.name}</span>
                 <span className="text-muted-foreground text-caption truncate">
                   {getTopRole(activePage.tasks)}

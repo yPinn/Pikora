@@ -34,35 +34,35 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
         <CardContent className="grid p-0 md:grid-cols-2">
           <div className="flex min-h-96 flex-col items-center justify-center gap-8 p-6 md:p-8">
             <div className="flex flex-col items-center gap-2 text-center">
-              <h1 className="text-3xl font-bold">Pikora</h1>
+              <h1 className="text-hero font-bold">Pikora</h1>
               <p className="text-muted-foreground text-balance">Post the Best, Pikora the Rest</p>
             </div>
 
             <div className="w-full space-y-3">
               <Button
-                className="w-full bg-blue-100 hover:bg-blue-200 dark:bg-blue-950 dark:hover:bg-blue-900"
+                className="bg-facebook/15 hover:bg-facebook/25 text-facebook w-full"
                 variant="ghost"
                 onClick={handleFacebookLogin}
               >
-                <FaFacebook className="size-4 text-blue-600 dark:text-blue-400" />
+                <FaFacebook className="size-4" />
                 Facebook
               </Button>
 
               <Button
-                className="w-full bg-pink-100 hover:bg-pink-200 dark:bg-pink-950 dark:hover:bg-pink-900"
+                className="bg-instagram/15 hover:bg-instagram/25 text-instagram w-full"
                 variant="ghost"
                 onClick={handleInstagramLogin}
               >
-                <FaInstagram className="size-4 text-pink-600 dark:text-pink-400" />
+                <FaInstagram className="size-4" />
                 Instagram
               </Button>
 
               <Button
-                className="w-full bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20"
+                className="bg-threads/10 hover:bg-threads/20 text-threads w-full"
                 variant="ghost"
                 onClick={handleThreadsLogin}
               >
-                <SiThreads className="size-4 text-black dark:text-white" />
+                <SiThreads className="size-4" />
                 Threads
               </Button>
             </div>

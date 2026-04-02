@@ -57,6 +57,7 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useGiveaway } from '@/hooks/use-giveaway';
 import { ANIM, cardReveal } from '@/lib/animation';
 import type { FacebookComment } from '@/lib/services/facebook';
@@ -200,7 +201,7 @@ export function GiveawayPanel({
           <Trophy className="mr-2 h-4 w-4" />
           結果
           {results.length > 0 && (
-            <span className="bg-primary-foreground text-primary ml-2 rounded-full px-1.5 text-xs">
+            <span className="bg-primary-foreground text-primary text-caption ml-2 rounded-full px-1.5">
               {results.length}
             </span>
           )}
@@ -209,7 +210,7 @@ export function GiveawayPanel({
           <UserX className="mr-2 h-4 w-4" />
           黑名單
           {blacklist.length > 0 && (
-            <span className="bg-primary-foreground text-primary ml-2 rounded-full px-1.5 text-xs">
+            <span className="bg-primary-foreground text-primary text-caption ml-2 rounded-full px-1.5">
               {blacklist.length}
             </span>
           )}
@@ -225,12 +226,7 @@ export function GiveawayPanel({
                 <Gift className="h-4 w-4" />
                 獎項設定
               </h3>
-              <Button
-                className="text-caption h-7 px-2"
-                size="sm"
-                variant="ghost"
-                onClick={addPrize}
-              >
+              <Button className="text-caption" size="xs" variant="ghost" onClick={addPrize}>
                 <Plus className="mr-1 h-3 w-3" />
                 新增
               </Button>
@@ -240,22 +236,21 @@ export function GiveawayPanel({
               {prizes.map((prize, i) => (
                 <div key={prize.id} className="flex items-center gap-2">
                   <Input
-                    className="h-10 flex-1 text-sm"
+                    className="text-body h-10 flex-1"
                     placeholder="獎項名稱"
                     value={prize.name}
                     onChange={(e) => updatePrize(i, 'name', e.target.value)}
                   />
                   <Input
-                    className="h-10 w-16 text-sm"
+                    className="text-body h-10 w-16"
                     min={1}
                     type="number"
                     value={prize.quantity}
                     onChange={(e) => updatePrize(i, 'quantity', parseInt(e.target.value) || 1)}
                   />
                   <Button
-                    className="h-7 w-7"
                     disabled={prizes.length <= 1}
-                    size="icon"
+                    size="icon-sm"
                     variant="ghost"
                     onClick={() => removePrize(i)}
                   >
@@ -276,7 +271,7 @@ export function GiveawayPanel({
                 篩選條件
               </h3>
               {filters.require_reaction && (
-                <div className="flex items-center gap-2 text-xs">
+                <div className="text-caption flex items-center gap-2">
                   {isLoadingReactions ? (
                     <>
                       <Loader2 className="h-3 w-3 animate-spin" />
@@ -306,7 +301,7 @@ export function GiveawayPanel({
                     <PopoverTrigger asChild>
                       <Button
                         className={cn(
-                          'h-10 flex-1 justify-start text-left text-sm font-normal',
+                          'text-body h-10 flex-1 justify-start text-left font-normal',
                           !filters.time_start && 'text-muted-foreground'
                         )}
                         variant="outline"
@@ -335,7 +330,7 @@ export function GiveawayPanel({
                     <PopoverTrigger asChild>
                       <Button
                         className={cn(
-                          'h-10 flex-1 justify-start text-left text-sm font-normal',
+                          'text-body h-10 flex-1 justify-start text-left font-normal',
                           !filters.time_end && 'text-muted-foreground'
                         )}
                         variant="outline"
@@ -370,7 +365,7 @@ export function GiveawayPanel({
                   留言格式（包含關鍵字）
                 </Label>
                 <Input
-                  className="h-10 text-sm"
+                  className="text-body h-10"
                   placeholder="例如：+1 或 我要參加"
                   value={filters.pattern || ''}
                   onChange={(e) => setFilters({ ...filters, pattern: e.target.value })}
@@ -384,7 +379,7 @@ export function GiveawayPanel({
                   最少 Tag 人數
                 </Label>
                 <Input
-                  className="h-10 text-sm"
+                  className="text-body h-10"
                   min={0}
                   placeholder="0 = 不限制"
                   type="number"
@@ -406,7 +401,7 @@ export function GiveawayPanel({
                     }
                   />
                   <Label
-                    className="flex cursor-pointer items-center gap-1 text-sm font-normal"
+                    className="text-body flex cursor-pointer items-center gap-1 font-normal"
                     htmlFor="require_reaction"
                   >
                     <ThumbsUp className="h-3 w-3" />
@@ -421,7 +416,7 @@ export function GiveawayPanel({
                       setFilters({ ...filters, allow_duplicate: checked === true })
                     }
                   />
-                  <Label className="cursor-pointer text-sm font-normal" htmlFor="allow_duplicate">
+                  <Label className="text-body cursor-pointer font-normal" htmlFor="allow_duplicate">
                     允許重複參加
                   </Label>
                 </div>
@@ -433,7 +428,7 @@ export function GiveawayPanel({
                       setFilters({ ...filters, allow_multi_win: checked === true })
                     }
                   />
-                  <Label className="cursor-pointer text-sm font-normal" htmlFor="allow_multi_win">
+                  <Label className="text-body cursor-pointer font-normal" htmlFor="allow_multi_win">
                     允許重複得獎
                   </Label>
                 </div>
@@ -475,7 +470,7 @@ export function GiveawayPanel({
                     <ScrollArea className="flex-1">
                       <div className="space-y-2 pr-4">
                         {filteredPoolUsers.length === 0 ? (
-                          <p className="text-muted-foreground py-4 text-center text-sm">
+                          <p className="text-muted-foreground text-body py-4 text-center">
                             {poolSearch ? '找不到符合的人選' : '獎池為空'}
                           </p>
                         ) : (
@@ -493,18 +488,18 @@ export function GiveawayPanel({
                                 <AvatarFallback>{entry.from_name[0]}</AvatarFallback>
                               </Avatar>
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium">
+                                <p className="text-body font-medium">
                                   {entry.from_name}
                                   {count > 1 && (
-                                    <span className="text-muted-foreground ml-1 text-xs font-normal">
+                                    <span className="text-muted-foreground text-caption ml-1 font-normal">
                                       ({count} {filters.allow_duplicate ? '次機會' : '則留言'})
                                     </span>
                                   )}
                                 </p>
                               </div>
                               <Button
-                                className="h-7 shrink-0"
-                                size="sm"
+                                className="shrink-0"
+                                size="icon-sm"
                                 variant="ghost"
                                 onClick={() => {
                                   addToBlacklist({
@@ -546,7 +541,7 @@ export function GiveawayPanel({
                     {filters.allow_duplicate ? (
                       <>
                         {stats.final_pool_size}
-                        <span className="text-muted-foreground ml-1 text-xs font-normal">
+                        <span className="text-muted-foreground text-caption ml-1 font-normal">
                           ({stats.unique_users} 人)
                         </span>
                       </>
@@ -588,35 +583,35 @@ export function GiveawayPanel({
               抽獎結果
             </h3>
             <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                title="重新隨機抽出所有獎項，儲存後將建立全新紀錄"
-                variant="outline"
-                onClick={draw}
-              >
-                <RefreshCw className="mr-1 h-3 w-3" />
-                再抽一輪
-              </Button>
-              <Button
-                disabled={results.length === 0 || isSaving || isSaved}
-                size="sm"
-                title={
-                  saveMode === 'replace'
-                    ? '局部重抽後儲存將取代現有紀錄'
-                    : saveMode === 'new'
-                      ? '儲存為新紀錄'
-                      : undefined
-                }
-                variant={isSaved ? 'secondary' : saveMode === 'replace' ? 'outline' : 'default'}
-                onClick={handleSave}
-              >
-                {isSaving ? (
-                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                ) : (
-                  <Save className="mr-1 h-3 w-3" />
-                )}
-                {isSaved ? '已儲存' : saveMode === 'replace' ? '更新紀錄' : '儲存'}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button size="sm" variant="outline" onClick={draw}>
+                    <RefreshCw className="mr-1 h-3 w-3" />
+                    再抽一輪
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>重新隨機抽出所有獎項，儲存後將建立全新紀錄</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    disabled={results.length === 0 || isSaving || isSaved}
+                    size="sm"
+                    variant={isSaved ? 'secondary' : saveMode === 'replace' ? 'outline' : 'default'}
+                    onClick={handleSave}
+                  >
+                    {isSaving ? (
+                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                    ) : (
+                      <Save className="mr-1 h-3 w-3" />
+                    )}
+                    {isSaved ? '已儲存' : saveMode === 'replace' ? '更新紀錄' : '儲存'}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {saveMode === 'replace' ? '局部重抽後儲存將取代現有紀錄' : '儲存為新紀錄'}
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
 
@@ -663,21 +658,25 @@ export function GiveawayPanel({
                             }}
                           >
                             {isFacebookProfileUrl(result.winner.from_profile_url) ? (
-                              <a
-                                href={result.winner.from_profile_url}
-                                rel="noopener noreferrer"
-                                target="_blank"
-                                title="查看個人頁面"
-                              >
-                                <Avatar className="h-10 w-10">
-                                  <AvatarImage
-                                    src={apiPath(
-                                      `/api/facebook/picture?userId=${result.winner.from_id}${pageId ? `&pageId=${pageId}` : ''}`
-                                    )}
-                                  />
-                                  <AvatarFallback>{result.winner.from_name[0]}</AvatarFallback>
-                                </Avatar>
-                              </a>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <a
+                                    href={result.winner.from_profile_url}
+                                    rel="noopener noreferrer"
+                                    target="_blank"
+                                  >
+                                    <Avatar className="h-10 w-10">
+                                      <AvatarImage
+                                        src={apiPath(
+                                          `/api/facebook/picture?userId=${result.winner.from_id}${pageId ? `&pageId=${pageId}` : ''}`
+                                        )}
+                                      />
+                                      <AvatarFallback>{result.winner.from_name[0]}</AvatarFallback>
+                                    </Avatar>
+                                  </a>
+                                </TooltipTrigger>
+                                <TooltipContent>查看個人頁面</TooltipContent>
+                              </Tooltip>
                             ) : (
                               <Avatar className="h-10 w-10">
                                 <AvatarImage
@@ -690,15 +689,19 @@ export function GiveawayPanel({
                             )}
                             <div className="min-w-0 flex-1">
                               {isFacebookProfileUrl(result.winner.from_profile_url) ? (
-                                <a
-                                  className="hover:text-primary font-medium hover:underline"
-                                  href={result.winner.from_profile_url}
-                                  rel="noopener noreferrer"
-                                  target="_blank"
-                                  title="查看個人頁面"
-                                >
-                                  {result.winner.from_name}
-                                </a>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <a
+                                      className="hover:text-primary font-medium hover:underline"
+                                      href={result.winner.from_profile_url}
+                                      rel="noopener noreferrer"
+                                      target="_blank"
+                                    >
+                                      {result.winner.from_name}
+                                    </a>
+                                  </TooltipTrigger>
+                                  <TooltipContent>查看個人頁面</TooltipContent>
+                                </Tooltip>
                               ) : (
                                 <p className="font-medium">{result.winner.from_name}</p>
                               )}
@@ -714,31 +717,38 @@ export function GiveawayPanel({
                                 })}
                               </span>
                               {postUrl && (
-                                <a
-                                  className="text-muted-foreground hover:text-primary"
-                                  href={`${postUrl}?comment_id=${result.winner.comment_id}`}
-                                  rel="noopener noreferrer"
-                                  target="_blank"
-                                  title="查看留言"
-                                >
-                                  <ExternalLink className="h-4 w-4" />
-                                </a>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <a
+                                      className="text-muted-foreground hover:text-primary"
+                                      href={`${postUrl}?comment_id=${result.winner.comment_id}`}
+                                      rel="noopener noreferrer"
+                                      target="_blank"
+                                    >
+                                      <ExternalLink className="h-4 w-4" />
+                                    </a>
+                                  </TooltipTrigger>
+                                  <TooltipContent>查看留言</TooltipContent>
+                                </Tooltip>
                               )}
-                              <Button
-                                className="h-7 w-7"
-                                size="icon"
-                                title="加入黑名單"
-                                variant="ghost"
-                                onClick={() => {
-                                  addToBlacklist({
-                                    from_id: result.winner.from_id,
-                                    from_name: result.winner.from_name,
-                                  });
-                                  toast.success(`已將 ${result.winner.from_name} 加入黑名單`);
-                                }}
-                              >
-                                <Ban className="h-4 w-4" />
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="icon-sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      addToBlacklist({
+                                        from_id: result.winner.from_id,
+                                        from_name: result.winner.from_name,
+                                      });
+                                      toast.success(`已將 ${result.winner.from_name} 加入黑名單`);
+                                    }}
+                                  >
+                                    <Ban className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>加入黑名單</TooltipContent>
+                              </Tooltip>
                             </div>
                           </motion.div>
                         ))}

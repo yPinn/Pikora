@@ -82,7 +82,7 @@ const CommentItem = ({ comment, pageId }: { comment: FacebookComment; pageId?: s
                 : undefined
             }
           />
-          <AvatarFallback className="text-xs font-medium" delayMs={300}>
+          <AvatarFallback className="text-caption font-medium" delayMs={300}>
             {comment.from?.name?.[0] || '?'}
           </AvatarFallback>
         </Avatar>
@@ -102,7 +102,7 @@ const CommentItem = ({ comment, pageId }: { comment: FacebookComment; pageId?: s
               />
             </div>
           )}
-          <div className="text-muted-foreground flex items-center gap-3 px-1 pt-0.5 text-xs">
+          <div className="text-muted-foreground text-caption flex items-center gap-3 px-1 pt-0.5">
             <span>
               {formatDistanceToNow(new Date(comment.created_time), {
                 addSuffix: false,
@@ -196,8 +196,8 @@ export function CommentList() {
           <div className="absolute top-1/2 right-1 flex -translate-y-1/2 gap-0.5">
             {state.postUrl && (
               <Button
-                className="text-muted-foreground hover:text-foreground h-7 w-7"
-                size="icon"
+                className="text-muted-foreground hover:text-foreground"
+                size="icon-sm"
                 variant="ghost"
                 onClick={actions.clearInput}
               >
@@ -205,8 +205,8 @@ export function CommentList() {
               </Button>
             )}
             <Button
-              className="text-muted-foreground hover:text-foreground h-7 w-7"
-              size="icon"
+              className="text-muted-foreground hover:text-foreground"
+              size="icon-sm"
               variant="ghost"
               onClick={async () => actions.setPostUrl(await navigator.clipboard.readText())}
             >
@@ -215,22 +215,26 @@ export function CommentList() {
           </div>
         </div>
 
-        <Button
-          disabled={!state.postUrl}
-          title="原始貼文"
-          variant="outline"
-          onClick={() => window.open(state.postUrl, '_blank', 'noopener,noreferrer')}
-        >
-          <ExternalLink className="h-4 w-4" />
-        </Button>
-        <Button
-          disabled={!state.postId}
-          title="重新整理"
-          variant="outline"
-          onClick={actions.refresh}
-        >
-          <RefreshCw className="h-4 w-4" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              disabled={!state.postUrl}
+              variant="outline"
+              onClick={() => window.open(state.postUrl, '_blank', 'noopener,noreferrer')}
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>原始貼文</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button disabled={!state.postId} variant="outline" onClick={actions.refresh}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>重新整理</TooltipContent>
+        </Tooltip>
         <Button onClick={() => actions.fetchComments(state.postUrl)}>
           <Search className="mr-2 h-4 w-4" />
           查詢

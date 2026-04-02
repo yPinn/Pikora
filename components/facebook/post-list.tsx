@@ -12,18 +12,18 @@ import {
   Share2,
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
   Play,
   Images,
-  Copy,
   Loader2,
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFacebookPage } from '@/contexts/facebook-page-store';
 import { useFacebookPosts } from '@/hooks/use-facebook-posts';
-import { ANIM, scaleIn, staggerContainer } from '@/lib/animation';
+import { ANIM, scaleInItem, staggerContainer } from '@/lib/animation';
 import type { FacebookPost } from '@/lib/services/facebook';
 import momonga2 from '@/public/Momonga_2.jpg';
 
@@ -74,20 +74,15 @@ function PostCard({ post, priority = false }: { post: FacebookPost; priority?: b
   const hasMultipleImages = images.length > 1;
   const isVideo = isVideoPost(post);
 
-  const handlePrev = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-    },
-    [images.length]
-  );
+  const handlePrev = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => Math.max(0, prev - 1));
+  }, []);
 
   const handleNext = useCallback(
     (e: React.MouseEvent) => {
-      e.preventDefault();
       e.stopPropagation();
-      setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+      setCurrentIndex((prev) => Math.min(images.length - 1, prev + 1));
     },
     [images.length]
   );
@@ -119,14 +114,10 @@ function PostCard({ post, priority = false }: { post: FacebookPost; priority?: b
 
   return (
     <motion.div
-      key={post.id}
-      animate={scaleIn.animate}
       className="group bg-muted relative aspect-square cursor-pointer overflow-hidden rounded-sm"
-      initial={scaleIn.initial}
       role="button"
       tabIndex={0}
-      title="點擊複製 URL｜Ctrl+點擊開啟貼文"
-      transition={scaleIn.transition}
+      variants={scaleInItem}
       whileTap={{ scale: ANIM.scale.tap }}
       onBlur={() => setShowOverlay(false)}
       onClick={handleCardClick}
@@ -139,17 +130,28 @@ function PostCard({ post, priority = false }: { post: FacebookPost; priority?: b
       onPointerEnter={() => setShowOverlay(true)}
       onPointerLeave={() => setShowOverlay(false)}
     >
-      {/* 圖片顯示 */}
+      {/* 圖片顯示（AnimatePresence crossfade） */}
       {images.length > 0 ? (
-        <Image
-          fill
-          alt={post.message ? post.message.slice(0, 60) : 'Facebook 貼文圖片'}
-          className="object-cover transition-transform group-hover:scale-105 motion-reduce:transition-none"
-          loading={priority ? 'eager' : 'lazy'}
-          priority={priority}
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"
-          src={images[currentIndex]}
-        />
+        <AnimatePresence initial={false} mode="sync">
+          <motion.div
+            key={currentIndex}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0"
+            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+          >
+            <Image
+              fill
+              alt={post.message ? post.message.slice(0, 60) : 'Facebook 貼文圖片'}
+              className="object-cover transition-transform group-hover:scale-105 motion-reduce:transition-none"
+              loading={priority ? 'eager' : 'lazy'}
+              priority={priority}
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"
+              src={images[currentIndex]}
+            />
+          </motion.div>
+        </AnimatePresence>
       ) : (
         <div className="relative h-full overflow-hidden">
           {/* 背景圖片（模糊+低對比） */}
@@ -168,50 +170,56 @@ function PostCard({ post, priority = false }: { post: FacebookPost; priority?: b
 
       {/* 影片播放圖示 */}
       {isVideo && (
-        <div className="absolute top-2 left-2 rounded-full bg-black/60 p-1.5">
-          <Play className="h-3 w-3 fill-white text-white" />
+        <div className="absolute top-2 left-2 z-20 flex size-9 items-center justify-center rounded-full border border-white/40 bg-black/50">
+          <Play className="h-4 w-4 fill-white text-white" />
         </div>
       )}
 
       {/* 多圖標示（右上角） */}
       {hasMultipleImages && !isVideo && (
-        <div className="absolute top-2 right-2 rounded-full bg-black/60 p-2">
-          <Images className="h-5 w-5 text-white" />
+        <div className="absolute top-2 right-2 z-20 flex size-9 items-center justify-center rounded-full border border-white/40 bg-black/50">
+          <Images className="h-4 w-4 text-white" />
         </div>
       )}
 
-      {/* 左右換頁按鈕（多圖時顯示） */}
-      {hasMultipleImages && (
-        <>
-          <button
-            aria-label="上一張"
-            className={`absolute top-1/2 left-2 z-20 -translate-y-1/2 rounded-full bg-black/50 p-1.5 text-white transition-opacity hover:bg-black/70 motion-reduce:transition-none ${showOverlay ? 'opacity-100' : 'opacity-0'}`}
-            type="button"
-            onClick={handlePrev}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            aria-label="下一張"
-            className={`absolute top-1/2 right-2 z-20 -translate-y-1/2 rounded-full bg-black/50 p-1.5 text-white transition-opacity hover:bg-black/70 motion-reduce:transition-none ${showOverlay ? 'opacity-100' : 'opacity-0'}`}
-            type="button"
-            onClick={handleNext}
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
+      {/* 左右換頁按鈕（多圖時顯示，首/末圖隱藏對應方向） */}
+      {hasMultipleImages && currentIndex > 0 && (
+        <button
+          aria-label="上一張"
+          className={`absolute top-1/2 left-2 z-20 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-black/50 text-white transition-opacity motion-reduce:transition-none ${showOverlay ? 'opacity-100' : 'opacity-0'}`}
+          type="button"
+          onClick={handlePrev}
+          onPointerDown={(e) => e.nativeEvent.stopImmediatePropagation()}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+      )}
+      {hasMultipleImages && currentIndex < images.length - 1 && (
+        <button
+          aria-label="下一張"
+          className={`absolute top-1/2 right-2 z-20 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-black/50 text-white transition-opacity motion-reduce:transition-none ${showOverlay ? 'opacity-100' : 'opacity-0'}`}
+          type="button"
+          onClick={handleNext}
+          onPointerDown={(e) => e.nativeEvent.stopImmediatePropagation()}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      )}
 
-          {/* 圖片指示點 */}
-          <div className="absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 gap-1">
-            {images.map((_, idx) => (
-              <span
-                key={idx}
-                className={`h-1.5 w-1.5 rounded-full transition-colors ${
-                  idx === currentIndex ? 'bg-white' : 'bg-white/50'
-                }`}
-              />
-            ))}
-          </div>
-        </>
+      {/* 圖片指示點 */}
+      {hasMultipleImages && (
+        <div
+          className={`absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 gap-1 transition-opacity motion-reduce:transition-none ${showOverlay ? 'opacity-100' : 'opacity-0'}`}
+        >
+          {images.map((_, idx) => (
+            <span
+              key={idx}
+              className={`h-1.5 w-1.5 rounded-full transition-colors ${
+                idx === currentIndex ? 'bg-white' : 'bg-white/50'
+              }`}
+            />
+          ))}
+        </div>
       )}
 
       {/* Hover / Focus / Touch 時顯示互動數據與文字預覽 */}
@@ -221,9 +229,11 @@ function PostCard({ post, priority = false }: { post: FacebookPost; priority?: b
       >
         {/* 貼文文字預覽 */}
         {post.message && (
-          <p className="mb-1.5 line-clamp-2 text-xs leading-tight opacity-90">{post.message}</p>
+          <p className="text-caption mb-1.5 line-clamp-2 leading-tight opacity-90">
+            {post.message}
+          </p>
         )}
-        <div className="flex gap-3 text-xs">
+        <div className="text-caption flex gap-3">
           <span className="flex items-center gap-1">
             <Heart className="h-3 w-3 fill-white" />
             {post.reactions?.summary?.total_count || 0}
@@ -237,18 +247,25 @@ function PostCard({ post, priority = false }: { post: FacebookPost; priority?: b
             {post.shares?.count || 0}
           </span>
         </div>
-        <time className="mt-1 text-xs opacity-80">
+        <time className="text-caption mt-1 opacity-80">
           {formatDistanceToNow(new Date(post.created_time), { addSuffix: true, locale: zhTW })}
         </time>
       </div>
 
-      {/* 左下角複製圖示提示 */}
-      <div
-        aria-hidden="true"
-        className={`absolute right-2 bottom-2 z-20 rounded-full bg-black/50 p-1.5 text-white transition-opacity motion-reduce:transition-none ${showOverlay ? 'opacity-100' : 'opacity-0'}`}
-      >
-        <Copy className="h-3 w-3" />
-      </div>
+      {/* 右下角：開啟原始貼文 */}
+      {post.permalink_url && (
+        <a
+          aria-label="開啟原始貼文"
+          className={`absolute right-2 bottom-2 z-20 flex size-9 items-center justify-center rounded-full border border-white/40 bg-black/50 text-white transition-opacity motion-reduce:transition-none ${showOverlay ? 'opacity-100' : 'opacity-0'}`}
+          href={post.permalink_url}
+          rel="noopener noreferrer"
+          target="_blank"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.nativeEvent.stopImmediatePropagation()}
+        >
+          <ExternalLink className="h-4 w-4" />
+        </a>
+      )}
     </motion.div>
   );
 }
@@ -293,7 +310,7 @@ export function PostList() {
       <div className="flex flex-col items-center gap-3 py-10 text-center">
         <p className="text-muted-foreground text-body">{error}</p>
         <button
-          className="text-primary text-sm underline-offset-4 hover:underline"
+          className="text-primary text-body underline-offset-4 hover:underline"
           type="button"
           onClick={refetch}
         >

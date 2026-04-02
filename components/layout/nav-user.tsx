@@ -42,7 +42,7 @@ const UserAvatar = memo(({ src, name }: { src: string; name: string }) => {
           onError={() => setImgError(true)}
         />
       ) : (
-        <div className="flex h-full w-full items-center justify-center text-xs">
+        <div className="text-caption flex h-full w-full items-center justify-center">
           {name.charAt(0).toUpperCase()}
         </div>
       )}
@@ -65,9 +65,9 @@ export function NavUser({ user }: { user: { name: string; email: string; avatar:
               size="lg"
             >
               <UserAvatar name={user.name} src={user.avatar} />
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="text-body grid flex-1 text-left leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
+                <span className="text-caption truncate">{user.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -81,11 +81,11 @@ export function NavUser({ user }: { user: { name: string; email: string; avatar:
             sideOffset={4}
           >
             <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+              <div className="text-body flex items-center gap-2 px-1 py-1.5 text-left">
                 <UserAvatar name={user.name} src={user.avatar} />
-                <div className="grid flex-1 text-left text-sm leading-tight">
+                <div className="text-body grid flex-1 text-left leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="text-caption truncate">{user.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
