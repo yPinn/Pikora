@@ -118,6 +118,10 @@ model Winner {
   drawnAt DateTime @default(now())
   isValid Boolean  @default(true)                // false = 重抽/取消
 
+  // 通知相關
+  notified_at      DateTime?                     // 留言回覆通知時間
+  comment_reply_id String?                       // 回覆留言的 ID（Facebook comment ID）
+
   giveaway Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
   prize    Prize    @relation(fields: [prizeId], references: [id], onDelete: Cascade)
 
