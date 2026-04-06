@@ -2,6 +2,8 @@
  * Facebook 相關工具函數
  */
 
+export const FACEBOOK_ID_PATTERN = /^\d{1,30}$/;
+
 /**
  * 從 URL 解析 Facebook 貼文 ID
  * 支援格式：
@@ -98,6 +100,15 @@ export function isValidPublicMediaUrl(url: string | undefined): boolean {
     return false;
   }
   return true;
+}
+
+/**
+ * 建構 Facebook 頭像代理路徑
+ * 回傳相對路徑；元件中用 apiPath() 包裹即可。
+ */
+export function facebookPictureUrl(userId: string, pageId?: string): string {
+  const base = `/api/facebook/picture?userId=${userId}`;
+  return pageId ? `${base}&pageId=${pageId}` : base;
 }
 
 /**

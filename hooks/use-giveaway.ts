@@ -325,8 +325,8 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
         const patchData = await patchRes.json();
         if (!patchRes.ok) {
           // PATCH 失敗：清理剛建立的 giveaway 避免留下空殼資料
-          await fetch(apiPath(`/api/giveaway/${giveawayId}`), { method: 'DELETE' }).catch(
-            () => null
+          await fetch(apiPath(`/api/giveaway/${giveawayId}`), { method: 'DELETE' }).catch((e) =>
+            logger.warn('Cleanup DELETE failed after PATCH error', e)
           );
           throw new Error(patchData.error || '儲存中獎者失敗');
         }

@@ -19,6 +19,7 @@ export interface GiveawayWinner {
   comment_created_time?: string;
   isValid: boolean;
   notified_at?: string;
+  comment_reply_id?: string;
   prize: {
     id: string;
     name: string;

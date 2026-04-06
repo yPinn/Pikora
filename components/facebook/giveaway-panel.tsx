@@ -1,68 +1,20 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 
-import { useAutoAnimate } from '@formkit/auto-animate/react';
-import { format, formatDistanceToNow } from 'date-fns';
-import { zhTW } from 'date-fns/locale';
-import {
-  Gift,
-  Filter,
-  Users,
-  Trophy,
-  Plus,
-  Trash2,
-  RefreshCw,
-  Save,
-  Shuffle,
-  Clock,
-  Hash,
-  AtSign,
-  Loader2,
-  ThumbsUp,
-  ExternalLink,
-  CalendarIcon,
-  Ban,
-  UserX,
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { Filter, Trophy, UserX } from 'lucide-react';
 import { toast } from 'sonner';
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Card } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useGiveaway } from '@/hooks/use-giveaway';
-import { ANIM, cardReveal } from '@/lib/animation';
 import type { FacebookComment } from '@/lib/services/facebook';
-import { cn, apiPath } from '@/lib/utils';
-import { isFacebookProfileUrl } from '@/lib/utils/facebook';
+
+import { BlacklistTab } from './giveaway/blacklist-tab';
+import { FilterSetupCard } from './giveaway/filter-setup-card';
+import { PrizeSetupCard } from './giveaway/prize-setup-card';
+import { ResultPanel } from './giveaway/result-panel';
+import { StatsDrawCard } from './giveaway/stats-draw-card';
+import { TabBadge } from './giveaway/tab-badge';
 
 interface GiveawayPanelProps {
   comments: FacebookComment[];
@@ -97,7 +49,6 @@ export function GiveawayPanel({
     isDrawing,
     draw,
     redraw,
-    reset: _reset,
     fetchBlacklist,
     isSaving,
     isSaved,
@@ -106,734 +57,96 @@ export function GiveawayPanel({
   } = useGiveaway({ comments, postId, postUrl });
 
   const [activeTab, setActiveTab] = useState('settings');
-  const [poolSearch, setPoolSearch] = useState('');
-
-  // 按用戶去重並計算每人留言數（pool 可達數千筆，避免每次 render 重算）
-  const poolUsers = useMemo(() => {
-    const userMap = new Map<string, { entry: (typeof pool)[0]; count: number }>();
-    pool.forEach((entry) => {
-      const existing = userMap.get(entry.from_id);
-      if (!existing) {
-        userMap.set(entry.from_id, { entry, count: 1 });
-      } else {
-        existing.count++;
-      }
-    });
-    return Array.from(userMap.values());
-  }, [pool]);
-
-  const filteredPoolUsers = useMemo(() => {
-    if (!poolSearch) return poolUsers;
-    const q = poolSearch.toLowerCase();
-    return poolUsers.filter(({ entry }) => entry.from_name.toLowerCase().includes(q));
-  }, [poolUsers, poolSearch]);
-
-  // auto-animate refs
-  const [prizesRef] = useAutoAnimate<HTMLDivElement>();
-  const [blacklistRef] = useAutoAnimate<HTMLDivElement>();
-  const [resultsRef] = useAutoAnimate<HTMLDivElement>();
 
   useEffect(() => {
     fetchBlacklist();
   }, [fetchBlacklist]);
 
-  // 當勾選「必須按讚」時，自動載入反應者
   useEffect(() => {
     if (filters.require_reaction && !hasLoadedReactions && !isLoadingReactions) {
       fetchReactions();
     }
   }, [filters.require_reaction, hasLoadedReactions, isLoadingReactions, fetchReactions]);
 
-  // 新增獎項
-  const addPrize = () => {
-    setPrizes([
-      ...prizes,
-      { id: crypto.randomUUID(), name: `${prizes.length + 1} 獎`, quantity: 1 },
-    ]);
-  };
-
-  // 更新獎項
-  const updatePrize = (index: number, field: 'name' | 'quantity', value: string | number) => {
-    const updated = [...prizes];
-    updated[index] = { ...updated[index], [field]: value };
-    setPrizes(updated);
-  };
-
-  // 刪除獎項
-  const removePrize = (index: number) => {
-    if (prizes.length <= 1) return;
-    setPrizes(prizes.filter((_, i) => i !== index));
-  };
-
-  // 執行抽獎
   const handleDraw = () => {
     draw();
     setActiveTab('results');
   };
 
-  // 儲存結果
   const handleSave = async () => {
     try {
       const id = await save(postMessage || undefined);
-      if (id) {
-        toast.success('抽獎結果已儲存！');
-      }
+      if (id) toast.success('抽獎結果已儲存！');
     } catch (error) {
-      const message = error instanceof Error ? error.message : '儲存失敗，請重試';
-      toast.error(message);
+      toast.error(error instanceof Error ? error.message : '儲存失敗，請重試');
     }
   };
 
   const totalPrizeCount = prizes.reduce((sum, p) => sum + p.quantity, 0);
-  // 當要求按讚但反應資料尚未載入時，不允許抽獎
-  const isWaitingForReactions = filters.require_reaction && !hasLoadedReactions;
+  const isWaitingForReactions = !!(filters.require_reaction && !hasLoadedReactions);
   const canDraw = pool.length > 0 && totalPrizeCount > 0 && !isWaitingForReactions;
 
   return (
     <Tabs className="flex flex-col gap-4" value={activeTab} onValueChange={setActiveTab}>
-      {/* Tab 切換 */}
-      <TabsList className="w-fit">
+      <TabsList className="w-full sm:w-fit">
         <TabsTrigger value="settings">
-          <Filter className="mr-2 h-4 w-4" />
+          <Filter className="h-4 w-4" />
           設定
         </TabsTrigger>
         <TabsTrigger value="results">
-          <Trophy className="mr-2 h-4 w-4" />
+          <Trophy className="h-4 w-4" />
           結果
-          {results.length > 0 && (
-            <span className="bg-primary-foreground text-primary text-caption ml-2 rounded-full px-1.5">
-              {results.length}
-            </span>
-          )}
+          {results.length > 0 && <TabBadge count={results.length} />}
         </TabsTrigger>
         <TabsTrigger value="blacklist">
-          <UserX className="mr-2 h-4 w-4" />
+          <UserX className="h-4 w-4" />
           黑名單
-          {blacklist.length > 0 && (
-            <span className="bg-primary-foreground text-primary text-caption ml-2 rounded-full px-1.5">
-              {blacklist.length}
-            </span>
-          )}
+          {blacklist.length > 0 && <TabBadge count={blacklist.length} />}
         </TabsTrigger>
       </TabsList>
 
       <TabsContent value="settings">
         <div className="grid gap-4 lg:grid-cols-2">
-          {/* 左欄：獎項設定 */}
-          <Card className="flex flex-col gap-3 p-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-body flex items-center gap-2 font-medium">
-                <Gift className="h-4 w-4" />
-                獎項設定
-              </h3>
-              <Button className="text-caption" size="xs" variant="ghost" onClick={addPrize}>
-                <Plus className="mr-1 h-3 w-3" />
-                新增
-              </Button>
-            </div>
-
-            <div ref={prizesRef} className="space-y-2">
-              {prizes.map((prize, i) => (
-                <div key={prize.id} className="flex items-center gap-2">
-                  <Input
-                    className="text-body h-10 flex-1"
-                    placeholder="獎項名稱"
-                    value={prize.name}
-                    onChange={(e) => updatePrize(i, 'name', e.target.value)}
-                  />
-                  <Input
-                    className="text-body h-10 w-16"
-                    min={1}
-                    type="number"
-                    value={prize.quantity}
-                    onChange={(e) => updatePrize(i, 'quantity', parseInt(e.target.value) || 1)}
-                  />
-                  <Button
-                    disabled={prizes.length <= 1}
-                    size="icon-sm"
-                    variant="ghost"
-                    onClick={() => removePrize(i)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-
-            <p className="text-muted-foreground text-caption">共 {totalPrizeCount} 個名額</p>
-          </Card>
-
-          {/* 右欄：篩選條件 */}
-          <Card className="flex flex-col gap-3 p-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-body flex items-center gap-2 font-medium">
-                <Filter className="h-4 w-4" />
-                篩選條件
-              </h3>
-              {filters.require_reaction && (
-                <div className="text-caption flex items-center gap-2">
-                  {isLoadingReactions ? (
-                    <>
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      <span className="text-muted-foreground">載入中...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-muted-foreground">{reactions.length} 反應</span>
-                      <button className="text-primary hover:underline" onClick={fetchReactions}>
-                        更新
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-3">
-              {/* 時間範圍 */}
-              <div className="space-y-1.5">
-                <Label className="text-muted-foreground text-caption flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  時間範圍
-                </Label>
-                <div className="flex gap-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        className={cn(
-                          'text-body h-10 flex-1 justify-start text-left font-normal',
-                          !filters.time_start && 'text-muted-foreground'
-                        )}
-                        variant="outline"
-                      >
-                        <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                        {filters.time_start
-                          ? format(new Date(filters.time_start), 'yyyy/MM/dd')
-                          : '開始日期'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="start" className="w-auto p-0">
-                      <Calendar
-                        locale={zhTW}
-                        mode="single"
-                        selected={filters.time_start ? new Date(filters.time_start) : undefined}
-                        onSelect={(date) =>
-                          setFilters({
-                            ...filters,
-                            time_start: date ? date.toISOString() : '',
-                          })
-                        }
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        className={cn(
-                          'text-body h-10 flex-1 justify-start text-left font-normal',
-                          !filters.time_end && 'text-muted-foreground'
-                        )}
-                        variant="outline"
-                      >
-                        <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                        {filters.time_end
-                          ? format(new Date(filters.time_end), 'yyyy/MM/dd')
-                          : '結束日期'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="start" className="w-auto p-0">
-                      <Calendar
-                        locale={zhTW}
-                        mode="single"
-                        selected={filters.time_end ? new Date(filters.time_end) : undefined}
-                        onSelect={(date) =>
-                          setFilters({
-                            ...filters,
-                            time_end: date ? date.toISOString() : '',
-                          })
-                        }
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-
-              {/* 格式檢查 */}
-              <div className="space-y-1.5">
-                <Label className="text-muted-foreground text-caption flex items-center gap-1">
-                  <Hash className="h-3 w-3" />
-                  留言格式（包含關鍵字）
-                </Label>
-                <Input
-                  className="text-body h-10"
-                  placeholder="例如：+1 或 我要參加"
-                  value={filters.pattern || ''}
-                  onChange={(e) => setFilters({ ...filters, pattern: e.target.value })}
-                />
-              </div>
-
-              {/* @mention 要求 */}
-              <div className="space-y-1.5">
-                <Label className="text-muted-foreground text-caption flex items-center gap-1">
-                  <AtSign className="h-3 w-3" />
-                  最少 Tag 人數
-                </Label>
-                <Input
-                  className="text-body h-10"
-                  min={0}
-                  placeholder="0 = 不限制"
-                  type="number"
-                  value={filters.min_mentions || ''}
-                  onChange={(e) =>
-                    setFilters({ ...filters, min_mentions: parseInt(e.target.value) || 0 })
-                  }
-                />
-              </div>
-
-              {/* Checkboxes */}
-              <div className="space-y-2 pt-1">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    checked={filters.require_reaction || false}
-                    id="require_reaction"
-                    onCheckedChange={(checked) =>
-                      setFilters({ ...filters, require_reaction: checked === true })
-                    }
-                  />
-                  <Label
-                    className="text-body flex cursor-pointer items-center gap-1 font-normal"
-                    htmlFor="require_reaction"
-                  >
-                    <ThumbsUp className="h-3 w-3" />
-                    必須按讚/反應
-                  </Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    checked={filters.allow_duplicate || false}
-                    id="allow_duplicate"
-                    onCheckedChange={(checked) =>
-                      setFilters({ ...filters, allow_duplicate: checked === true })
-                    }
-                  />
-                  <Label className="text-body cursor-pointer font-normal" htmlFor="allow_duplicate">
-                    允許重複參加
-                  </Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    checked={filters.allow_multi_win || false}
-                    id="allow_multi_win"
-                    onCheckedChange={(checked) =>
-                      setFilters({ ...filters, allow_multi_win: checked === true })
-                    }
-                  />
-                  <Label className="text-body cursor-pointer font-normal" htmlFor="allow_multi_win">
-                    允許重複得獎
-                  </Label>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* 統計資訊 + 抽獎按鈕 */}
-          <Card className="flex flex-col gap-3 p-4 lg:col-span-2">
-            <div className="flex items-center justify-between">
-              <h3 className="text-body flex items-center gap-2 font-medium">
-                <Users className="h-4 w-4" />
-                參與者統計
-              </h3>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button disabled={pool.length === 0} size="sm" variant="outline">
-                    <Users className="mr-1 h-3 w-3" />
-                    查看獎池
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="flex max-h-[80vh] max-w-lg flex-col overflow-hidden">
-                  <DialogHeader>
-                    <DialogTitle>
-                      獎池人選 ({stats.unique_users} 人
-                      {filters.allow_duplicate && `, ${stats.final_pool_size} 次機會`})
-                    </DialogTitle>
-                    <DialogDescription className="sr-only">
-                      符合篩選條件的抽獎參加者名單
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="flex flex-1 flex-col space-y-3 overflow-hidden">
-                    <Input
-                      className="h-10"
-                      placeholder="搜尋姓名或留言..."
-                      value={poolSearch}
-                      onChange={(e) => setPoolSearch(e.target.value)}
-                    />
-                    <ScrollArea className="flex-1">
-                      <div className="space-y-2 pr-4">
-                        {filteredPoolUsers.length === 0 ? (
-                          <p className="text-muted-foreground text-body py-4 text-center">
-                            {poolSearch ? '找不到符合的人選' : '獎池為空'}
-                          </p>
-                        ) : (
-                          filteredPoolUsers.map(({ entry, count }) => (
-                            <div
-                              key={entry.from_id}
-                              className="bg-muted/50 flex items-center gap-3 rounded-lg p-3"
-                            >
-                              <Avatar className="h-8 w-8">
-                                <AvatarImage
-                                  src={apiPath(
-                                    `/api/facebook/picture?userId=${entry.from_id}${pageId ? `&pageId=${pageId}` : ''}`
-                                  )}
-                                />
-                                <AvatarFallback>{entry.from_name[0]}</AvatarFallback>
-                              </Avatar>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-body font-medium">
-                                  {entry.from_name}
-                                  {count > 1 && (
-                                    <span className="text-muted-foreground text-caption ml-1 font-normal">
-                                      ({count} {filters.allow_duplicate ? '次機會' : '則留言'})
-                                    </span>
-                                  )}
-                                </p>
-                              </div>
-                              <Button
-                                className="shrink-0"
-                                size="icon-sm"
-                                variant="ghost"
-                                onClick={() => {
-                                  addToBlacklist({
-                                    from_id: entry.from_id,
-                                    from_name: entry.from_name,
-                                  });
-                                  toast.success(`已將 ${entry.from_name} 加入黑名單`);
-                                }}
-                              >
-                                <Ban className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </ScrollArea>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            <div className="flex items-end justify-between gap-4">
-              <div className="grid flex-1 grid-cols-3 gap-4">
-                <div>
-                  <p className="text-muted-foreground text-caption">總留言</p>
-                  <p className="text-xl font-semibold tabular-nums">{stats.total_comments}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-caption">通過篩選</p>
-                  <p className="text-xl font-semibold tabular-nums">
-                    {stats.after_blacklist_filter}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-caption">
-                    {filters.allow_duplicate ? '抽獎機會' : '參與人數'}
-                  </p>
-                  <p className="text-xl font-semibold tabular-nums">
-                    {filters.allow_duplicate ? (
-                      <>
-                        {stats.final_pool_size}
-                        <span className="text-muted-foreground text-caption ml-1 font-normal">
-                          ({stats.unique_users} 人)
-                        </span>
-                      </>
-                    ) : (
-                      stats.unique_users
-                    )}
-                  </p>
-                </div>
-              </div>
-
-              <Button className="shrink-0" disabled={!canDraw || isDrawing} onClick={handleDraw}>
-                {isDrawing ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Shuffle className="mr-2 h-4 w-4" />
-                )}
-                開始抽獎
-              </Button>
-            </div>
-
-            {!canDraw && (
-              <p className="text-destructive text-caption text-center">
-                {isWaitingForReactions
-                  ? '正在載入反應資料...'
-                  : pool.length === 0
-                    ? '沒有符合條件的參與者'
-                    : null}
-              </p>
-            )}
-          </Card>
+          <PrizeSetupCard prizes={prizes} onChangePrizes={setPrizes} />
+          <FilterSetupCard
+            fetchReactions={fetchReactions}
+            filters={filters}
+            isLoadingReactions={isLoadingReactions}
+            reactions={reactions}
+            onChangeFilters={setFilters}
+          />
+          <StatsDrawCard
+            canDraw={canDraw}
+            filters={filters}
+            isDrawing={isDrawing}
+            isWaitingForReactions={isWaitingForReactions}
+            pageId={pageId}
+            pool={pool}
+            stats={stats}
+            onAddToBlacklist={addToBlacklist}
+            onDraw={handleDraw}
+          />
         </div>
       </TabsContent>
 
       <TabsContent value="results">
-        <Card className="p-4">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="flex items-center gap-2 font-medium">
-              <Trophy className="h-4 w-4" />
-              抽獎結果
-            </h3>
-            <div className="flex items-center gap-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button size="sm" variant="outline" onClick={draw}>
-                    <RefreshCw className="mr-1 h-3 w-3" />
-                    再抽一輪
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>重新隨機抽出所有獎項，儲存後將建立全新紀錄</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    disabled={results.length === 0 || isSaving || isSaved}
-                    size="sm"
-                    variant={isSaved ? 'secondary' : saveMode === 'replace' ? 'outline' : 'default'}
-                    onClick={handleSave}
-                  >
-                    {isSaving ? (
-                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                    ) : (
-                      <Save className="mr-1 h-3 w-3" />
-                    )}
-                    {isSaved ? '已儲存' : saveMode === 'replace' ? '更新紀錄' : '儲存'}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {saveMode === 'replace' ? '局部重抽後儲存將取代現有紀錄' : '儲存為新紀錄'}
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
-
-          {results.length === 0 ? (
-            <p className="text-muted-foreground text-body py-8 text-center">尚未進行抽獎</p>
-          ) : (
-            <div ref={resultsRef} className="space-y-4">
-              {prizes.map((prize) => {
-                const prizeResults = results.filter((r) => r.prize_id === prize.id);
-
-                return (
-                  <div key={prize.id}>
-                    <div className="mb-2 flex items-center justify-between">
-                      <h4 className="text-body flex items-center gap-2 font-medium">
-                        {prize.name}
-                        <span className="text-muted-foreground text-caption font-normal">
-                          {prizeResults.length}/{prize.quantity} 名
-                        </span>
-                        {prizeResults.length < prize.quantity && (
-                          <span className="text-caption rounded-full bg-amber-100 px-1.5 py-0.5 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                            {prize.quantity - prizeResults.length} 空缺
-                          </span>
-                        )}
-                      </h4>
-                      <Button size="sm" variant="ghost" onClick={() => redraw(prize.id)}>
-                        <RefreshCw className="mr-1 h-3 w-3" />
-                        重抽
-                      </Button>
-                    </div>
-
-                    <AnimatePresence>
-                      <div className="space-y-2">
-                        {prizeResults.map((result, i) => (
-                          <motion.div
-                            key={result.winner.comment_id}
-                            animate={cardReveal.animate}
-                            className="bg-muted/50 flex items-center gap-3 rounded-lg p-3"
-                            exit={cardReveal.exit}
-                            initial={cardReveal.initial}
-                            transition={{
-                              duration: ANIM.normal,
-                              delay: i * ANIM.staggerDelay,
-                              ease: ANIM.ease,
-                            }}
-                          >
-                            {isFacebookProfileUrl(result.winner.from_profile_url) ? (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <a
-                                    href={result.winner.from_profile_url}
-                                    rel="noopener noreferrer"
-                                    target="_blank"
-                                  >
-                                    <Avatar className="h-10 w-10">
-                                      <AvatarImage
-                                        src={apiPath(
-                                          `/api/facebook/picture?userId=${result.winner.from_id}${pageId ? `&pageId=${pageId}` : ''}`
-                                        )}
-                                      />
-                                      <AvatarFallback>{result.winner.from_name[0]}</AvatarFallback>
-                                    </Avatar>
-                                  </a>
-                                </TooltipTrigger>
-                                <TooltipContent>查看個人頁面</TooltipContent>
-                              </Tooltip>
-                            ) : (
-                              <Avatar className="h-10 w-10">
-                                <AvatarImage
-                                  src={apiPath(
-                                    `/api/facebook/picture?userId=${result.winner.from_id}${pageId ? `&pageId=${pageId}` : ''}`
-                                  )}
-                                />
-                                <AvatarFallback>{result.winner.from_name[0]}</AvatarFallback>
-                              </Avatar>
-                            )}
-                            <div className="min-w-0 flex-1">
-                              {isFacebookProfileUrl(result.winner.from_profile_url) ? (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <a
-                                      className="hover:text-primary font-medium hover:underline"
-                                      href={result.winner.from_profile_url}
-                                      rel="noopener noreferrer"
-                                      target="_blank"
-                                    >
-                                      {result.winner.from_name}
-                                    </a>
-                                  </TooltipTrigger>
-                                  <TooltipContent>查看個人頁面</TooltipContent>
-                                </Tooltip>
-                              ) : (
-                                <p className="font-medium">{result.winner.from_name}</p>
-                              )}
-                              <p className="text-muted-foreground text-caption truncate">
-                                {result.winner.comment_message}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-muted-foreground text-caption">
-                                {formatDistanceToNow(new Date(result.winner.comment_created_time), {
-                                  addSuffix: true,
-                                  locale: zhTW,
-                                })}
-                              </span>
-                              {postUrl && (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <a
-                                      className="text-muted-foreground hover:text-primary"
-                                      href={`${postUrl}?comment_id=${result.winner.comment_id}`}
-                                      rel="noopener noreferrer"
-                                      target="_blank"
-                                    >
-                                      <ExternalLink className="h-4 w-4" />
-                                    </a>
-                                  </TooltipTrigger>
-                                  <TooltipContent>查看留言</TooltipContent>
-                                </Tooltip>
-                              )}
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    size="icon-sm"
-                                    variant="ghost"
-                                    onClick={() => {
-                                      addToBlacklist({
-                                        from_id: result.winner.from_id,
-                                        from_name: result.winner.from_name,
-                                      });
-                                      toast.success(`已將 ${result.winner.from_name} 加入黑名單`);
-                                    }}
-                                  >
-                                    <Ban className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>加入黑名單</TooltipContent>
-                              </Tooltip>
-                            </div>
-                          </motion.div>
-                        ))}
-
-                        {Array.from({
-                          length: prize.quantity - prizeResults.length,
-                        }).map((_, i) => (
-                          <div
-                            key={`empty-${i}`}
-                            className="border-muted-foreground/20 text-muted-foreground flex items-center gap-3 rounded-lg border border-dashed p-3"
-                          >
-                            <div className="bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-                              <Users className="h-4 w-4 opacity-40" />
-                            </div>
-                            <p className="text-caption">空缺 #{prizeResults.length + i + 1}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </AnimatePresence>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Card>
+        <ResultPanel
+          isSaved={isSaved}
+          isSaving={isSaving}
+          pageId={pageId}
+          postUrl={postUrl}
+          prizes={prizes}
+          results={results}
+          saveMode={saveMode}
+          onAddToBlacklist={addToBlacklist}
+          onDraw={draw}
+          onRedraw={redraw}
+          onSave={handleSave}
+        />
       </TabsContent>
 
       <TabsContent value="blacklist">
-        <Card className="p-4">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="flex items-center gap-2 font-medium">
-              <UserX className="h-4 w-4" />
-              黑名單管理
-            </h3>
-            <p className="text-muted-foreground text-caption">黑名單內的用戶將不會出現在抽獎池中</p>
-          </div>
-
-          {blacklist.length === 0 ? (
-            <p className="text-muted-foreground text-body py-8 text-center">尚無黑名單</p>
-          ) : (
-            <div ref={blacklistRef} className="space-y-2">
-              {blacklist.map((entry) => (
-                <div
-                  key={entry.from_id}
-                  className="bg-muted/50 flex items-center justify-between gap-3 rounded-lg p-3"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium">{entry.from_name || entry.from_id}</p>
-                    {entry.reason && (
-                      <p className="text-muted-foreground text-caption truncate">{entry.reason}</p>
-                    )}
-                  </div>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button className="h-7 shrink-0" size="sm" variant="ghost">
-                        <Trash2 className="mr-1 h-3 w-3" />
-                        移除
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>確認移除黑名單？</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          將 <strong>{entry.from_name || entry.from_id}</strong>{' '}
-                          從黑名單移除後，此用戶將重新出現在抽獎池中。
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>取消</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={async () => {
-                            await removeFromBlacklist(entry.from_id);
-                            toast.success(`已將 ${entry.from_name || entry.from_id} 從黑名單移除`);
-                          }}
-                        >
-                          確認移除
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
+        <BlacklistTab blacklist={blacklist} onRemoveFromBlacklist={removeFromBlacklist} />
       </TabsContent>
     </Tabs>
   );

@@ -43,6 +43,10 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
 
+  /* ===== Semantic status ===== */
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+
   /* ===== Platform ===== */
   --color-facebook: var(--facebook);
   --color-instagram: var(--instagram);
@@ -77,7 +81,7 @@
   --text-3xl: 2rem; /* 32px */
 
   /* Typography — 語義化字級 */
-  --text-hero: var(--text-3xl); /* 首頁大標題 32px */
+  --text-hero: clamp(1.75rem, 4vw, 2rem); /* 登入/404 大標  28→32px fluid */
   --text-title: var(--text-2xl); /* 頁面大標題 24px */
   --text-heading: var(--text-xl); /* 區塊標題   20px */
   --text-body: var(--text-base); /* 內文       16px */
@@ -141,6 +145,10 @@
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
 
+  /* ===== Semantic Status Colors ===== */
+  --success: oklch(0.5 0.18 145);
+  --warning: oklch(0.6 0.17 85);
+
   /* ===== Platform Brand Colors ===== */
   --facebook: oklch(0.56 0.2 255);
   --instagram: oklch(0.58 0.22 330);
@@ -198,6 +206,10 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.68 0.17 255);
 
+  /* ===== Semantic Status Colors (dark) ===== */
+  --success: oklch(0.72 0.2 145);
+  --warning: oklch(0.75 0.18 85);
+
   /* ===== Platform Brand Colors (dark) ===== */
   --facebook: oklch(0.72 0.18 255);
   --instagram: oklch(0.74 0.2 330);
@@ -210,15 +222,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* Prevent document-level scroll that causes white bleed below the fixed-height app shell */
-    overflow: hidden;
-    height: 100dvh;
-  }
-  h1 {
-    font-family:
-      var(--font-dela-gothic-one), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-    font-size: clamp(2.5rem, 6vw, 4rem); /* 40px ~ 64px，確保字體清晰 */
-    line-height: 1.15;
   }
   /* Reserve scrollbar gutter on html to prevent layout shift between pages.
      Scroll functionality is preserved; only the visual track is hidden. */
@@ -372,6 +375,12 @@
   [data-active] .anim-item,
   [data-active] .doodle-item {
     animation: anim-in-reduced 0.3s ease-out var(--anim-delay, 0s) both !important;
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --gap-page: calc(var(--space-2) + 0.25rem); /* 平板 18px */
   }
 }
 
