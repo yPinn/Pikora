@@ -90,7 +90,7 @@ async function handleWebhookPayload(payload: WebhookPayload): Promise<void> {
         await handleInstagramEvent(item);
         break;
       default:
-      // 未處理的事件類型
+        logger.info('Unhandled webhook object type', { object });
     }
   }
 }
@@ -111,7 +111,7 @@ async function handlePageEvent(entry: WebhookPayload['entry'][0]): Promise<void>
           // TODO: 實作評價處理邏輯
           break;
         default:
-        // 其他事件
+          logger.info('Unhandled page change field', { field: change.field });
       }
     }
   }
@@ -119,6 +119,7 @@ async function handlePageEvent(entry: WebhookPayload['entry'][0]): Promise<void>
   if (messaging) {
     for (const _message of messaging) {
       // TODO: 實作私訊處理邏輯
+      logger.info('Unhandled page messaging event');
     }
   }
 }
@@ -143,7 +144,7 @@ async function handleInstagramEvent(entry: WebhookPayload['entry'][0]): Promise<
         // TODO: 實作限動分析處理邏輯
         break;
       default:
-      // 其他事件
+        logger.info('Unhandled instagram change field', { field: change.field });
     }
   }
 }

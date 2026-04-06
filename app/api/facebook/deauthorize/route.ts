@@ -64,9 +64,11 @@ export async function POST(request: NextRequest) {
         }),
       ]);
 
-      logger.info(`Revoked tokens and sessions for Facebook user ${maskId(facebookUserId)}`);
+      logger.info('Revoked tokens and sessions for Facebook user', {
+        userId: maskId(facebookUserId),
+      });
     } else {
-      logger.info(`Facebook user ${maskId(facebookUserId)} not found, skipping`);
+      logger.info('Facebook user not found, skipping', { userId: maskId(facebookUserId) });
     }
 
     return NextResponse.json({ success: true });

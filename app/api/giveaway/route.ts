@@ -4,10 +4,9 @@ import { auth } from '@/lib/auth';
 import { validateGiveawayFilters } from '@/lib/giveaway/types';
 import { createLogger } from '@/lib/logger';
 import prisma from '@/lib/prisma';
+import { FACEBOOK_ID_PATTERN } from '@/lib/utils/facebook';
 
 const logger = createLogger('giveaway');
-
-const FACEBOOK_ID_PATTERN = /^\d{1,30}$/;
 // Facebook post ID 格式為 {pageId}_{postId}（如 123456789_987654321）
 const FACEBOOK_POST_ID_PATTERN = /^\d{1,30}(_\d{1,30})?$/;
 
@@ -21,6 +20,10 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const pageId = searchParams.get('pageId');
+
+    if (pageId && !FACEBOOK_ID_PATTERN.test(pageId)) {
+      return NextResponse.json({ error: '無效的 pageId' }, { status: 400 });
+    }
 
     const giveaways = await prisma.giveaway.findMany({
       where: {

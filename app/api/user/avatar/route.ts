@@ -7,22 +7,43 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { getToken } from 'next-auth/jwt';
 
-import { SESSION_COOKIE_NAME } from '@/lib/auth/cookie-names';
+import {
+  SESSION_COOKIE_NAME,
+  SESSION_COOKIE_NAME_SECURE,
+  SESSION_COOKIE_NAME_INSECURE,
+} from '@/lib/auth/cookie-names';
 
 const secret = process.env.AUTH_SECRET;
 if (!secret) throw new Error('AUTH_SECRET environment variable is required');
 
-export async function GET(request: NextRequest) {
-  const token = await getToken({ req: request, secret, cookieName: SESSION_COOKIE_NAME });
+const COOKIE_NAME_CANDIDATES = Array.from(
+  new Set([SESSION_COOKIE_NAME, SESSION_COOKIE_NAME_SECURE, SESSION_COOKIE_NAME_INSECURE])
+);
 
-  if (!token?.accessToken || !token?.providerAccountId) {
+export async function GET(request: NextRequest) {
+  let accessToken: string | undefined;
+  let providerAccountId: string | undefined;
+
+  for (const cookieName of COOKIE_NAME_CANDIDATES) {
+    const token = await getToken({ req: request, secret, cookieName });
+    if (token?.accessToken && token?.providerAccountId) {
+      accessToken = token.accessToken as string;
+      providerAccountId = token.providerAccountId as string;
+      break;
+    }
+  }
+
+  if (!accessToken || !providerAccountId) {
     return new NextResponse(null, { status: 401 });
   }
 
-  const url = `https://graph.facebook.com/${token.providerAccountId}/picture?type=square&access_token=${token.accessToken}`;
+  const url = `https://graph.facebook.com/${providerAccountId}/picture?type=square`;
 
   try {
-    const res = await fetch(url, { redirect: 'follow' });
+    const res = await fetch(url, {
+      redirect: 'follow',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
 
     if (!res.ok) {
       return new NextResponse(null, { status: res.status });

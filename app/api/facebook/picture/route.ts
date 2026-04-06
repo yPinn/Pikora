@@ -35,10 +35,13 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const url = `https://graph.facebook.com/${userId}/picture?type=square&access_token=${accessToken}`;
+  const url = `https://graph.facebook.com/${userId}/picture?type=square`;
 
   try {
-    const res = await fetch(url, { redirect: 'follow' });
+    const res = await fetch(url, {
+      redirect: 'follow',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
 
     if (!res.ok) {
       return new NextResponse(null, { status: res.status });

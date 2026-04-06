@@ -64,10 +64,10 @@ export async function POST(request: NextRequest) {
         await tx.user.delete({ where: { id: userId } });
       });
 
-      logger.info(`Deleted all data for Facebook user ${maskId(facebookUserId)}`);
+      logger.info('Deleted all data for Facebook user', { userId: maskId(facebookUserId) });
     } else {
       // 用戶不存在於系統中，視為已刪除
-      logger.info(`Facebook user ${maskId(facebookUserId)} not found, skipping`);
+      logger.info('Facebook user not found, skipping', { userId: maskId(facebookUserId) });
     }
 
     const idHash = createHash('sha256').update(facebookUserId).digest('hex').slice(0, 12);
