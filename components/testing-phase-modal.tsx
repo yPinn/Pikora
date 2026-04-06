@@ -40,7 +40,7 @@ export function TestingPhaseModal() {
               <FlaskConicalIcon className="size-5 text-amber-600 dark:text-amber-400" />
             </div>
             <div className="min-w-0">
-              <DialogTitle className="text-heading font-semibold break-words">
+              <DialogTitle className="text-heading font-semibold wrap-break-word">
                 測試階段限定
               </DialogTitle>
               <p className="text-caption text-muted-foreground">Beta access required</p>
@@ -49,13 +49,13 @@ export function TestingPhaseModal() {
           <DialogDescription className="sr-only">測試階段授權說明</DialogDescription>
         </DialogHeader>
 
-        <p className="text-body text-muted-foreground leading-relaxed break-words">
+        <p className="text-body text-muted-foreground leading-relaxed wrap-break-word">
           此應用程式目前僅限已獲 <strong className="text-foreground font-medium">Meta 授權</strong>
           的測試人員登入使用。若登入失敗，請確認您已接受測試邀請。
         </p>
 
         <a
-          className="text-caption inline-flex items-center gap-1.5 text-blue-600 hover:underline dark:text-blue-400"
+          className="text-caption text-primary inline-flex items-center gap-1.5 hover:underline"
           href="https://www.facebook.com/settings?tab=applications"
           rel="noopener noreferrer"
           target="_blank"

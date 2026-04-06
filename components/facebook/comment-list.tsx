@@ -70,7 +70,7 @@ const CommentItem = ({ comment, pageId }: { comment: FacebookComment; pageId?: s
   return (
     <div className="relative py-1">
       <div className="relative flex gap-2">
-        {hasReplies && <div className="bg-border absolute top-9 bottom-0 left-[15px] w-0.5" />}
+        {hasReplies && <div className="bg-border absolute top-9 bottom-0 left-3.75 w-0.5" />}
         <Avatar className="h-8 w-8 shrink-0">
           <AvatarImage
             alt={comment.from?.name}
@@ -89,7 +89,7 @@ const CommentItem = ({ comment, pageId }: { comment: FacebookComment; pageId?: s
         <div className="min-w-0 flex-1">
           <div className="bg-muted inline-block max-w-full rounded-2xl px-3 py-2">
             <p className="text-caption font-semibold">{comment.from?.name}</p>
-            <p className="text-body break-words whitespace-pre-wrap">{comment.message}</p>
+            <p className="text-body wrap-break-word whitespace-pre-wrap">{comment.message}</p>
           </div>
           {comment.attachment?.media?.image?.src && (
             <div className="relative mt-1 h-36 w-56">
@@ -131,11 +131,11 @@ const CommentItem = ({ comment, pageId }: { comment: FacebookComment; pageId?: s
             return (
               <div key={reply.id} className="relative">
                 {/* 垂直線上段（連接到水平線） */}
-                <div className="bg-border absolute top-0 left-[15px] h-5 w-0.5" />
+                <div className="bg-border absolute top-0 left-3.75 h-5 w-0.5" />
                 {/* 垂直線下段（非最後一個才顯示） */}
-                {!isLast && <div className="bg-border absolute top-5 bottom-0 left-[15px] w-0.5" />}
+                {!isLast && <div className="bg-border absolute top-5 bottom-0 left-3.75 w-0.5" />}
                 {/* 水平連接線 */}
-                <div className="bg-border absolute top-5 left-[15px] h-0.5 w-[20px]" />
+                <div className="bg-border absolute top-5 left-3.75 h-0.5 w-5" />
                 <div className="pl-10">
                   <CommentItem comment={reply} pageId={pageId} />
                 </div>
@@ -166,7 +166,7 @@ export function CommentList() {
       <div className="flex gap-2">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button disabled={!state.postImage} size="icon" variant="outline">
+            <Button disabled={!state.postImage} size="icon-md" variant="outline">
               <ImageIcon className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
@@ -219,6 +219,7 @@ export function CommentList() {
           <TooltipTrigger asChild>
             <Button
               disabled={!state.postUrl}
+              size="icon-md"
               variant="outline"
               onClick={() => window.open(state.postUrl, '_blank', 'noopener,noreferrer')}
             >
@@ -229,7 +230,12 @@ export function CommentList() {
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button disabled={!state.postId} variant="outline" onClick={actions.refresh}>
+            <Button
+              disabled={!state.postId}
+              size="icon-md"
+              variant="outline"
+              onClick={actions.refresh}
+            >
               <RefreshCw className="h-4 w-4" />
             </Button>
           </TooltipTrigger>

@@ -22,7 +22,6 @@ import { FaFacebook, FaInstagram } from 'react-icons/fa';
 import { SiThreads } from 'react-icons/si';
 
 import { ModeToggle } from '@/components/mode-toggle';
-import { ScrollIndicator } from '@/components/scroll-indicator';
 import { Button } from '@/components/ui/button';
 import momonga1 from '@/public/Momonga_1.jpg';
 
@@ -113,6 +112,7 @@ export default function Home() {
   // Once a section index is added it is never removed — animations play only once
   const [seen, setSeen] = useState<Set<number>>(new Set());
   const [notifVisible, setNotifVisible] = useState(true);
+  const [currentSection, setCurrentSection] = useState(0);
   const markSeen = (i: number) => setSeen((prev) => (prev.has(i) ? prev : new Set([...prev, i])));
 
   // setTimeout(0) fires after the browser has committed the first paint, ensuring
@@ -148,6 +148,14 @@ export default function Home() {
     };
   }, []);
 
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
+    const onScroll = () => setCurrentSection(Math.round(el.scrollTop / el.clientHeight));
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
       {/*
@@ -158,16 +166,12 @@ export default function Home() {
         border-l separator — no inner div needed (avoids bleed artifacts).
         ────────────────────────────────────────────────────────────────
       */}
-      <header className="bg-background z-20 shrink-0 overflow-hidden border-2 border-black">
-        <div
-          className="flex w-full items-stretch"
-          style={{ height: 'var(--nav-h)' } as React.CSSProperties}
-        >
+      <header className="bg-background z-20 shrink-0 overflow-hidden border-b-2 border-black dark:border-white/20">
+        <div className="flex h-(--nav-h) w-full items-stretch">
           {/* ── Logo ── fills remaining space */}
           <Link
-            className="flex flex-1 items-center gap-2 transition-opacity hover:opacity-80"
+            className="flex flex-1 items-center gap-2 pl-(--nav-px) transition-opacity hover:opacity-80"
             href="/"
-            style={{ paddingLeft: 'var(--nav-px)' } as React.CSSProperties}
           >
             <Image
               alt="pikora"
@@ -176,7 +180,7 @@ export default function Home() {
               src={momonga1}
               width={28}
             />
-            <span className="text-sm font-semibold text-blue-500">pikora</span>
+            <span className="text-primary text-sm font-semibold">pikora</span>
           </Link>
 
           {/*
@@ -185,20 +189,16 @@ export default function Home() {
             ModeToggle: !important ensures amber shows in both themes.
             LOGIN: border-l separates from icon btn cleanly.
           */}
-          <div className="flex items-stretch border-l-2 border-black">
+          <div className="flex items-stretch border-l-2 border-black dark:border-white/20">
             {/* ModeToggle — square: width = nav-h */}
-            <div
-              className="flex items-stretch [&>button]:h-full [&>button]:w-full [&>button]:rounded-none! [&>button]:border-0! [&>button]:bg-amber-500! [&>button]:text-gray-900! [&>button]:shadow-none! [&>button]:transition-colors [&>button]:duration-150 [&>button]:hover:bg-amber-400!"
-              style={{ width: 'var(--nav-btn-icon-w)' } as React.CSSProperties}
-            >
+            <div className="flex w-(--nav-btn-icon-w) items-stretch [&>button]:h-full [&>button]:w-full [&>button]:rounded-none! [&>button]:border-0! [&>button]:bg-amber-500! [&>button]:text-gray-900! [&>button]:shadow-none! [&>button]:transition-colors [&>button]:duration-150 [&>button]:hover:bg-amber-400!">
               <ModeToggle />
             </div>
 
             {/* LOGIN */}
             <Button
               asChild
-              className="h-full rounded-none border-l-2 border-black bg-blue-600 text-sm font-extrabold tracking-[0.15em] text-white uppercase transition-colors duration-150 hover:bg-blue-700"
-              style={{ paddingInline: 'var(--nav-btn-px)' } as React.CSSProperties}
+              className="h-full rounded-none border-l-2 border-black bg-blue-600 px-(--nav-btn-px) text-sm font-extrabold tracking-[0.15em] text-white uppercase transition-colors duration-150 hover:bg-blue-700 dark:border-white/20"
             >
               <Link href="/login">Login</Link>
             </Button>
@@ -215,7 +215,7 @@ export default function Home() {
           className={`${SECTION} flex items-center bg-linear-to-b from-blue-600 to-blue-400`}
           data-active={seen.has(0) ? '' : undefined}
         >
-          <div className="mx-auto w-full max-w-7xl px-8">
+          <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid items-center gap-8 lg:grid-cols-[1fr_420px]">
               <div>
                 <div
@@ -232,8 +232,11 @@ export default function Home() {
                 </div>
                 {/* On the always-bright blue gradient: dark in light mode, white in dark mode */}
                 <h1
-                  className="anim-item mb-6 leading-[1.05] text-gray-900 dark:text-white"
-                  style={{ fontSize: 'clamp(3rem, 7vw, 5rem)', ...delay(0.18) }}
+                  className="anim-item mb-6 text-[clamp(2.25rem,7vw,5rem)] leading-[1.05] text-gray-900 dark:text-white"
+                  style={{
+                    fontFamily: 'var(--font-dela-gothic-one), var(--font-geist-sans), sans-serif',
+                    ...delay(0.18),
+                  }}
                 >
                   跨平台社群抽獎
                   <br />
@@ -267,7 +270,7 @@ export default function Home() {
               </div>
 
               {/* Sticker icons — decorative only, not interactive */}
-              <div className="relative hidden h-80 lg:block">
+              <div aria-hidden="true" className="relative hidden h-80 lg:block">
                 <div
                   className="anim-item pointer-events-none absolute top-2 right-4"
                   style={delay(0.55)}
@@ -323,13 +326,10 @@ export default function Home() {
             />
           </svg>
 
-          <div className="relative mx-auto flex h-full w-full max-w-7xl flex-col px-8 py-12">
+          <div className="relative mx-auto flex h-full w-full max-w-7xl flex-col px-4 py-12 sm:px-6 lg:px-8">
             {/* Title + doodle underline */}
             <div className="anim-item mb-0 text-center" style={delay(0.05)}>
-              <h2
-                className="relative inline-block text-4xl font-bold text-[#d4f23a] lg:text-5xl"
-                style={{ textShadow: '2px 2px 0 rgba(0,0,0,0.18)' }}
-              >
+              <h2 className="relative inline-block text-4xl font-bold text-[#d4f23a] [text-shadow:2px_2px_0_rgba(0,0,0,0.18)] lg:text-5xl">
                 支援 Meta 全平台
                 {/* Hand-drawn underline drawn in after title appears */}
                 <svg
@@ -352,175 +352,181 @@ export default function Home() {
               </h2>
             </div>
 
-            <div className="relative flex-1">
-              {/* ── Instagram — top-left ── */}
+            {/* 3-column grid — each platform gets equal width, fills available height */}
+            <div className="grid flex-1 grid-cols-3 items-center gap-4 py-4">
+              {/* ── Instagram ── */}
               <div
-                className="anim-item pointer-events-none absolute top-[15%] left-[4%]"
+                className="anim-item flex flex-col items-center justify-center"
                 style={delay(0.15)}
               >
-                <div className="-rotate-12 animate-[float_3.2s_ease-in-out_infinite]">
-                  <FaInstagram className="h-36 w-36 text-slate-900 drop-shadow-xl lg:h-44 lg:w-44 dark:text-slate-100" />
-                  <div className="mt-2 inline-flex -rotate-6 items-center gap-1 rounded-full bg-rose-500 px-3 py-1 text-xs font-bold tracking-wider text-white uppercase shadow-md">
-                    即將推出
+                <div className="relative inline-block">
+                  <div className="-rotate-12 animate-[float_3.2s_ease-in-out_infinite]">
+                    <FaInstagram className="h-24 w-24 text-slate-900 drop-shadow-xl sm:h-36 sm:w-36 lg:h-44 lg:w-44 xl:h-52 xl:w-52 dark:text-slate-100" />
+                    <div className="mt-2 inline-flex -rotate-6 items-center gap-1 rounded-full bg-rose-500 px-3 py-1 text-xs font-bold tracking-wider text-white uppercase shadow-md">
+                      即將推出
+                    </div>
                   </div>
+                  {/* Doodle ✕ */}
+                  <div
+                    className="doodle-item pointer-events-none absolute -top-3 -right-3"
+                    style={delay(0.3)}
+                  >
+                    <svg fill="none" height="40" viewBox="0 0 40 40" width="40">
+                      <path
+                        d="M6 6 L34 34 M34 6 L6 34"
+                        stroke="#ef4444"
+                        strokeLinecap="round"
+                        strokeWidth="3.5"
+                      />
+                    </svg>
+                  </div>
+                  {/* Star */}
+                  <svg
+                    aria-hidden
+                    className="doodle-item pointer-events-none absolute right-2 -bottom-5 text-yellow-300/80"
+                    fill="currentColor"
+                    height="16"
+                    style={delay(0.38)}
+                    viewBox="0 0 20 20"
+                    width="16"
+                  >
+                    <path d="M10 1l2.5 6.5h6.5L14 11.5l2 6.5-6-3.5-6 3.5 2-6.5-4.5-4h6.5z" />
+                  </svg>
                 </div>
               </div>
 
-              {/* Doodle ✕ over Instagram */}
+              {/* ── Facebook ── */}
               <div
-                className="doodle-item pointer-events-none absolute top-[12%] left-[10%]"
-                style={delay(0.3)}
-              >
-                <svg fill="none" height="40" viewBox="0 0 40 40" width="40">
-                  <path
-                    d="M6 6 L34 34 M34 6 L6 34"
-                    stroke="#ef4444"
-                    strokeLinecap="round"
-                    strokeWidth="3.5"
-                  />
-                </svg>
-              </div>
-
-              {/* ── Threads — top-right ── */}
-              <div
-                className="anim-item pointer-events-none absolute top-[10%] right-[6%]"
-                style={delay(0.2)}
-              >
-                <div className="rotate-[8deg] animate-[float_2.8s_ease-in-out_0.8s_infinite]">
-                  <SiThreads className="h-36 w-36 text-slate-900 drop-shadow-xl lg:h-44 lg:w-44 dark:text-slate-100" />
-                  <div className="mt-2 ml-auto inline-flex rotate-3 items-center gap-1 rounded-full bg-orange-400 px-3 py-1 text-xs font-bold tracking-wider text-white uppercase shadow-md">
-                    即將推出
-                  </div>
-                </div>
-              </div>
-
-              {/* Doodle annotation next to Threads */}
-              <div
-                className="doodle-item pointer-events-none absolute top-[8%] right-[22%]"
-                style={{ ...delay(0.35), fontFamily: 'var(--font-caveat), cursive' }}
-              >
-                <span className="inline-block rotate-[8deg] text-lg font-bold text-slate-700 dark:text-slate-300">
-                  ?!
-                </span>
-                <svg
-                  aria-hidden
-                  className="absolute top-5 left-4 text-slate-600/70 dark:text-slate-400/70"
-                  fill="none"
-                  height="24"
-                  viewBox="0 0 30 24"
-                  width="30"
-                >
-                  <path
-                    d="M2 12 C8 4,20 6,26 14"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeWidth="1.8"
-                  />
-                  <path
-                    d="M22 10 L27 14 L22 17"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="1.8"
-                  />
-                </svg>
-              </div>
-
-              {/* ── Facebook — center bottom ── */}
-              <div
-                className="anim-item pointer-events-none absolute bottom-[20%] left-1/2 -translate-x-1/2"
+                className="anim-item flex flex-col items-center justify-center"
                 style={delay(0.28)}
               >
-                <div className="rotate-3 animate-[float_3.8s_ease-in-out_1.5s_infinite]">
-                  <FaFacebook className="h-44 w-44 text-slate-900 drop-shadow-xl lg:h-52 lg:w-52 dark:text-slate-100" />
-                  <div className="mx-auto mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-400 px-3 py-1 text-xs font-bold tracking-wider text-slate-900 uppercase shadow-md">
-                    <span>✓</span> Facebook
+                <div className="relative inline-block">
+                  <div className="rotate-3 animate-[float_3.8s_ease-in-out_1.5s_infinite]">
+                    <FaFacebook className="h-28 w-28 text-slate-900 drop-shadow-xl sm:h-44 sm:w-44 lg:h-52 lg:w-52 xl:h-60 xl:w-60 dark:text-slate-100" />
+                    <div className="mx-auto mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-400 px-3 py-1 text-xs font-bold tracking-wider text-slate-900 uppercase shadow-md">
+                      <span>✓</span> Facebook
+                    </div>
+                  </div>
+                  {/* Doodle circle */}
+                  <div
+                    className="doodle-item pointer-events-none absolute inset-0 flex items-center justify-center"
+                    style={delay(0.42)}
+                  >
+                    <svg fill="none" height="220" viewBox="0 0 220 220" width="220">
+                      <ellipse
+                        className="text-emerald-400/60"
+                        cx="110"
+                        cy="110"
+                        rx="100"
+                        ry="95"
+                        stroke="currentColor"
+                        strokeDasharray="12 6"
+                        strokeLinecap="round"
+                        strokeWidth="2.5"
+                        transform="rotate(-8 110 110)"
+                      />
+                    </svg>
+                  </div>
+                  {/* ok! annotation */}
+                  <div
+                    className="doodle-item pointer-events-none absolute -right-12 bottom-8"
+                    style={{ ...delay(0.48), fontFamily: 'var(--font-caveat), cursive' }}
+                  >
+                    <span className="inline-block -rotate-10 text-2xl font-bold text-slate-700 dark:text-slate-300">
+                      ok!
+                    </span>
+                    <svg
+                      aria-hidden
+                      className="absolute -bottom-1 left-0 w-full overflow-visible text-slate-600/60 dark:text-slate-400/60"
+                      fill="none"
+                      height="6"
+                      preserveAspectRatio="none"
+                      viewBox="0 0 40 6"
+                    >
+                      <path
+                        d="M2 4 C10 1,28 5,38 3"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeWidth="1.8"
+                      />
+                    </svg>
                   </div>
                 </div>
               </div>
 
-              {/* Doodle circle around Facebook */}
+              {/* ── Threads ── */}
               <div
-                className="doodle-item pointer-events-none absolute bottom-[14%] left-1/2 -translate-x-1/2"
-                style={delay(0.42)}
+                className="anim-item flex flex-col items-center justify-center"
+                style={delay(0.2)}
               >
-                <svg fill="none" height="220" viewBox="0 0 220 220" width="220">
-                  <ellipse
-                    className="text-emerald-400/60"
-                    cx="110"
-                    cy="110"
-                    rx="100"
-                    ry="95"
-                    stroke="currentColor"
-                    strokeDasharray="12 6"
-                    strokeLinecap="round"
-                    strokeWidth="2.5"
-                    transform="rotate(-8 110 110)"
-                  />
-                </svg>
+                <div className="relative inline-block">
+                  <div className="rotate-[8deg] animate-[float_2.8s_ease-in-out_0.8s_infinite]">
+                    <SiThreads className="h-24 w-24 text-slate-900 drop-shadow-xl sm:h-36 sm:w-36 lg:h-44 lg:w-44 xl:h-52 xl:w-52 dark:text-slate-100" />
+                    <div className="mt-2 ml-auto inline-flex rotate-3 items-center gap-1 rounded-full bg-orange-400 px-3 py-1 text-xs font-bold tracking-wider text-white uppercase shadow-md">
+                      即將推出
+                    </div>
+                  </div>
+                  {/* ?! annotation */}
+                  <div
+                    className="doodle-item pointer-events-none absolute -top-6 -left-8"
+                    style={{ ...delay(0.35), fontFamily: 'var(--font-caveat), cursive' }}
+                  >
+                    <span className="inline-block rotate-[8deg] text-lg font-bold text-slate-700 dark:text-slate-300">
+                      ?!
+                    </span>
+                    <svg
+                      aria-hidden
+                      className="absolute top-5 left-4 text-slate-600/70 dark:text-slate-400/70"
+                      fill="none"
+                      height="24"
+                      viewBox="0 0 30 24"
+                      width="30"
+                    >
+                      <path
+                        d="M2 12 C8 4,20 6,26 14"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeWidth="1.8"
+                      />
+                      <path
+                        d="M22 10 L27 14 L22 17"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="1.8"
+                      />
+                    </svg>
+                  </div>
+                  {/* Star */}
+                  <svg
+                    aria-hidden
+                    className="doodle-item pointer-events-none absolute -top-2 -right-2 rotate-20 text-yellow-200/80"
+                    fill="currentColor"
+                    height="12"
+                    style={delay(0.44)}
+                    viewBox="0 0 20 20"
+                    width="12"
+                  >
+                    <path d="M10 1l2.5 6.5h6.5L14 11.5l2 6.5-6-3.5-6 3.5 2-6.5-4.5-4h6.5z" />
+                  </svg>
+                </div>
               </div>
-
-              {/* Hand-written "ok!" annotation */}
-              <div
-                className="doodle-item pointer-events-none absolute right-[28%] bottom-[28%]"
-                style={{ ...delay(0.48), fontFamily: 'var(--font-caveat), cursive' }}
-              >
-                <span className="inline-block -rotate-10 text-2xl font-bold text-slate-700 dark:text-slate-300">
-                  ok!
-                </span>
-                <svg
-                  aria-hidden
-                  className="absolute -bottom-1 left-0 w-full overflow-visible text-slate-600/60 dark:text-slate-400/60"
-                  fill="none"
-                  height="6"
-                  preserveAspectRatio="none"
-                  viewBox="0 0 40 6"
-                >
-                  <path
-                    d="M2 4 C10 1,28 5,38 3"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeWidth="1.8"
-                  />
-                </svg>
-              </div>
-
-              {/* Doodle stars */}
-              <svg
-                aria-hidden
-                className="doodle-item pointer-events-none absolute top-[42%] left-[28%] text-yellow-300/80"
-                fill="currentColor"
-                height="16"
-                style={delay(0.38)}
-                viewBox="0 0 20 20"
-                width="16"
-              >
-                <path d="M10 1l2.5 6.5h6.5L14 11.5l2 6.5-6-3.5-6 3.5 2-6.5-4.5-4h6.5z" />
-              </svg>
-              <svg
-                aria-hidden
-                className="doodle-item pointer-events-none absolute top-[36%] right-[24%] rotate-20 text-yellow-200/80"
-                fill="currentColor"
-                height="12"
-                style={delay(0.44)}
-                viewBox="0 0 20 20"
-                width="12"
-              >
-                <path d="M10 1l2.5 6.5h6.5L14 11.5l2 6.5-6-3.5-6 3.5 2-6.5-4.5-4h6.5z" />
-              </svg>
             </div>
 
             {/* Notification card */}
             {notifVisible && (
-              <div className="anim-item absolute bottom-8 left-8 w-72" style={delay(0.25)}>
-                <div className="rounded-2xl border border-blue-300 bg-yellow-50 px-4 py-3 shadow-lg dark:border-blue-700 dark:bg-yellow-100">
+              <div
+                className="anim-item absolute right-4 bottom-4 left-4 sm:right-auto sm:bottom-8 sm:left-8 sm:w-72"
+                style={delay(0.25)}
+              >
+                <div className="rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3 shadow-lg dark:border-yellow-800 dark:bg-yellow-950">
                   {/* Header */}
                   <div className="mb-2 flex items-center gap-2">
                     <Info className="h-4 w-4 shrink-0 text-blue-500" />
                     <span className="text-body flex-1 font-semibold">通知</span>
                     <button
                       aria-label="關閉通知"
-                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      className="text-muted-foreground hover:text-foreground flex size-8 items-center justify-center rounded transition-colors"
                       onClick={() => setNotifVisible(false)}
                     >
                       <X className="h-4 w-4" />
@@ -535,17 +541,17 @@ export default function Home() {
                   {/* CTA */}
                   <Button
                     asChild
-                    className="h-8 rounded-lg bg-orange-500 px-4 text-sm font-bold text-white transition-colors hover:bg-orange-600"
+                    className="rounded-lg bg-orange-500 px-4 text-sm font-bold text-white transition-colors hover:bg-orange-600"
                     size="sm"
                   >
-                    <Link href="/login">幫你搞</Link>
+                    <Link href="/login">立即體驗</Link>
                   </Button>
                 </div>
               </div>
             )}
 
             <Link
-              className="anim-item group absolute right-8 bottom-8 flex items-center gap-2"
+              className="anim-item group absolute right-8 bottom-8 hidden items-center gap-2 sm:flex"
               href="#features"
               style={delay(0.35)}
             >
@@ -565,7 +571,7 @@ export default function Home() {
           data-active={seen.has(2) ? '' : undefined}
           id="features"
         >
-          <div className="mx-auto w-full max-w-7xl px-8">
+          <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
             <h2
               className="anim-item text-foreground mb-2 text-3xl font-bold lg:text-4xl"
               style={delay(0.05)}
@@ -598,28 +604,54 @@ export default function Home() {
           className={`${SECTION} flex flex-col bg-linear-to-br from-blue-600 via-blue-700 to-blue-800`}
           data-active={seen.has(3) ? '' : undefined}
         >
-          <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
-            <h2
-              className="anim-item mb-4 leading-[1.1] text-white"
-              style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', ...delay(0.05) }}
-            >
-              立即開始您的第一場抽獎
-            </h2>
-            <p className="anim-item mb-10 text-base text-white/75" style={delay(0.18)}>
-              連結 Meta 帳號，幾分鐘內完成設定
-            </p>
-            <div className="anim-item" style={delay(0.3)}>
-              <Button
-                asChild
-                className="rounded-full bg-white px-10 font-bold text-blue-700 shadow-xl transition-all hover:-translate-y-0.5 hover:bg-slate-100 hover:shadow-2xl"
-                size="lg"
+          <div className="mx-auto flex w-full max-w-7xl flex-1 items-center gap-12 px-4 sm:px-6 lg:px-8">
+            {/* 左：主文案 */}
+            <div className="flex-1">
+              <h2
+                className="anim-item mb-4 text-[clamp(2rem,5vw,3rem)] leading-[1.1] text-white"
+                style={delay(0.05)}
               >
-                <Link href="/login">立即免費登入</Link>
-              </Button>
+                立即開始您的第一場抽獎
+              </h2>
+              <p className="anim-item mb-10 max-w-md text-base text-white/75" style={delay(0.18)}>
+                連結 Meta 帳號，幾分鐘內完成設定
+              </p>
+              <div className="anim-item" style={delay(0.3)}>
+                <Button
+                  asChild
+                  className="rounded-full bg-white px-10 font-bold text-blue-700 shadow-xl transition-all hover:-translate-y-0.5 hover:bg-slate-100 hover:shadow-2xl"
+                  size="lg"
+                >
+                  <Link href="/login">立即免費登入</Link>
+                </Button>
+              </div>
+            </div>
+
+            {/* 右：特點清單 */}
+            <div className="anim-item hidden flex-1 lg:block" style={delay(0.2)}>
+              <ul className="space-y-5">
+                {[
+                  { icon: ShieldCheck, text: '密碼學安全亂數，公正無偏差' },
+                  { icon: Filter, text: '多條件彈性篩選參與者' },
+                  { icon: Gift, text: '多獎項分級，靈活設定數量' },
+                  { icon: History, text: '完整紀錄，隨時查閱得獎名單' },
+                ].map(({ icon: Icon, text }, i) => (
+                  <li
+                    key={text}
+                    className="anim-item flex items-center gap-4"
+                    style={delay(0.25 + i * 0.08)}
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15">
+                      <Icon className="h-5 w-5 text-white" />
+                    </div>
+                    <span className="text-base text-white/90">{text}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
-          <footer className="shrink-0 border-t border-white/20 px-8 py-5">
-            <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-2 text-center sm:flex-row">
+          <footer className="shrink-0 border-t border-white/20 px-4 py-5 sm:px-6 lg:px-8">
+            <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-2 sm:flex-row">
               <span className="text-xs text-white/50">© 2025 Pikora. All rights reserved.</span>
               <div className="flex gap-5 text-xs text-white/50">
                 <Link className="transition-colors hover:text-white/80" href="/privacy">
@@ -633,12 +665,31 @@ export default function Home() {
           </footer>
         </section>
       </main>
-      <ScrollIndicator
-        className="top-14"
-        scrollRef={mainRef}
-        thumbClassName="border border-white/60"
-        trackClassName="bg-white/10"
-      />
+      {/* Section dot navigator */}
+      <nav
+        aria-label="頁面區塊導覽"
+        className="pointer-events-none fixed top-1/2 right-4 z-50 flex -translate-y-1/2 flex-col gap-2"
+      >
+        {(['hero', 'platforms', 'features', 'cta'] as const).map((_, i) => (
+          <button
+            key={i}
+            aria-label={`前往第 ${i + 1} 區塊`}
+            className={`pointer-events-auto size-2 rounded-full ring-1 ring-black/15 transition-all duration-300 ${
+              currentSection === i
+                ? 'scale-125 bg-white ring-black/20'
+                : 'bg-white/60 hover:bg-white/80'
+            }`}
+            onClick={() => {
+              const el = mainRef.current;
+              if (el)
+                scrollToIndex(el, i, () => {
+                  markSeen(i);
+                  setCurrentSection(i);
+                });
+            }}
+          />
+        ))}
+      </nav>
     </div>
   );
 }

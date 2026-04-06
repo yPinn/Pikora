@@ -34,7 +34,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
         <CardContent className="grid p-0 md:grid-cols-2">
           <div className="flex min-h-96 flex-col items-center justify-center gap-8 p-6 md:p-8">
             <div className="flex flex-col items-center gap-2 text-center">
-              <h1 className="text-hero font-bold">Pikora</h1>
+              <h1 className="text-4xl font-bold">Pikora</h1>
               <p className="text-muted-foreground text-balance">Post the Best, Pikora the Rest</p>
             </div>
 
@@ -72,8 +72,9 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
             <Image
               fill
               priority
-              alt="Login background"
+              alt=""
               className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.8]"
+              role="presentation"
               sizes="(max-width: 768px) 0vw, 50vw"
               src={momonga1}
             />
@@ -82,11 +83,17 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
       </Card>
       <div className="text-muted-foreground text-body px-6 text-center">
         登入即表示您同意我們的{' '}
-        <a className="underline-offset-2 hover:underline" href={`${appUrl}/terms`}>
+        <a
+          className="hover:text-foreground underline underline-offset-2 transition-colors"
+          href={`${appUrl}/terms`}
+        >
           服務條款
         </a>{' '}
         和{' '}
-        <a className="underline-offset-2 hover:underline" href={`${appUrl}/privacy`}>
+        <a
+          className="hover:text-foreground underline underline-offset-2 transition-colors"
+          href={`${appUrl}/privacy`}
+        >
           隱私政策
         </a>
         。
