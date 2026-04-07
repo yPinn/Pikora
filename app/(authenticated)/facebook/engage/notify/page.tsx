@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 
 import { format } from 'date-fns';
 import {
@@ -145,9 +145,9 @@ function WinnerRow({
                   onClick={(e) => void handleClear(e)}
                 >
                   {isClearing ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <Loader2 className="size-3.5 animate-spin" />
                   ) : (
-                    <Trash2 className="text-destructive h-3.5 w-3.5" />
+                    <Trash2 className="text-destructive size-3.5" />
                   )}
                 </Button>
               </TooltipTrigger>
@@ -205,6 +205,16 @@ function GiveawayNotifyPanel({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     () => new Set(notifiableWinners.map((w) => w.id))
   );
+  // 當 notifiableWinners 更新（例如通知後 refresh）時，移除已不再可通知的 id
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    const notifiableIds = new Set(notifiableWinners.map((w) => w.id));
+    setSelectedIds((prev) => new Set([...prev].filter((id) => notifiableIds.has(id))));
+  }, [notifiableWinners]);
 
   const [replyTemplate, setReplyTemplate] = useState(DEFAULT_REPLY_TEMPLATE);
   const [dmTemplate, setDmTemplate] = useState(DEFAULT_DM_TEMPLATE);
@@ -303,6 +313,7 @@ function GiveawayNotifyPanel({
       else toast.warning(`${successCount} 位成功，${failCount} 位失敗`);
 
       setSelectedIds(new Set());
+      await onRefresh();
     } catch {
       toast.error('發送失敗，請稍後再試');
     } finally {
@@ -338,222 +349,215 @@ function GiveawayNotifyPanel({
         />
 
         <CollapsibleContent>
-          <div className="border-t">
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'reply' | 'dm')}>
-              <div className="px-4 pt-4">
-                <TabsList className="w-full">
-                  <TabsTrigger className="flex-1" value="reply">
-                    <Bell className="h-3.5 w-3.5" />
-                    留言回覆通知
-                  </TabsTrigger>
-                  <TabsTrigger className="flex-1" value="dm">
-                    <Clipboard className="h-3.5 w-3.5" />
-                    私訊模板
-                  </TabsTrigger>
-                </TabsList>
+          <Separator />
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'reply' | 'dm')}>
+            <div className="px-4 pt-4">
+              <TabsList className="w-full">
+                <TabsTrigger className="flex-1" value="reply">
+                  <Bell className="size-3.5" />
+                  留言回覆通知
+                </TabsTrigger>
+                <TabsTrigger className="flex-1" value="dm">
+                  <Clipboard className="size-3.5" />
+                  私訊模板
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            {/* ── Tab 1：留言回覆 ── */}
+            <TabsContent className="px-4 pt-4 pb-4" value="reply">
+              <div className="gap-page flex flex-col items-stretch lg:flex-row">
+                {/* 左：設定區 */}
+                <div className="order-last flex flex-1 flex-col gap-4 lg:order-first">
+                  <div className="flex flex-1 flex-col gap-1.5">
+                    <Label>回覆訊息模板</Label>
+                    <Textarea
+                      className="text-body min-h-32 flex-1 resize-none font-mono"
+                      maxLength={500}
+                      value={replyTemplate}
+                      onChange={(e) => setReplyTemplate(e.target.value)}
+                    />
+                    <p className="text-muted-foreground text-caption">
+                      @mention 將自動加於訊息開頭。可用變數：
+                      <code className="bg-muted rounded px-1">{'{{prizeName}}'}</code>
+                    </p>
+                  </div>
+
+                  {(!record.name || !record.post_url) && (
+                    <div className="bg-muted text-muted-foreground text-caption rounded-lg px-3 py-2">
+                      {!record.name && <p>此活動尚未設定名稱，訊息可信度可能較低。</p>}
+                      {!record.post_url && <p>此活動沒有關聯貼文連結。</p>}
+                    </div>
+                  )}
+
+                  {sendResults && (
+                    <div className="rounded-lg border px-3 py-2">
+                      <div className="flex items-center gap-3">
+                        {sendResults.successCount > 0 && (
+                          <span className="text-success flex items-center gap-1 text-sm">
+                            <CheckCircle2 className="h-4 w-4" />
+                            {sendResults.successCount} 則成功
+                          </span>
+                        )}
+                        {sendResults.failCount > 0 && (
+                          <span className="text-destructive flex items-center gap-1 text-sm">
+                            <XCircle className="h-4 w-4" />
+                            {sendResults.failCount} 則失敗
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <Button
+                    className="w-full"
+                    disabled={isSending || selectedIds.size === 0}
+                    onClick={() => void handleSendReply()}
+                  >
+                    {isSending ? <Loader2 className="animate-spin" /> : <Send />}
+                    {isSending ? '發送中...' : `發送留言回覆（${selectedIds.size} 位）`}
+                  </Button>
+                </div>
+
+                <Separator className="hidden h-auto lg:block" orientation="vertical" />
+
+                {/* 右：中獎者名單 */}
+                <div className="flex flex-1 flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <Label>選擇通知對象</Label>
+                    {notifiableWinners.length > 0 && (
+                      <Button size="sm" variant="ghost" onClick={toggleAll}>
+                        {selectedIds.size === notifiableWinners.length ? '取消全選' : '全選未通知'}
+                      </Button>
+                    )}
+                  </div>
+
+                  {allValid.length === 0 ? (
+                    <p className="text-muted-foreground text-caption py-3 text-center">
+                      此活動尚無中獎者
+                    </p>
+                  ) : (
+                    <div className="flex flex-col gap-1">
+                      {allValid.map((winner) => (
+                        <WinnerRow
+                          key={winner.id}
+                          giveawayId={record.id}
+                          pageId={pageId}
+                          selected={selectedIds.has(winner.id)}
+                          winner={winner}
+                          onClearNotification={onRefresh}
+                          onToggle={() => toggleWinner(winner.id)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
+            </TabsContent>
 
-              {/* ── Tab 1：留言回覆 ── */}
-              <TabsContent className="px-4 pt-4 pb-4" value="reply">
-                <div className="gap-page flex flex-col items-stretch lg:flex-row">
-                  {/* 左：設定區 */}
-                  <div className="order-last flex flex-1 flex-col gap-4 lg:order-first">
-                    <div className="flex flex-1 flex-col space-y-1.5">
-                      <Label>回覆訊息模板</Label>
-                      <Textarea
-                        className="text-body min-h-32 flex-1 resize-none font-mono"
-                        maxLength={500}
-                        value={replyTemplate}
-                        onChange={(e) => setReplyTemplate(e.target.value)}
-                      />
-                      <p className="text-muted-foreground text-caption">
-                        @mention 將自動加於訊息開頭。可用變數：
-                        <code className="bg-muted rounded px-1">{'{{prizeName}}'}</code>
-                      </p>
-                    </div>
-
-                    {(!record.name || !record.post_url) && (
-                      <div className="bg-muted text-muted-foreground text-caption rounded-lg px-3 py-2">
-                        {!record.name && <p>此活動尚未設定名稱，訊息可信度可能較低。</p>}
-                        {!record.post_url && <p>此活動沒有關聯貼文連結。</p>}
-                      </div>
-                    )}
-
-                    {sendResults && (
-                      <div className="rounded-lg border px-3 py-2">
-                        <div className="flex items-center gap-3">
-                          {sendResults.successCount > 0 && (
-                            <span className="text-success flex items-center gap-1 text-sm">
-                              <CheckCircle2 className="h-4 w-4" />
-                              {sendResults.successCount} 則成功
-                            </span>
-                          )}
-                          {sendResults.failCount > 0 && (
-                            <span className="text-destructive flex items-center gap-1 text-sm">
-                              <XCircle className="h-4 w-4" />
-                              {sendResults.failCount} 則失敗
-                            </span>
-                          )}
+            {/* ── Tab 2：私訊模板 ── */}
+            <TabsContent className="px-4 pt-4 pb-4" value="dm">
+              <div className="gap-page flex flex-col items-stretch lg:flex-row">
+                {/* 左：設定區 */}
+                <div className="order-last flex flex-1 flex-col gap-4 lg:order-first">
+                  <div className="flex flex-col gap-2">
+                    <Label>要求提供的聯絡資訊</Label>
+                    <div className="flex flex-wrap gap-4">
+                      {CONTACT_FIELD_OPTIONS.map((field) => (
+                        <div key={field.id} className="flex items-center gap-2">
+                          <Checkbox
+                            checked={selectedContactFields.includes(field.id)}
+                            id={`field-${record.id}-${field.id}`}
+                            onCheckedChange={() => toggleContactField(field.id)}
+                          />
+                          <Label
+                            className="cursor-pointer font-normal"
+                            htmlFor={`field-${record.id}-${field.id}`}
+                          >
+                            {field.label}
+                          </Label>
                         </div>
-                      </div>
-                    )}
-
-                    <Button
-                      className="w-full"
-                      disabled={isSending || selectedIds.size === 0}
-                      onClick={() => void handleSendReply()}
-                    >
-                      {isSending ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Send className="h-4 w-4" />
-                      )}
-                      {isSending ? '發送中...' : `發送留言回覆（${selectedIds.size} 位）`}
-                    </Button>
+                      ))}
+                    </div>
                   </div>
 
-                  <Separator className="hidden h-auto lg:block" orientation="vertical" />
-
-                  {/* 右：中獎者名單 */}
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label>選擇通知對象</Label>
-                      {notifiableWinners.length > 0 && (
-                        <Button size="sm" variant="ghost" onClick={toggleAll}>
-                          {selectedIds.size === notifiableWinners.length
-                            ? '取消全選'
-                            : '全選未通知'}
-                        </Button>
-                      )}
-                    </div>
-
-                    {allValid.length === 0 ? (
-                      <p className="text-muted-foreground text-caption py-3 text-center">
-                        此活動尚無中獎者
-                      </p>
-                    ) : (
-                      <div className="space-y-1">
-                        {allValid.map((winner) => (
-                          <WinnerRow
-                            key={winner.id}
-                            giveawayId={record.id}
-                            pageId={pageId}
-                            selected={selectedIds.has(winner.id)}
-                            winner={winner}
-                            onClearNotification={onRefresh}
-                            onToggle={() => toggleWinner(winner.id)}
-                          />
-                        ))}
-                      </div>
-                    )}
+                  <div className="flex flex-1 flex-col gap-1.5">
+                    <Label>私訊模板</Label>
+                    <Textarea
+                      className="text-body min-h-32 flex-1 resize-none font-mono"
+                      value={dmTemplate}
+                      onChange={(e) => setDmTemplate(e.target.value)}
+                    />
+                    <p className="text-muted-foreground text-caption">
+                      可用變數：
+                      <code className="bg-muted rounded px-1">{'{{winnerName}}'}</code>、
+                      <code className="bg-muted rounded px-1">{'{{prizeName}}'}</code>、
+                      <code className="bg-muted rounded px-1">{'{{activityName}}'}</code>、
+                      <code className="bg-muted rounded px-1">{'{{postLink}}'}</code>、
+                      <code className="bg-muted rounded px-1">{'{{contactFields}}'}</code>
+                    </p>
                   </div>
                 </div>
-              </TabsContent>
 
-              {/* ── Tab 2：私訊模板 ── */}
-              <TabsContent className="px-4 pt-4 pb-4" value="dm">
-                <div className="gap-page flex flex-col items-stretch lg:flex-row">
-                  {/* 左：設定區 */}
-                  <div className="order-last flex flex-1 flex-col gap-4 lg:order-first">
-                    <div className="space-y-2">
-                      <Label>要求提供的聯絡資訊</Label>
-                      <div className="flex flex-wrap gap-4">
-                        {CONTACT_FIELD_OPTIONS.map((field) => (
-                          <div key={field.id} className="flex items-center gap-2">
-                            <Checkbox
-                              checked={selectedContactFields.includes(field.id)}
-                              id={`field-${record.id}-${field.id}`}
-                              onCheckedChange={() => toggleContactField(field.id)}
+                <Separator className="hidden h-auto lg:block" orientation="vertical" />
+
+                {/* 右：各中獎者複製 */}
+                <div className="flex flex-1 flex-col gap-3">
+                  <Label>各別複製私訊內容</Label>
+                  {allValid.length === 0 ? (
+                    <p className="text-muted-foreground text-caption py-3 text-center">
+                      此活動尚無中獎者
+                    </p>
+                  ) : (
+                    <div className="flex flex-col gap-1">
+                      {allValid.map((winner) => (
+                        <PersonRow
+                          key={winner.id}
+                          actions={
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="icon-sm"
+                                  variant="ghost"
+                                  onClick={() => handleCopyDm(winner)}
+                                >
+                                  {copiedWinnerId === winner.id ? (
+                                    <ClipboardCheck className="text-success" />
+                                  ) : (
+                                    <Clipboard />
+                                  )}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {copiedWinnerId === winner.id ? '已複製' : '複製私訊內容'}
+                              </TooltipContent>
+                            </Tooltip>
+                          }
+                          avatar={
+                            <FacebookAvatar
+                              name={winner.from_name}
+                              pageId={pageId}
+                              userId={winner.from_id}
                             />
-                            <Label
-                              className="cursor-pointer font-normal"
-                              htmlFor={`field-${record.id}-${field.id}`}
-                            >
-                              {field.label}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
+                          }
+                          name={
+                            <>
+                              <span className="font-medium">{winner.from_name}</span>
+                              <span className="text-muted-foreground flex items-center gap-1 text-xs">
+                                <Gift className="h-3 w-3 shrink-0" />
+                                {winner.prize.name}
+                              </span>
+                            </>
+                          }
+                          variant="interactive"
+                        />
+                      ))}
                     </div>
-
-                    <div className="flex flex-1 flex-col space-y-1.5">
-                      <Label>私訊模板</Label>
-                      <Textarea
-                        className="text-body min-h-32 flex-1 resize-none font-mono"
-                        value={dmTemplate}
-                        onChange={(e) => setDmTemplate(e.target.value)}
-                      />
-                      <p className="text-muted-foreground text-caption">
-                        可用變數：
-                        <code className="bg-muted rounded px-1">{'{{winnerName}}'}</code>、
-                        <code className="bg-muted rounded px-1">{'{{prizeName}}'}</code>、
-                        <code className="bg-muted rounded px-1">{'{{activityName}}'}</code>、
-                        <code className="bg-muted rounded px-1">{'{{postLink}}'}</code>、
-                        <code className="bg-muted rounded px-1">{'{{contactFields}}'}</code>
-                      </p>
-                    </div>
-                  </div>
-
-                  <Separator className="hidden h-auto lg:block" orientation="vertical" />
-
-                  {/* 右：各中獎者複製 */}
-                  <div className="flex-1 space-y-3">
-                    <Label>各別複製私訊內容</Label>
-                    {allValid.length === 0 ? (
-                      <p className="text-muted-foreground text-caption py-3 text-center">
-                        此活動尚無中獎者
-                      </p>
-                    ) : (
-                      <div className="space-y-1">
-                        {allValid.map((winner) => (
-                          <PersonRow
-                            key={winner.id}
-                            actions={
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    size="icon-sm"
-                                    variant="ghost"
-                                    onClick={() => handleCopyDm(winner)}
-                                  >
-                                    {copiedWinnerId === winner.id ? (
-                                      <ClipboardCheck className="text-success h-4 w-4" />
-                                    ) : (
-                                      <Clipboard className="h-4 w-4" />
-                                    )}
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {copiedWinnerId === winner.id ? '已複製' : '複製私訊內容'}
-                                </TooltipContent>
-                              </Tooltip>
-                            }
-                            avatar={
-                              <FacebookAvatar
-                                name={winner.from_name}
-                                pageId={pageId}
-                                userId={winner.from_id}
-                              />
-                            }
-                            name={
-                              <>
-                                <span className="font-medium">{winner.from_name}</span>
-                                <span className="text-muted-foreground flex items-center gap-1 text-xs">
-                                  <Gift className="h-3 w-3 shrink-0" />
-                                  {winner.prize.name}
-                                </span>
-                              </>
-                            }
-                            variant="interactive"
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
-              </TabsContent>
-            </Tabs>
-          </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CollapsibleContent>
       </Card>
     </Collapsible>
@@ -601,7 +605,7 @@ export default function FacebookNotifyPage({
             title="尚無抽獎紀錄"
           />
         ) : (
-          <div className="space-y-3">
+          <div className="flex flex-col gap-3">
             {displayRecords.map((record, index) => (
               <GiveawayNotifyPanel
                 key={record.id}
