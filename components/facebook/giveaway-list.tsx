@@ -49,7 +49,7 @@ export function GiveawayList() {
     sessionStorage.removeItem(SELECTED_POST_MESSAGE_KEY);
   }, []);
 
-  // 當 postId 有值且有 activePage 時自動載入留言
+  // 當 postId 有值且有 activePage 時自動載入留言（並同步貼文名稱）
   useEffect(() => {
     if (!postId || !activePage?.id) return;
 
@@ -65,16 +65,26 @@ export function GiveawayList() {
           pageId: activePage.id,
           fetchAll: 'true',
         });
-        const res = await fetch(apiPath(`/api/facebook/comments?${commentsParams}`), {
-          signal: controller.signal,
-        });
+        const postParams = new URLSearchParams({ postId, pageId: activePage.id });
 
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || '取得留言失敗');
+        const [commentsRes, postRes] = await Promise.all([
+          fetch(apiPath(`/api/facebook/comments?${commentsParams}`), {
+            signal: controller.signal,
+          }),
+          fetch(apiPath(`/api/facebook/posts?${postParams}`), { signal: controller.signal }),
+        ]);
+
+        const commentsData = await commentsRes.json();
+        if (!commentsRes.ok) {
+          throw new Error(commentsData.error || '取得留言失敗');
         }
+        setComments(commentsData.data || []);
 
-        setComments(data.data || []);
+        if (postRes.ok) {
+          const postData = await postRes.json();
+          const message: string = postData.data?.message ?? '';
+          if (message) setPostMessage(message);
+        }
       } catch (err) {
         if ((err as Error).name === 'AbortError') return;
         const message = err instanceof Error ? err.message : '未知錯誤';

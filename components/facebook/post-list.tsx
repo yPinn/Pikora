@@ -25,7 +25,7 @@ import { useFacebookPage } from '@/contexts/facebook-page-store';
 import { useFacebookPosts } from '@/hooks/use-facebook-posts';
 import { ANIM, scaleInItem, staggerContainer } from '@/lib/animation';
 import type { FacebookPost } from '@/lib/services/facebook';
-import momonga2 from '@/public/Momonga_2.jpg';
+import momonga2 from '@/public/images/Momonga_2.jpg';
 
 // 從貼文中提取所有媒體圖片
 function getMediaImages(post: FacebookPost): string[] {

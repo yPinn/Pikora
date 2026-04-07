@@ -59,6 +59,41 @@ export default function FacebookWinnersPage() {
     setDeletingId(null);
   };
 
+  /** 計算字串的顯示寬度（CJK 全形字元算 2，其他算 1） */
+  function strDisplayWidth(text: string): number {
+    let w = 0;
+    for (const ch of text) {
+      w +=
+        /[\u1100-\u115f\u2e80-\u303e\u3041-\u33bf\u33ff\ua960-\ua97f\uac00-\ud7ff\uf900-\ufaff\ufe10-\ufe6f\uff00-\uffef]/.test(
+          ch
+        )
+          ? 2
+          : 1;
+    }
+    return w;
+  }
+
+  /** 掃描各欄所有儲存格，自動設定最適寬度 */
+  function autoFitColumns(
+    ws: ExcelJS.Worksheet,
+    caps: Record<number, number> = {} // colIndex(0-based) → 最大寬度上限
+  ) {
+    ws.columns.forEach((col, i) => {
+      let max = 0;
+      col.eachCell?.({ includeEmpty: false }, (cell) => {
+        const v = cell.value;
+        if (!v) return;
+        const text =
+          v !== null && typeof v === 'object' && 'text' in v
+            ? String((v as { text: unknown }).text)
+            : String(v);
+        max = Math.max(max, strDisplayWidth(text));
+      });
+      const cap = caps[i] ?? 48;
+      col.width = Math.min(Math.max(max + 2, 8), cap);
+    });
+  }
+
   const exportXLSX = async (record: GiveawayRecord) => {
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('中獎名單');
@@ -85,13 +120,13 @@ export default function FacebookWinnersPage() {
     };
 
     ws.columns = [
-      { key: 'prize', width: 14 },
-      { key: 'name', width: 20 },
-      { key: 'message', width: 44 },
-      { key: 'time', width: 18 },
-      { key: 'link', width: 12 },
-      { key: 'status', width: 14 },
-      { key: 'note', width: 26 },
+      { key: 'prize' },
+      { key: 'name' },
+      { key: 'message' },
+      { key: 'time' },
+      { key: 'link' },
+      { key: 'status' },
+      { key: 'note' },
     ];
 
     const titleText =
@@ -166,6 +201,9 @@ export default function FacebookWinnersPage() {
         }
       });
     });
+
+    // 留言欄（index 2）限 50；備註欄（index 6）限 40；其餘自動
+    autoFitColumns(ws, { 2: 50, 6: 40 });
 
     const buffer = await wb.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
@@ -251,11 +289,15 @@ export default function FacebookWinnersPage() {
                           {record.post_url && (
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <a href={record.post_url} rel="noopener noreferrer" target="_blank">
-                                  <Button size="icon-sm" variant="ghost">
+                                <Button asChild size="icon-sm" variant="ghost">
+                                  <a
+                                    href={record.post_url}
+                                    rel="noopener noreferrer"
+                                    target="_blank"
+                                  >
                                     <ExternalLink />
-                                  </Button>
-                                </a>
+                                  </a>
+                                </Button>
                               </TooltipTrigger>
                               <TooltipContent>查看貼文</TooltipContent>
                             </Tooltip>

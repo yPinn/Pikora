@@ -17,7 +17,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import type { BlacklistEntry, DrawEntry, FilterStats, GiveawayFilters } from '@/lib/giveaway';
 
 import { CardSectionHeader } from './card-section-header';
@@ -64,7 +63,10 @@ export function StatsDrawCard({
   const filteredPoolUsers = useMemo(() => {
     if (!poolSearch) return poolUsers;
     const q = poolSearch.toLowerCase();
-    return poolUsers.filter(({ entry }) => entry.from_name.toLowerCase().includes(q));
+    return poolUsers.filter(
+      ({ entry }) =>
+        entry.from_name.toLowerCase().includes(q) || entry.comment_message.toLowerCase().includes(q)
+    );
   }, [poolUsers, poolSearch]);
 
   return (
@@ -88,15 +90,15 @@ export function StatsDrawCard({
                   符合篩選條件的抽獎參加者名單
                 </DialogDescription>
               </DialogHeader>
-              <div className="flex flex-1 flex-col gap-3 overflow-hidden">
+              <div className="flex min-h-0 flex-1 flex-col gap-3">
                 <Input
                   className="h-10"
                   placeholder="搜尋姓名或留言..."
                   value={poolSearch}
                   onChange={(e) => setPoolSearch(e.target.value)}
                 />
-                <ScrollArea className="flex-1">
-                  <div className="flex flex-col gap-2 pr-4">
+                <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
+                  <div className="flex flex-col gap-2">
                     {filteredPoolUsers.length === 0 ? (
                       <p className="text-muted-foreground text-body py-4 text-center">
                         {poolSearch ? '找不到符合的人選' : '獎池為空'}
@@ -106,27 +108,31 @@ export function StatsDrawCard({
                         <PersonRow
                           key={entry.from_id}
                           actions={
-                            <Button
-                              size="icon-sm"
-                              variant="ghost"
-                              onClick={() => {
-                                void onAddToBlacklist({
-                                  from_id: entry.from_id,
-                                  from_name: entry.from_name,
-                                });
-                                toast.success(`已將 ${entry.from_name} 加入黑名單`);
-                              }}
-                            >
-                              <Ban className="h-3 w-3" />
-                            </Button>
+                            !entry.is_anonymous ? (
+                              <Button
+                                size="icon-sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  void onAddToBlacklist({
+                                    from_id: entry.from_id,
+                                    from_name: entry.from_name,
+                                  });
+                                  toast.success(`已將 ${entry.from_name} 加入黑名單`);
+                                }}
+                              >
+                                <Ban className="h-3 w-3" />
+                              </Button>
+                            ) : undefined
                           }
                           avatar={
                             <FacebookAvatar
                               name={entry.from_name}
                               pageId={pageId}
+                              pictureUrl={entry.from_picture_url}
                               userId={entry.from_id}
                             />
                           }
+                          meta={entry.is_anonymous ? entry.comment_message : undefined}
                           name={
                             <p className="text-body font-medium">
                               {entry.from_name}
@@ -141,7 +147,7 @@ export function StatsDrawCard({
                       ))
                     )}
                   </div>
-                </ScrollArea>
+                </div>
               </div>
             </DialogContent>
           </Dialog>

@@ -243,6 +243,13 @@
   }
 }
 
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* ─── Section entrance system ───────────────────────────────────────────
    Usage:
      Add `anim-item` class to any element that should animate in.
