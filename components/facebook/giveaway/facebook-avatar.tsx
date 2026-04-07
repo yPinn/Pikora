@@ -12,9 +12,9 @@ interface FacebookAvatarProps {
 
 export function FacebookAvatar({ userId, name, pageId, size = 'sm' }: FacebookAvatarProps) {
   return (
-    <Avatar className={size === 'md' ? 'h-10 w-10' : 'h-8 w-8'}>
+    <Avatar className={size === 'md' ? 'size-10' : 'size-8'}>
       <AvatarImage src={apiPath(facebookPictureUrl(userId, pageId))} />
-      <AvatarFallback>{name[0]}</AvatarFallback>
+      <AvatarFallback>{name[0] || '?'}</AvatarFallback>
     </Avatar>
   );
 }

@@ -32,6 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
+import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useGiveawayHistory, type GiveawayRecord } from '@/hooks/use-giveaway-history';
 
@@ -204,7 +205,7 @@ export default function FacebookWinnersPage() {
             title="尚無抽獎紀錄"
           />
         ) : (
-          <div className="space-y-3">
+          <div className="flex flex-col gap-3">
             {records.map((record) => {
               const isExpanded = expandedIds.has(record.id);
               const winnerGroups = groupWinnersByPrize(record);
@@ -230,7 +231,7 @@ export default function FacebookWinnersPage() {
                                   router.push(`/facebook/engage/notify?giveawayId=${record.id}`)
                                 }
                               >
-                                <Bell className="h-4 w-4" />
+                                <Bell />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>發送通知</TooltipContent>
@@ -242,17 +243,17 @@ export default function FacebookWinnersPage() {
                                 variant="ghost"
                                 onClick={() => void exportXLSX(record)}
                               >
-                                <Download className="h-4 w-4" />
+                                <Download />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>匯出 CSV</TooltipContent>
+                            <TooltipContent>匯出 Excel</TooltipContent>
                           </Tooltip>
                           {record.post_url && (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <a href={record.post_url} rel="noopener noreferrer" target="_blank">
                                   <Button size="icon-sm" variant="ghost">
-                                    <ExternalLink className="h-4 w-4" />
+                                    <ExternalLink />
                                   </Button>
                                 </a>
                               </TooltipTrigger>
@@ -264,7 +265,7 @@ export default function FacebookWinnersPage() {
                               <TooltipTrigger asChild>
                                 <AlertDialogTrigger asChild>
                                   <Button size="icon-sm" variant="ghost">
-                                    <Trash2 className="h-4 w-4" />
+                                    <Trash2 />
                                   </Button>
                                 </AlertDialogTrigger>
                               </TooltipTrigger>
@@ -283,9 +284,7 @@ export default function FacebookWinnersPage() {
                                   disabled={deletingId === record.id}
                                   onClick={() => void handleDelete(record.id)}
                                 >
-                                  {deletingId === record.id && (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  )}
+                                  {deletingId === record.id && <Loader2 className="animate-spin" />}
                                   刪除
                                 </AlertDialogAction>
                               </AlertDialogFooter>
@@ -309,7 +308,8 @@ export default function FacebookWinnersPage() {
                     />
 
                     <CollapsibleContent>
-                      <div className="border-t px-4 pb-3">
+                      <Separator />
+                      <div className="px-4 pb-3">
                         {winnerGroups.map(({ prize, winners }) => (
                           <div key={prize.id} className="mt-3">
                             <h4 className="text-body mb-2 flex items-center gap-2 font-medium">
@@ -325,7 +325,7 @@ export default function FacebookWinnersPage() {
                                 無中獎者
                               </p>
                             ) : (
-                              <div className="space-y-2">
+                              <div className="flex flex-col gap-2">
                                 {winners.map((winner) => (
                                   <PersonRow
                                     key={winner.id}

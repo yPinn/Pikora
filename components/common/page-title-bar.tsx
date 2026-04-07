@@ -14,7 +14,7 @@ export function PageTitleBar({ title, isLoading, onRefresh }: PageTitleBarProps)
     <div className="flex items-center justify-between">
       <h2 className="text-heading font-semibold">{title}</h2>
       <Button disabled={isLoading} size="sm" variant="outline" onClick={onRefresh}>
-        <RefreshCw className={cn('h-3 w-3', isLoading && 'animate-spin')} />
+        <RefreshCw className={cn('size-3', isLoading && 'animate-spin')} />
         重新整理
       </Button>
     </div>

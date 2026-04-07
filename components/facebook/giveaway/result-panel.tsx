@@ -2,7 +2,6 @@
 
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { Loader2, RefreshCw, Save, Trophy, Users } from 'lucide-react';
-import { AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -53,7 +52,7 @@ export function ResultPanel({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button size="sm" variant="outline" onClick={onDraw}>
-                <RefreshCw className="h-3 w-3" />
+                <RefreshCw className="size-3" />
                 再抽一輪
               </Button>
             </TooltipTrigger>
@@ -70,7 +69,7 @@ export function ResultPanel({
                 {isSaving ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
                 ) : (
-                  <Save className="h-3 w-3" />
+                  <Save className="size-3" />
                 )}
                 {isSaved ? '已儲存' : saveMode === 'replace' ? '更新紀錄' : '儲存'}
               </Button>
@@ -85,7 +84,7 @@ export function ResultPanel({
       {results.length === 0 ? (
         <p className="text-muted-foreground text-body py-8 text-center">尚未進行抽獎</p>
       ) : (
-        <div ref={resultsRef} className="space-y-4">
+        <div ref={resultsRef} className="flex flex-col gap-4">
           {prizes.map((prize) => {
             const prizeResults = results.filter((r) => r.prize_id === prize.id);
 
@@ -104,40 +103,38 @@ export function ResultPanel({
                     )}
                   </h4>
                   <Button size="sm" variant="ghost" onClick={() => onRedraw(prize.id)}>
-                    <RefreshCw className="h-3 w-3" />
+                    <RefreshCw className="size-3" />
                     重抽
                   </Button>
                 </div>
 
-                <AnimatePresence>
-                  <div className="space-y-2">
-                    {prizeResults.map((result, i) => (
-                      <WinnerCard
-                        key={result.winner.comment_id}
-                        index={i}
-                        pageId={pageId}
-                        postUrl={postUrl}
-                        result={result}
-                        onAddToBlacklist={(entry) => {
-                          void onAddToBlacklist(entry);
-                          toast.success(`已將 ${entry.from_name} 加入黑名單`);
-                        }}
-                      />
-                    ))}
+                <div className="flex flex-col gap-2">
+                  {prizeResults.map((result, i) => (
+                    <WinnerCard
+                      key={result.winner.comment_id}
+                      index={i}
+                      pageId={pageId}
+                      postUrl={postUrl}
+                      result={result}
+                      onAddToBlacklist={(entry) => {
+                        void onAddToBlacklist(entry);
+                        toast.success(`已將 ${entry.from_name} 加入黑名單`);
+                      }}
+                    />
+                  ))}
 
-                    {Array.from({ length: prize.quantity - prizeResults.length }).map((_, i) => (
-                      <div
-                        key={`empty-${i}`}
-                        className="border-muted-foreground/20 text-muted-foreground flex items-center gap-3 rounded-lg border border-dashed px-3 py-2"
-                      >
-                        <div className="bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-                          <Users className="h-4 w-4 opacity-40" />
-                        </div>
-                        <p className="text-caption">空缺 #{prizeResults.length + i + 1}</p>
+                  {Array.from({ length: prize.quantity - prizeResults.length }).map((_, i) => (
+                    <div
+                      key={`empty-${i}`}
+                      className="border-muted-foreground/20 text-muted-foreground flex items-center gap-3 rounded-lg border border-dashed px-3 py-2"
+                    >
+                      <div className="bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+                        <Users className="h-4 w-4 opacity-40" />
                       </div>
-                    ))}
-                  </div>
-                </AnimatePresence>
+                      <p className="text-caption">空缺 #{prizeResults.length + i + 1}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             );
           })}

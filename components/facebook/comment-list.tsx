@@ -71,7 +71,7 @@ const CommentItem = ({ comment, pageId }: { comment: FacebookComment; pageId?: s
     <div className="relative py-1">
       <div className="relative flex gap-2">
         {hasReplies && <div className="bg-border absolute top-9 bottom-0 left-3.75 w-0.5" />}
-        <Avatar className="h-8 w-8 shrink-0">
+        <Avatar className="size-8 shrink-0">
           <AvatarImage
             alt={comment.from?.name}
             src={
@@ -155,7 +155,7 @@ export function CommentList() {
 
   if (!isReady)
     return (
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-64 w-full" />
       </div>
@@ -167,7 +167,7 @@ export function CommentList() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button disabled={!state.postImage} size="icon-md" variant="outline">
-              <ImageIcon className="h-4 w-4" />
+              <ImageIcon />
             </Button>
           </TooltipTrigger>
           {state.postImage && (
@@ -201,16 +201,23 @@ export function CommentList() {
                 variant="ghost"
                 onClick={actions.clearInput}
               >
-                <X className="h-4 w-4" />
+                <X />
               </Button>
             )}
             <Button
               className="text-muted-foreground hover:text-foreground"
               size="icon-sm"
               variant="ghost"
-              onClick={async () => actions.setPostUrl(await navigator.clipboard.readText())}
+              onClick={async () => {
+                try {
+                  const text = await navigator.clipboard.readText();
+                  actions.setPostUrl(text);
+                } catch {
+                  // 使用者拒絕剪貼簿存取，靜默忽略
+                }
+              }}
             >
-              <Clipboard className="h-4 w-4" />
+              <Clipboard />
             </Button>
           </div>
         </div>
@@ -223,7 +230,7 @@ export function CommentList() {
               variant="outline"
               onClick={() => window.open(state.postUrl, '_blank', 'noopener,noreferrer')}
             >
-              <ExternalLink className="h-4 w-4" />
+              <ExternalLink />
             </Button>
           </TooltipTrigger>
           <TooltipContent>原始貼文</TooltipContent>
@@ -236,30 +243,30 @@ export function CommentList() {
               variant="outline"
               onClick={actions.refresh}
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw />
             </Button>
           </TooltipTrigger>
           <TooltipContent>重新整理</TooltipContent>
         </Tooltip>
         <Button onClick={() => actions.fetchComments(state.postUrl)}>
-          <Search className="mr-2 h-4 w-4" />
+          <Search />
           查詢
         </Button>
       </div>
 
       {state.loading ? (
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
           {[1, 2, 3, 4, 5].map((i) => (
             <Skeleton key={i} className="h-20 w-full" />
           ))}
         </div>
       ) : state.comments.length > 0 ? (
-        <div className="flex flex-col space-y-3">
+        <div className="flex flex-col gap-3">
           <div className="flex items-center gap-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="sm" variant="outline">
-                  <ArrowUpDown className="mr-2 h-3 w-3" />
+                  <ArrowUpDown className="size-3" />
                   排序
                 </Button>
               </DropdownMenuTrigger>
@@ -268,7 +275,7 @@ export function CommentList() {
                   className={state.sortBy === 'newest' ? 'bg-accent' : ''}
                   onClick={() => actions.setSortBy('newest')}
                 >
-                  <Clock className="h-3.5 w-3.5" />
+                  <Clock className="size-3.5" />
                   最新優先
                   {state.sortBy === 'newest' && <Check className="ml-2 h-3.5 w-3.5" />}
                 </DropdownMenuItem>
@@ -276,7 +283,7 @@ export function CommentList() {
                   className={state.sortBy === 'oldest' ? 'bg-accent' : ''}
                   onClick={() => actions.setSortBy('oldest')}
                 >
-                  <History className="h-3.5 w-3.5" />
+                  <History className="size-3.5" />
                   最早優先
                   {state.sortBy === 'oldest' && <Check className="ml-2 h-3.5 w-3.5" />}
                 </DropdownMenuItem>
@@ -284,7 +291,7 @@ export function CommentList() {
                   className={state.sortBy === 'most_likes' ? 'bg-accent' : ''}
                   onClick={() => actions.setSortBy('most_likes')}
                 >
-                  <Flame className="h-3.5 w-3.5" />
+                  <Flame className="size-3.5" />
                   熱門優先
                   {state.sortBy === 'most_likes' && <Check className="ml-2 h-3.5 w-3.5" />}
                 </DropdownMenuItem>
@@ -302,7 +309,7 @@ export function CommentList() {
               onChange={(e) => actions.setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="space-y-1 px-2">
+          <div className="flex flex-col gap-1 px-2">
             {state.paginatedComments.map((c) => (
               <CommentItem key={c.id} comment={c} pageId={activePage?.id} />
             ))}
@@ -315,7 +322,7 @@ export function CommentList() {
                 variant="outline"
                 onClick={() => actions.setCurrentPage(state.currentPage - 1)}
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft />
               </Button>
               <span className="text-muted-foreground text-body">
                 第 {state.currentPage} / {state.totalPages} 頁
@@ -326,7 +333,7 @@ export function CommentList() {
                 variant="outline"
                 onClick={() => actions.setCurrentPage(state.currentPage + 1)}
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight />
               </Button>
             </div>
           )}

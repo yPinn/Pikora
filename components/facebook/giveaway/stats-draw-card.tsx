@@ -88,7 +88,7 @@ export function StatsDrawCard({
                   符合篩選條件的抽獎參加者名單
                 </DialogDescription>
               </DialogHeader>
-              <div className="flex flex-1 flex-col space-y-3 overflow-hidden">
+              <div className="flex flex-1 flex-col gap-3 overflow-hidden">
                 <Input
                   className="h-10"
                   placeholder="搜尋姓名或留言..."
@@ -96,7 +96,7 @@ export function StatsDrawCard({
                   onChange={(e) => setPoolSearch(e.target.value)}
                 />
                 <ScrollArea className="flex-1">
-                  <div className="space-y-2 pr-4">
+                  <div className="flex flex-col gap-2 pr-4">
                     {filteredPoolUsers.length === 0 ? (
                       <p className="text-muted-foreground text-body py-4 text-center">
                         {poolSearch ? '找不到符合的人選' : '獎池為空'}

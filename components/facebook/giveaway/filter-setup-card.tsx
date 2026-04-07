@@ -57,12 +57,9 @@ export function FilterSetupCard({
               ) : (
                 <>
                   <span className="text-muted-foreground">{reactions.length} 反應</span>
-                  <button
-                    className="text-primary min-h-8 px-1 hover:underline"
-                    onClick={fetchReactions}
-                  >
+                  <Button size="sm" type="button" variant="link" onClick={fetchReactions}>
                     更新
-                  </button>
+                  </Button>
                 </>
               )}
             </div>
@@ -72,9 +69,9 @@ export function FilterSetupCard({
         title="篩選條件"
       />
 
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3">
         {/* 時間範圍 */}
-        <div className="space-y-1.5">
+        <div className="flex flex-col gap-1.5">
           <FilterLabel icon={Clock}>時間範圍</FilterLabel>
           <div className="flex gap-2">
             <Popover>
@@ -132,7 +129,7 @@ export function FilterSetupCard({
         </div>
 
         {/* 格式檢查 */}
-        <div className="space-y-1.5">
+        <div className="flex flex-col gap-1.5">
           <FilterLabel icon={Hash}>留言格式（包含關鍵字）</FilterLabel>
           <Input
             className="text-body h-10"
@@ -143,7 +140,7 @@ export function FilterSetupCard({
         </div>
 
         {/* @mention 要求 */}
-        <div className="space-y-1.5">
+        <div className="flex flex-col gap-1.5">
           <FilterLabel icon={AtSign}>最少 Tag 人數</FilterLabel>
           <Input
             className="text-body h-10"
@@ -158,7 +155,7 @@ export function FilterSetupCard({
         </div>
 
         {/* Checkboxes */}
-        <div className="space-y-2 pt-1">
+        <div className="flex flex-col gap-2 pt-1">
           <div className="flex items-center gap-2">
             <Checkbox
               checked={filters.require_reaction || false}

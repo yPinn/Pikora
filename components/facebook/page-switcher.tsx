@@ -20,6 +20,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useFacebookPage } from '@/contexts/facebook-page-store';
 import type { FacebookPage } from '@/lib/services/facebook';
 
@@ -66,8 +67,7 @@ export function PageSwitcher() {
     return () => window.removeEventListener('keydown', down);
   }, [sortedPages, setActivePage]);
 
-  if (!activePage)
-    return <div className="bg-sidebar-accent/50 h-12 w-full animate-pulse rounded-lg" />;
+  if (!activePage) return <Skeleton className="bg-sidebar-accent/50 h-12 w-full" />;
 
   return (
     <SidebarMenu>

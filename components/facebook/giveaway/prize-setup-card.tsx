@@ -43,7 +43,7 @@ export function PrizeSetupCard({ prizes, onChangePrizes }: PrizeSetupCardProps) 
       <CardSectionHeader
         action={
           <Button size="xs" variant="ghost" onClick={addPrize}>
-            <Plus className="h-3 w-3" />
+            <Plus className="size-3" />
             新增
           </Button>
         }
@@ -51,7 +51,7 @@ export function PrizeSetupCard({ prizes, onChangePrizes }: PrizeSetupCardProps) 
         title="獎項設定"
       />
 
-      <div ref={prizesRef} className="space-y-2">
+      <div ref={prizesRef} className="flex flex-col gap-2">
         {prizes.map((prize, i) => (
           <div key={prize.id} className="flex items-center gap-2">
             <Input
@@ -73,7 +73,7 @@ export function PrizeSetupCard({ prizes, onChangePrizes }: PrizeSetupCardProps) 
               variant="ghost"
               onClick={() => removePrize(i)}
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="size-3.5" />
             </Button>
           </div>
         ))}

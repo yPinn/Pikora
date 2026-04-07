@@ -32,7 +32,7 @@ export function BlacklistTab({ blacklist, onRemoveFromBlacklist }: BlacklistTabP
 
   return (
     <Card className="p-4">
-      <div className="mb-4 space-y-0.5">
+      <div className="mb-4 flex flex-col gap-0.5">
         <CardSectionHeader icon={UserX} title="黑名單管理" />
         <p className="text-muted-foreground text-caption pl-6">
           黑名單內的用戶將不會出現在抽獎池中
@@ -42,7 +42,7 @@ export function BlacklistTab({ blacklist, onRemoveFromBlacklist }: BlacklistTabP
       {blacklist.length === 0 ? (
         <p className="text-muted-foreground text-body py-8 text-center">尚無黑名單</p>
       ) : (
-        <div ref={blacklistRef} className="space-y-2">
+        <div ref={blacklistRef} className="flex flex-col gap-2">
           {blacklist.map((entry) => (
             <PersonRow
               key={entry.from_id}
@@ -50,7 +50,7 @@ export function BlacklistTab({ blacklist, onRemoveFromBlacklist }: BlacklistTabP
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button className="h-7 shrink-0" size="sm" variant="ghost">
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="size-3" />
                       移除
                     </Button>
                   </AlertDialogTrigger>

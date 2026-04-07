@@ -89,7 +89,7 @@ export function WinnerCard({ result, index, pageId, postUrl, onAddToBlacklist }:
                 onAddToBlacklist({ from_id: winner.from_id, from_name: winner.from_name })
               }
             >
-              <Ban className="h-4 w-4" />
+              <Ban />
             </Button>
           </TooltipTrigger>
           <TooltipContent>加入黑名單</TooltipContent>
