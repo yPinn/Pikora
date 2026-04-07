@@ -4,6 +4,7 @@ import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { Loader2, RefreshCw, Save, Trophy, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -58,7 +59,7 @@ export function ResultPanel({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button size="sm" variant="outline" onClick={onDraw}>
-                <RefreshCw className="size-3" />
+                <RefreshCw data-icon="inline-start" />
                 再抽一輪
               </Button>
             </TooltipTrigger>
@@ -73,9 +74,9 @@ export function ResultPanel({
                 onClick={onSave}
               >
                 {isSaving ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <Loader2 className="animate-spin" data-icon="inline-start" />
                 ) : (
-                  <Save className="size-3" />
+                  <Save data-icon="inline-start" />
                 )}
                 {isSaved ? '已儲存' : saveMode === 'replace' ? '更新紀錄' : '儲存'}
               </Button>
@@ -119,13 +120,13 @@ export function ResultPanel({
                       {prizeResults.length}/{prize.quantity} 名
                     </span>
                     {prizeResults.length < prize.quantity && (
-                      <span className="text-caption bg-warning/15 text-warning rounded-full px-1.5 py-0.5">
+                      <Badge className="bg-warning/15 text-warning border-0">
                         {prize.quantity - prizeResults.length} 空缺
-                      </span>
+                      </Badge>
                     )}
                   </h4>
                   <Button size="sm" variant="ghost" onClick={() => onRedraw(prize.id)}>
-                    <RefreshCw className="size-3" />
+                    <RefreshCw data-icon="inline-start" />
                     重抽
                   </Button>
                 </div>
@@ -150,7 +151,7 @@ export function ResultPanel({
                       key={`empty-${i}`}
                       className="border-muted-foreground/20 text-muted-foreground flex items-center gap-3 rounded-lg border border-dashed px-3 py-2"
                     >
-                      <div className="bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+                      <div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-full">
                         <Users className="h-4 w-4 opacity-40" />
                       </div>
                       <p className="text-caption">空缺 #{prizeResults.length + i + 1}</p>

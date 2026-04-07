@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-import { Gift, Search, Loader2, X, Clipboard, AlertCircle } from 'lucide-react';
+import { Gift, Search, Loader2, X, Clipboard } from 'lucide-react';
 
 import { GiveawayPanel } from '@/components/facebook/giveaway-panel';
 import {
@@ -10,6 +10,7 @@ import {
   SELECTED_POST_MESSAGE_KEY,
   SELECTED_POST_URL_KEY,
 } from '@/components/facebook/post-list';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -150,7 +151,7 @@ export function GiveawayList() {
                 variant="ghost"
                 onClick={clearGiveaway}
               >
-                <X className="h-4 w-4" />
+                <X />
               </Button>
             )}
             <Button
@@ -166,15 +167,15 @@ export function GiveawayList() {
                 }
               }}
             >
-              <Clipboard className="h-4 w-4" />
+              <Clipboard />
             </Button>
           </div>
         </div>
         <Button disabled={!postUrl || commentsLoading} onClick={fetchComments}>
           {commentsLoading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 className="animate-spin" data-icon="inline-start" />
           ) : (
-            <Search className="mr-2 h-4 w-4" />
+            <Search data-icon="inline-start" />
           )}
           載入留言
         </Button>
@@ -182,10 +183,9 @@ export function GiveawayList() {
 
       {/* 錯誤訊息 */}
       {commentsError && (
-        <div className="text-destructive text-body mt-3 flex items-center gap-2">
-          <AlertCircle className="h-4 w-4" />
-          {commentsError}
-        </div>
+        <Alert className="mt-3" variant="destructive">
+          <AlertDescription>{commentsError}</AlertDescription>
+        </Alert>
       )}
 
       {/* 留言已載入：顯示抽獎面板 */}

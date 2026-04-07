@@ -136,7 +136,7 @@ function WinnerRow({
               <TooltipTrigger asChild>
                 <Button asChild size="icon-sm" variant="ghost">
                   <a href={commentUrl} rel="noopener noreferrer" target="_blank">
-                    <ExternalLink className="size-3.5" />
+                    <ExternalLink />
                   </a>
                 </Button>
               </TooltipTrigger>
@@ -147,11 +147,7 @@ function WinnerRow({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button size="icon-sm" variant="ghost" onClick={onCopyDm}>
-                  {isCopied ? (
-                    <ClipboardCheck className="text-success size-3.5" />
-                  ) : (
-                    <Clipboard className="size-3.5" />
-                  )}
+                  {isCopied ? <ClipboardCheck className="text-success" /> : <Clipboard />}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{isCopied ? '已複製' : '複製私訊'}</TooltipContent>
@@ -185,9 +181,9 @@ function WinnerRow({
                   onClick={(e) => void handleClear(e)}
                 >
                   {isClearing ? (
-                    <Loader2 className="size-3.5 animate-spin" />
+                    <Loader2 className="animate-spin" />
                   ) : (
-                    <Trash2 className="text-destructive size-3.5" />
+                    <Trash2 className="text-destructive" />
                   )}
                 </Button>
               </TooltipTrigger>
@@ -410,11 +406,11 @@ function GiveawayNotifyPanel({
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'reply' | 'dm')}>
               <TabsList>
                 <TabsTrigger value="reply">
-                  <Bell className="size-3.5" />
+                  <Bell data-icon="inline-start" />
                   留言回覆通知
                 </TabsTrigger>
                 <TabsTrigger value="dm">
-                  <MessageSquare className="size-3.5" />
+                  <MessageSquare data-icon="inline-start" />
                   私訊模板
                 </TabsTrigger>
               </TabsList>
@@ -442,9 +438,9 @@ function GiveawayNotifyPanel({
                           }}
                         >
                           {isReplyTemplateCopied ? (
-                            <ClipboardCheck className="text-success size-3.5" />
+                            <ClipboardCheck className="text-success" />
                           ) : (
-                            <Clipboard className="size-3.5" />
+                            <Clipboard />
                           )}
                         </Button>
                       </TooltipTrigger>

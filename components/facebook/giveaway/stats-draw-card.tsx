@@ -76,7 +76,7 @@ export function StatsDrawCard({
           <Dialog>
             <DialogTrigger asChild>
               <Button disabled={pool.length === 0} size="sm" variant="outline">
-                <Users className="h-3 w-3" />
+                <Users data-icon="inline-start" />
                 查看獎池
               </Button>
             </DialogTrigger>
@@ -120,7 +120,7 @@ export function StatsDrawCard({
                                   toast.success(`已將 ${entry.from_name} 加入黑名單`);
                                 }}
                               >
-                                <Ban className="h-3 w-3" />
+                                <Ban />
                               </Button>
                             ) : undefined
                           }
@@ -192,9 +192,9 @@ export function StatsDrawCard({
 
         <Button className="shrink-0" disabled={!canDraw || isDrawing} onClick={onDraw}>
           {isDrawing ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="animate-spin" data-icon="inline-start" />
           ) : (
-            <Shuffle className="h-4 w-4" />
+            <Shuffle data-icon="inline-start" />
           )}
           開始抽獎
         </Button>

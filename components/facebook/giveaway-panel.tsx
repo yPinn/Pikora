@@ -112,16 +112,16 @@ export function GiveawayPanel({
     <Tabs className="flex flex-col gap-4" value={activeTab} onValueChange={setActiveTab}>
       <TabsList className="w-full sm:w-fit">
         <TabsTrigger value="settings">
-          <Filter className="h-4 w-4" />
+          <Filter data-icon="inline-start" />
           設定
         </TabsTrigger>
         <TabsTrigger value="results">
-          <Trophy className="h-4 w-4" />
+          <Trophy data-icon="inline-start" />
           結果
           {results.length > 0 && <TabBadge count={results.length} />}
         </TabsTrigger>
         <TabsTrigger value="blacklist">
-          <UserX className="h-4 w-4" />
+          <UserX data-icon="inline-start" />
           黑名單
           {blacklist.length > 0 && <TabBadge count={blacklist.length} />}
         </TabsTrigger>
