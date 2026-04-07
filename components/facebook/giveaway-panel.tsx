@@ -2,6 +2,18 @@
 
 import { useEffect, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
+/** 從貼文訊息中智能抓取活動名稱（優先斷句，最多 50 字）*/
+function smartTruncateName(text: string): string {
+  if (!text) return '';
+  const firstLine = text.split('\n').find((l) => l.trim()) ?? text;
+  if (firstLine.length <= 50) return firstLine.trim();
+  const match = firstLine.slice(0, 50).match(/^.+?[。！？…]/);
+  if (match) return match[0].trim();
+  return firstLine.slice(0, 50).trim();
+}
+
 import { Filter, Trophy, UserX } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -56,7 +68,14 @@ export function GiveawayPanel({
     save,
   } = useGiveaway({ comments, postId, postUrl });
 
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('settings');
+  const [giveawayName, setGiveawayName] = useState(() => smartTruncateName(postMessage ?? ''));
+  const [prevPostMessage, setPrevPostMessage] = useState(postMessage);
+  if (prevPostMessage !== postMessage) {
+    setPrevPostMessage(postMessage);
+    setGiveawayName(smartTruncateName(postMessage ?? ''));
+  }
 
   useEffect(() => {
     fetchBlacklist();
@@ -75,8 +94,11 @@ export function GiveawayPanel({
 
   const handleSave = async () => {
     try {
-      const id = await save(postMessage || undefined);
-      if (id) toast.success('抽獎結果已儲存！');
+      const id = await save(giveawayName.trim() || undefined);
+      if (id) {
+        toast.success('抽獎結果已儲存！');
+        router.push('/facebook/engage/winners');
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '儲存失敗，請重試');
     }
@@ -131,6 +153,7 @@ export function GiveawayPanel({
 
       <TabsContent value="results">
         <ResultPanel
+          giveawayName={giveawayName}
           isSaved={isSaved}
           isSaving={isSaving}
           pageId={pageId}
@@ -140,6 +163,7 @@ export function GiveawayPanel({
           saveMode={saveMode}
           onAddToBlacklist={addToBlacklist}
           onDraw={draw}
+          onGiveawayNameChange={setGiveawayName}
           onRedraw={redraw}
           onSave={handleSave}
         />

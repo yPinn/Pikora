@@ -54,10 +54,12 @@ describe('useGiveaway', () => {
   beforeEach(() => {
     setActivePage('p1');
     vi.restoreAllMocks();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   // ── 初始狀態 ────────────────────────────────────────────────────────────────
@@ -109,6 +111,7 @@ describe('useGiveaway', () => {
 
       act(() => {
         result.current.draw();
+        vi.runAllTimers();
       });
 
       expect(result.current.results).toHaveLength(1);
@@ -120,6 +123,7 @@ describe('useGiveaway', () => {
 
       act(() => {
         result.current.draw();
+        vi.runAllTimers();
       });
 
       const winnerIds = result.current.results.map((r) => r.winner.from_id);
@@ -139,6 +143,7 @@ describe('useGiveaway', () => {
 
       act(() => {
         result.current.draw();
+        vi.runAllTimers();
       });
 
       expect(result.current.results).toHaveLength(2);
@@ -149,6 +154,7 @@ describe('useGiveaway', () => {
 
       act(() => {
         result.current.draw();
+        vi.runAllTimers();
       });
 
       expect(result.current.saveMode).toBe('new');
@@ -168,6 +174,7 @@ describe('useGiveaway', () => {
 
       act(() => {
         result.current.draw();
+        vi.runAllTimers();
       });
 
       const winnerIds = result.current.results.map((r) => r.winner.from_id);
@@ -183,6 +190,7 @@ describe('useGiveaway', () => {
 
       act(() => {
         result.current.draw();
+        vi.runAllTimers();
       });
 
       expect(result.current.results).toHaveLength(1);
@@ -199,6 +207,7 @@ describe('useGiveaway', () => {
 
       act(() => {
         result.current.draw();
+        vi.runAllTimers();
       });
 
       act(() => {
@@ -217,6 +226,7 @@ describe('useGiveaway', () => {
 
       act(() => {
         result.current.draw();
+        vi.runAllTimers();
       });
 
       expect(() => {
@@ -245,6 +255,7 @@ describe('useGiveaway', () => {
 
       act(() => {
         result.current.draw();
+        vi.runAllTimers();
       });
 
       act(() => {
@@ -459,6 +470,7 @@ describe('useGiveaway', () => {
 
       act(() => {
         result.current.draw();
+        vi.runAllTimers();
       });
 
       let ret: string | null = 'sentinel';
@@ -500,6 +512,7 @@ describe('useGiveaway', () => {
 
       act(() => {
         result.current.draw();
+        vi.runAllTimers();
       });
 
       let savedId: string | null = null;
@@ -531,6 +544,7 @@ describe('useGiveaway', () => {
 
       act(() => {
         result.current.draw();
+        vi.runAllTimers();
       });
 
       await act(async () => {
@@ -571,6 +585,7 @@ describe('useGiveaway', () => {
 
       act(() => {
         result.current.draw();
+        vi.runAllTimers();
       });
 
       await expect(
@@ -614,6 +629,7 @@ describe('useGiveaway', () => {
 
       act(() => {
         result.current.draw();
+        vi.runAllTimers();
       });
 
       await act(async () => {

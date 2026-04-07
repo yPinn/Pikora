@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, useRef } from 'react';
 
-import { format } from 'date-fns';
 import {
   Bell,
   BellOff,
@@ -12,8 +11,10 @@ import {
   ExternalLink,
   Gift,
   Loader2,
+  MessageSquare,
   Send,
   Trash2,
+  UserRound,
   XCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -43,12 +44,13 @@ import {
 } from '@/hooks/use-giveaway-history';
 import { renderTemplate } from '@/lib/giveaway/template';
 import { apiPath } from '@/lib/utils';
+import { isAnonymousUser } from '@/lib/utils/facebook';
 
 // ── 預設模板 ─────────────────────────────────────────────────────────────────
 
-const DEFAULT_REPLY_TEMPLATE = `恭喜您獲得【{{prizeName}}】，請私訊本粉絲專頁以完成後續領獎流程。`;
+const DEFAULT_REPLY_TEMPLATE = `恭喜您中獎！請私訊本粉絲專頁以完成後續領獎流程。`;
 
-const DEFAULT_DM_TEMPLATE = `{{winnerName}} 您好，恭喜您獲得【{{prizeName}}】！
+const DEFAULT_DM_TEMPLATE = `您好，恭喜您獲得【{{prizeName}}】！
 
 活動：{{activityName}}
 原貼文：{{postLink}}
@@ -78,18 +80,30 @@ function WinnerRow({
   winner,
   pageId,
   giveawayId,
+  postUrl,
+  mode,
   selected,
   onToggle,
   onClearNotification,
+  onCopyDm,
+  isCopied,
 }: {
   winner: GiveawayWinner;
   pageId: string;
   giveawayId: string;
+  postUrl?: string;
+  /** reply = 留言回覆（有 checkbox）, dm = 私訊模板（有複製按鈕，無 checkbox） */
+  mode: 'reply' | 'dm';
   selected: boolean;
   onToggle: () => void;
   onClearNotification: () => Promise<void>;
+  onCopyDm: () => void;
+  isCopied: boolean;
 }) {
+  const isAnonymous = isAnonymousUser(winner.from_id);
   const isNotified = !!winner.notified_at;
+  const commentUrl =
+    postUrl && winner.comment_id ? `${postUrl}?comment_id=${winner.comment_id}` : undefined;
   const [isClearing, setIsClearing] = useState(false);
 
   const handleClear = async (e: React.MouseEvent) => {
@@ -117,8 +131,39 @@ function WinnerRow({
     <PersonRow
       actions={
         <>
+          {isAnonymous && commentUrl && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button asChild size="icon-sm" variant="ghost">
+                  <a href={commentUrl} rel="noopener noreferrer" target="_blank">
+                    <ExternalLink className="size-3.5" />
+                  </a>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>前往留言確認身份</TooltipContent>
+            </Tooltip>
+          )}
+          {mode === 'dm' && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="icon-sm" variant="ghost" onClick={onCopyDm}>
+                  {isCopied ? (
+                    <ClipboardCheck className="text-success size-3.5" />
+                  ) : (
+                    <Clipboard className="size-3.5" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{isCopied ? '已複製' : '複製私訊'}</TooltipContent>
+            </Tooltip>
+          )}
           <Badge className="shrink-0" variant={isNotified ? 'default' : 'outline'}>
-            {isNotified ? (
+            {isAnonymous ? (
+              <span className="flex items-center gap-1">
+                <UserRound className="h-3 w-3" />
+                待確認
+              </span>
+            ) : isNotified ? (
               <span className="flex items-center gap-1">
                 <CheckCircle2 className="h-3 w-3" />
                 已通知
@@ -130,12 +175,7 @@ function WinnerRow({
               </span>
             )}
           </Badge>
-          {winner.notified_at && (
-            <span className="text-muted-foreground text-caption hidden shrink-0 sm:inline">
-              {format(new Date(winner.notified_at), 'MM/dd HH:mm')}
-            </span>
-          )}
-          {isNotified && (
+          {isNotified && !isAnonymous && mode === 'reply' && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -158,17 +198,24 @@ function WinnerRow({
       }
       avatar={<FacebookAvatar name={winner.from_name} pageId={pageId} userId={winner.from_id} />}
       left={
-        <Checkbox
-          checked={selected}
-          disabled={isNotified}
-          id={`winner-${winner.id}`}
-          onCheckedChange={onToggle}
-        />
+        mode === 'reply' ? (
+          <Checkbox
+            checked={selected}
+            disabled={isNotified || isAnonymous}
+            id={`winner-${winner.id}`}
+            onCheckedChange={onToggle}
+          />
+        ) : undefined
       }
       meta={winner.comment_message || undefined}
       name={
         <>
-          <Label className="cursor-pointer font-medium" htmlFor={`winner-${winner.id}`}>
+          <Label
+            className={
+              mode === 'reply' && !isAnonymous ? 'cursor-pointer font-medium' : 'font-medium'
+            }
+            htmlFor={mode === 'reply' ? `winner-${winner.id}` : undefined}
+          >
             {winner.from_name}
           </Label>
           <span className="text-muted-foreground flex items-center gap-1 text-xs">
@@ -199,7 +246,7 @@ function GiveawayNotifyPanel({
   const [activeTab, setActiveTab] = useState<'reply' | 'dm'>('reply');
 
   const notifiableWinners = useMemo(
-    () => record.winners.filter((w) => w.isValid && !w.notified_at),
+    () => record.winners.filter((w) => w.isValid && !w.notified_at && !isAnonymousUser(w.from_id)),
     [record.winners]
   );
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
@@ -225,6 +272,16 @@ function GiveawayNotifyPanel({
     failCount: number;
   } | null>(null);
   const [copiedWinnerId, setCopiedWinnerId] = useState<string | null>(null);
+  const [isReplyTemplateCopied, setIsReplyTemplateCopied] = useState(false);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const replyTemplateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+      if (replyTemplateTimerRef.current) clearTimeout(replyTemplateTimerRef.current);
+    };
+  }, []);
 
   const prizeOrder = useMemo(
     () => Object.fromEntries(record.prizes.map((p) => [p.id, p.sort_order])),
@@ -276,7 +333,8 @@ function GiveawayNotifyPanel({
   const handleCopyDm = (winner: GiveawayWinner) => {
     void navigator.clipboard.writeText(dmPreviewFor(winner)).then(() => {
       setCopiedWinnerId(winner.id);
-      setTimeout(() => setCopiedWinnerId(null), 2000);
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+      copiedTimerRef.current = setTimeout(() => setCopiedWinnerId(null), 2000);
     });
   };
 
@@ -329,14 +387,11 @@ function GiveawayNotifyPanel({
             record.post_url ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <a
-                    className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 shrink-0 rounded p-1 transition-colors outline-none focus-visible:ring-[3px]"
-                    href={record.post_url}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
+                  <Button asChild size="icon-sm" variant="ghost">
+                    <a href={record.post_url} rel="noopener noreferrer" target="_blank">
+                      <ExternalLink />
+                    </a>
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>查看貼文</TooltipContent>
               </Tooltip>
@@ -350,214 +405,169 @@ function GiveawayNotifyPanel({
 
         <CollapsibleContent>
           <Separator />
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'reply' | 'dm')}>
-            <div className="px-4 pt-4">
-              <TabsList className="w-full">
-                <TabsTrigger className="flex-1" value="reply">
+          <div className="flex flex-col gap-4 px-4 pt-4 pb-4">
+            {/* ── Tabs：模板設定 ── */}
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'reply' | 'dm')}>
+              <TabsList>
+                <TabsTrigger value="reply">
                   <Bell className="size-3.5" />
                   留言回覆通知
                 </TabsTrigger>
-                <TabsTrigger className="flex-1" value="dm">
-                  <Clipboard className="size-3.5" />
+                <TabsTrigger value="dm">
+                  <MessageSquare className="size-3.5" />
                   私訊模板
                 </TabsTrigger>
               </TabsList>
-            </div>
 
-            {/* ── Tab 1：留言回覆 ── */}
-            <TabsContent className="px-4 pt-4 pb-4" value="reply">
-              <div className="gap-page flex flex-col items-stretch lg:flex-row">
-                {/* 左：設定區 */}
-                <div className="order-last flex flex-1 flex-col gap-4 lg:order-first">
-                  <div className="flex flex-1 flex-col gap-1.5">
-                    <Label>回覆訊息模板</Label>
-                    <Textarea
-                      className="text-body min-h-32 flex-1 resize-none font-mono"
-                      maxLength={500}
-                      value={replyTemplate}
-                      onChange={(e) => setReplyTemplate(e.target.value)}
-                    />
-                    <p className="text-muted-foreground text-caption">
-                      @mention 將自動加於訊息開頭。可用變數：
-                      <code className="bg-muted rounded px-1">{'{{prizeName}}'}</code>
-                    </p>
-                  </div>
-
-                  {(!record.name || !record.post_url) && (
-                    <div className="bg-muted text-muted-foreground text-caption rounded-lg px-3 py-2">
-                      {!record.name && <p>此活動尚未設定名稱，訊息可信度可能較低。</p>}
-                      {!record.post_url && <p>此活動沒有關聯貼文連結。</p>}
-                    </div>
-                  )}
-
-                  {sendResults && (
-                    <div className="rounded-lg border px-3 py-2">
-                      <div className="flex items-center gap-3">
-                        {sendResults.successCount > 0 && (
-                          <span className="text-success flex items-center gap-1 text-sm">
-                            <CheckCircle2 className="h-4 w-4" />
-                            {sendResults.successCount} 則成功
-                          </span>
-                        )}
-                        {sendResults.failCount > 0 && (
-                          <span className="text-destructive flex items-center gap-1 text-sm">
-                            <XCircle className="h-4 w-4" />
-                            {sendResults.failCount} 則失敗
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  <Button
-                    className="w-full"
-                    disabled={isSending || selectedIds.size === 0}
-                    onClick={() => void handleSendReply()}
-                  >
-                    {isSending ? <Loader2 className="animate-spin" /> : <Send />}
-                    {isSending ? '發送中...' : `發送留言回覆（${selectedIds.size} 位）`}
-                  </Button>
-                </div>
-
-                <Separator className="hidden h-auto lg:block" orientation="vertical" />
-
-                {/* 右：中獎者名單 */}
-                <div className="flex flex-1 flex-col gap-3">
+              {/* Tab 1：留言回覆 */}
+              <TabsContent className="mt-4 flex flex-col gap-3" value="reply">
+                <div className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between">
-                    <Label>選擇通知對象</Label>
-                    {notifiableWinners.length > 0 && (
-                      <Button size="sm" variant="ghost" onClick={toggleAll}>
-                        {selectedIds.size === notifiableWinners.length ? '取消全選' : '全選未通知'}
-                      </Button>
-                    )}
+                    <Label>回覆訊息模板</Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          onClick={() => {
+                            void navigator.clipboard.writeText(replyTemplate).then(() => {
+                              setIsReplyTemplateCopied(true);
+                              if (replyTemplateTimerRef.current)
+                                clearTimeout(replyTemplateTimerRef.current);
+                              replyTemplateTimerRef.current = setTimeout(
+                                () => setIsReplyTemplateCopied(false),
+                                2000
+                              );
+                            });
+                          }}
+                        >
+                          {isReplyTemplateCopied ? (
+                            <ClipboardCheck className="text-success size-3.5" />
+                          ) : (
+                            <Clipboard className="size-3.5" />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {isReplyTemplateCopied ? '已複製' : '複製模板'}
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
-
-                  {allValid.length === 0 ? (
-                    <p className="text-muted-foreground text-caption py-3 text-center">
-                      此活動尚無中獎者
-                    </p>
-                  ) : (
-                    <div className="flex flex-col gap-1">
-                      {allValid.map((winner) => (
-                        <WinnerRow
-                          key={winner.id}
-                          giveawayId={record.id}
-                          pageId={pageId}
-                          selected={selectedIds.has(winner.id)}
-                          winner={winner}
-                          onClearNotification={onRefresh}
-                          onToggle={() => toggleWinner(winner.id)}
-                        />
-                      ))}
-                    </div>
-                  )}
+                  <Textarea
+                    className="text-body min-h-24 resize-none font-mono"
+                    maxLength={500}
+                    value={replyTemplate}
+                    onChange={(e) => setReplyTemplate(e.target.value)}
+                  />
+                  <p className="text-muted-foreground text-caption">
+                    @mention 自動加於開頭。可使用變數：
+                    <code className="bg-muted rounded px-1">{'{{prizeName}}'}</code>
+                  </p>
                 </div>
-              </div>
-            </TabsContent>
-
-            {/* ── Tab 2：私訊模板 ── */}
-            <TabsContent className="px-4 pt-4 pb-4" value="dm">
-              <div className="gap-page flex flex-col items-stretch lg:flex-row">
-                {/* 左：設定區 */}
-                <div className="order-last flex flex-1 flex-col gap-4 lg:order-first">
-                  <div className="flex flex-col gap-2">
-                    <Label>要求提供的聯絡資訊</Label>
-                    <div className="flex flex-wrap gap-4">
-                      {CONTACT_FIELD_OPTIONS.map((field) => (
-                        <div key={field.id} className="flex items-center gap-2">
-                          <Checkbox
-                            checked={selectedContactFields.includes(field.id)}
-                            id={`field-${record.id}-${field.id}`}
-                            onCheckedChange={() => toggleContactField(field.id)}
-                          />
-                          <Label
-                            className="cursor-pointer font-normal"
-                            htmlFor={`field-${record.id}-${field.id}`}
-                          >
-                            {field.label}
-                          </Label>
-                        </div>
-                      ))}
+                {sendResults && (
+                  <div className="rounded-lg border px-3 py-2">
+                    <div className="flex items-center gap-3">
+                      {sendResults.successCount > 0 && (
+                        <span className="text-success flex items-center gap-1 text-sm">
+                          <CheckCircle2 className="h-4 w-4" />
+                          {sendResults.successCount} 則成功
+                        </span>
+                      )}
+                      {sendResults.failCount > 0 && (
+                        <span className="text-destructive flex items-center gap-1 text-sm">
+                          <XCircle className="h-4 w-4" />
+                          {sendResults.failCount} 則失敗
+                        </span>
+                      )}
                     </div>
                   </div>
+                )}
+                <Button
+                  disabled={isSending || selectedIds.size === 0}
+                  onClick={() => void handleSendReply()}
+                >
+                  {isSending ? <Loader2 className="animate-spin" /> : <Send />}
+                  {isSending ? '發送中...' : `發送留言回覆（${selectedIds.size} 位）`}
+                </Button>
+              </TabsContent>
 
-                  <div className="flex flex-1 flex-col gap-1.5">
-                    <Label>私訊模板</Label>
-                    <Textarea
-                      className="text-body min-h-32 flex-1 resize-none font-mono"
-                      value={dmTemplate}
-                      onChange={(e) => setDmTemplate(e.target.value)}
+              {/* Tab 2：私訊模板 */}
+              <TabsContent className="mt-4 flex flex-col gap-3" value="dm">
+                <div className="flex flex-col gap-2">
+                  <Label>要求提供的聯絡資訊</Label>
+                  <div className="flex flex-wrap gap-4">
+                    {CONTACT_FIELD_OPTIONS.map((field) => (
+                      <div key={field.id} className="flex items-center gap-2">
+                        <Checkbox
+                          checked={selectedContactFields.includes(field.id)}
+                          id={`field-${record.id}-${field.id}`}
+                          onCheckedChange={() => toggleContactField(field.id)}
+                        />
+                        <Label
+                          className="cursor-pointer font-normal"
+                          htmlFor={`field-${record.id}-${field.id}`}
+                        >
+                          {field.label}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label>私訊模板</Label>
+                  <Textarea
+                    className="text-body min-h-32 resize-none font-mono"
+                    value={dmTemplate}
+                    onChange={(e) => setDmTemplate(e.target.value)}
+                  />
+                  <p className="text-muted-foreground text-caption">
+                    變數：
+                    <code className="bg-muted rounded px-1">{'{{prizeName}}'}</code>、
+                    <code className="bg-muted rounded px-1">{'{{activityName}}'}</code>、
+                    <code className="bg-muted rounded px-1">{'{{postLink}}'}</code>、
+                    <code className="bg-muted rounded px-1">{'{{contactFields}}'}</code>
+                  </p>
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            <Separator />
+
+            {/* ── 中獎者名單 ── */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <Label>中獎者名單</Label>
+                {activeTab === 'reply' && notifiableWinners.length > 0 && (
+                  <Button size="sm" variant="ghost" onClick={toggleAll}>
+                    {selectedIds.size === notifiableWinners.length ? '取消全選' : '全選未通知'}
+                  </Button>
+                )}
+              </div>
+              {allValid.length === 0 ? (
+                <p className="text-muted-foreground text-caption py-3 text-center">
+                  此活動尚無中獎者
+                </p>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  {allValid.map((winner) => (
+                    <WinnerRow
+                      key={winner.id}
+                      giveawayId={record.id}
+                      isCopied={copiedWinnerId === winner.id}
+                      mode={activeTab}
+                      pageId={pageId}
+                      postUrl={record.post_url}
+                      selected={selectedIds.has(winner.id)}
+                      winner={winner}
+                      onClearNotification={onRefresh}
+                      onCopyDm={() => handleCopyDm(winner)}
+                      onToggle={() => toggleWinner(winner.id)}
                     />
-                    <p className="text-muted-foreground text-caption">
-                      可用變數：
-                      <code className="bg-muted rounded px-1">{'{{winnerName}}'}</code>、
-                      <code className="bg-muted rounded px-1">{'{{prizeName}}'}</code>、
-                      <code className="bg-muted rounded px-1">{'{{activityName}}'}</code>、
-                      <code className="bg-muted rounded px-1">{'{{postLink}}'}</code>、
-                      <code className="bg-muted rounded px-1">{'{{contactFields}}'}</code>
-                    </p>
-                  </div>
+                  ))}
                 </div>
-
-                <Separator className="hidden h-auto lg:block" orientation="vertical" />
-
-                {/* 右：各中獎者複製 */}
-                <div className="flex flex-1 flex-col gap-3">
-                  <Label>各別複製私訊內容</Label>
-                  {allValid.length === 0 ? (
-                    <p className="text-muted-foreground text-caption py-3 text-center">
-                      此活動尚無中獎者
-                    </p>
-                  ) : (
-                    <div className="flex flex-col gap-1">
-                      {allValid.map((winner) => (
-                        <PersonRow
-                          key={winner.id}
-                          actions={
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  size="icon-sm"
-                                  variant="ghost"
-                                  onClick={() => handleCopyDm(winner)}
-                                >
-                                  {copiedWinnerId === winner.id ? (
-                                    <ClipboardCheck className="text-success" />
-                                  ) : (
-                                    <Clipboard />
-                                  )}
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                {copiedWinnerId === winner.id ? '已複製' : '複製私訊內容'}
-                              </TooltipContent>
-                            </Tooltip>
-                          }
-                          avatar={
-                            <FacebookAvatar
-                              name={winner.from_name}
-                              pageId={pageId}
-                              userId={winner.from_id}
-                            />
-                          }
-                          name={
-                            <>
-                              <span className="font-medium">{winner.from_name}</span>
-                              <span className="text-muted-foreground flex items-center gap-1 text-xs">
-                                <Gift className="h-3 w-3 shrink-0" />
-                                {winner.prize.name}
-                              </span>
-                            </>
-                          }
-                          variant="interactive"
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+              )}
+            </div>
+          </div>
         </CollapsibleContent>
       </Card>
     </Collapsible>

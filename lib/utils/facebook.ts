@@ -103,6 +103,14 @@ export function isValidPublicMediaUrl(url: string | undefined): boolean {
 }
 
 /**
+ * 判斷是否為匿名參與者（無 Facebook 帳號資訊）
+ * 匿名用戶以 "anon_" 為 userId 前綴。
+ */
+export function isAnonymousUser(userId: string): boolean {
+  return userId.startsWith('anon_');
+}
+
+/**
  * 建構 Facebook 頭像代理路徑
  * 回傳相對路徑；元件中用 apiPath() 包裹即可。
  */

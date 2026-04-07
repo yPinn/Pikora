@@ -9,7 +9,7 @@ import { SiThreads } from 'react-icons/si';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import momonga1 from '@/public/Momonga_1.jpg';
+import momonga1 from '@/public/images/Momonga_1.jpg';
 
 export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';

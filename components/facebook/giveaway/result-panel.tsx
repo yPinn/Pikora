@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { SaveMode } from '@/hooks/use-giveaway';
 import type { BlacklistEntry, DrawResult, PrizeInput } from '@/lib/giveaway';
@@ -17,12 +19,14 @@ interface ResultPanelProps {
   prizes: PrizeInput[];
   pageId?: string;
   postUrl?: string;
+  giveawayName: string;
   isSaving: boolean;
   isSaved: boolean;
   saveMode: SaveMode;
   onDraw: () => void;
   onRedraw: (prizeId: string) => void;
   onSave: () => void;
+  onGiveawayNameChange: (name: string) => void;
   onAddToBlacklist: (entry: BlacklistEntry) => Promise<void>;
 }
 
@@ -31,12 +35,14 @@ export function ResultPanel({
   prizes,
   pageId,
   postUrl,
+  giveawayName,
   isSaving,
   isSaved,
   saveMode,
   onDraw,
   onRedraw,
   onSave,
+  onGiveawayNameChange,
   onAddToBlacklist,
 }: ResultPanelProps) {
   const [resultsRef] = useAutoAnimate<HTMLDivElement>();
@@ -80,6 +86,22 @@ export function ResultPanel({
           </Tooltip>
         </div>
       </div>
+
+      {results.length > 0 && (
+        <div className="mb-4 flex items-center gap-2">
+          <Label className="text-caption text-muted-foreground shrink-0" htmlFor="giveaway-name">
+            活動名稱
+          </Label>
+          <Input
+            className="h-8 text-sm"
+            id="giveaway-name"
+            maxLength={200}
+            placeholder="未命名抽獎"
+            value={giveawayName}
+            onChange={(e) => onGiveawayNameChange(e.target.value)}
+          />
+        </div>
+      )}
 
       {results.length === 0 ? (
         <p className="text-muted-foreground text-body py-8 text-center">尚未進行抽獎</p>
