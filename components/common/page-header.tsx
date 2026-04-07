@@ -16,8 +16,25 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 
+const SEGMENT_LABELS: Record<string, string> = {
+  facebook: 'Facebook',
+  instagram: 'Instagram',
+  threads: 'Threads',
+  content: '內容管理',
+  engage: '互動工具',
+  help: '說明中心',
+  posts: '貼文',
+  comments: '留言管理',
+  giveaway: '抽獎活動',
+  notify: '通知發送',
+  winners: '中獎名單',
+  faq: '常見問題',
+  guide: '使用指南',
+  info: '系統介紹',
+};
+
 function formatSegment(segment: string): string {
-  return segment.charAt(0).toUpperCase() + segment.slice(1);
+  return SEGMENT_LABELS[segment] ?? segment.charAt(0).toUpperCase() + segment.slice(1);
 }
 
 export function PageHeader() {
