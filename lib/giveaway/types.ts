@@ -111,7 +111,7 @@ export function toDrawEntry(comment: FacebookComment): DrawEntry | null {
 
   return {
     from_id: comment.from?.id ?? `anon_${comment.id}`,
-    from_name: comment.from?.name ?? '',
+    from_name: comment.from?.name ?? '（身份待確認）',
     is_anonymous: isAnonymous,
     from_picture_url: comment.from?.picture?.data?.url,
     from_profile_url: comment.from?.link,
