@@ -155,6 +155,11 @@ export function StatsDrawCard({
           <div>
             <p className="text-muted-foreground text-caption">總留言</p>
             <p className="text-xl font-semibold tabular-nums">{stats.total_comments}</p>
+            {stats.anonymous_comments > 0 && (
+              <p className="text-muted-foreground text-caption mt-0.5">
+                ({stats.anonymous_comments} 則無用戶資訊)
+              </p>
+            )}
           </div>
           <div>
             <p className="text-muted-foreground text-caption">通過篩選</p>

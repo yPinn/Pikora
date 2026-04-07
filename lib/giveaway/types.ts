@@ -159,6 +159,7 @@ export interface FilterStats {
   after_mention_filter: number;
   after_reaction_filter: number; // 反應篩選後數量
   after_blacklist_filter: number;
+  anonymous_comments: number; // 因缺少用戶資訊（from.id/name）而無法參與的留言數
   final_pool_size: number;
   unique_users: number;
 }

@@ -91,6 +91,7 @@ export function buildDrawPool(
     after_mention_filter: 0,
     after_reaction_filter: 0,
     after_blacklist_filter: 0,
+    anonymous_comments: 0,
     final_pool_size: 0,
     unique_users: 0,
   };
@@ -116,8 +117,10 @@ export function buildDrawPool(
   }
   stats.after_reaction_filter = filtered.length;
 
-  // 排除黑名單
-  filtered = filtered.filter((c) => c.from?.id && !blacklist.has(c.from.id));
+  // 排除黑名單（同時排除無用戶資訊的留言）
+  const withUserId = filtered.filter((c) => !!c.from?.id);
+  stats.anonymous_comments = filtered.length - withUserId.length;
+  filtered = withUserId.filter((c) => !blacklist.has(c.from!.id));
   stats.after_blacklist_filter = filtered.length;
 
   // 轉換為 DrawEntry
