@@ -4,6 +4,7 @@ import {
   extractPostIdFromUrl,
   isFacebookCdnUrl,
   isFacebookProfileUrl,
+  isAnonymousUser,
   isValidPublicMediaUrl,
   parseFacebookErrorMessage,
   rebuildCommentTree,
@@ -187,6 +188,30 @@ describe('isValidPublicMediaUrl', () => {
 
   it('無效 URL 回傳 false', () => {
     expect(isValidPublicMediaUrl('not-a-url')).toBe(false);
+  });
+});
+
+// ── isAnonymousUser ───────────────────────────────────────────────────────────
+
+describe('isAnonymousUser', () => {
+  it('anon_ 前綴回傳 true', () => {
+    expect(isAnonymousUser('anon_abc123')).toBe(true);
+  });
+
+  it('anon_ 加 comment id 回傳 true', () => {
+    expect(isAnonymousUser('anon_1234567890')).toBe(true);
+  });
+
+  it('一般數字 userId 回傳 false', () => {
+    expect(isAnonymousUser('123456789')).toBe(false);
+  });
+
+  it('空字串回傳 false', () => {
+    expect(isAnonymousUser('')).toBe(false);
+  });
+
+  it('anon 無底線不符合回傳 false', () => {
+    expect(isAnonymousUser('anon')).toBe(false);
   });
 });
 
