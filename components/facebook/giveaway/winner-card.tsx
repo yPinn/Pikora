@@ -2,7 +2,7 @@
 
 import { formatDistanceToNow } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
-import { Ban } from 'lucide-react';
+import { Ban, UserRound } from 'lucide-react';
 import { motion } from 'motion/react';
 
 import { Button } from '@/components/ui/button';
@@ -25,8 +25,13 @@ interface WinnerCardProps {
 export function WinnerCard({ result, index, pageId, postUrl, onAddToBlacklist }: WinnerCardProps) {
   const { winner } = result;
   const hasProfileUrl = isFacebookProfileUrl(winner.from_profile_url);
+  const isAnonymous = winner.is_anonymous;
 
-  const avatar = (
+  const avatar = isAnonymous ? (
+    <div className="bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+      <UserRound className="text-muted-foreground h-5 w-5" />
+    </div>
+  ) : (
     <FacebookAvatar name={winner.from_name} pageId={pageId} size="md" userId={winner.from_id} />
   );
 
@@ -52,7 +57,9 @@ export function WinnerCard({ result, index, pageId, postUrl, onAddToBlacklist }:
       )}
 
       <div className="min-w-0 flex-1">
-        {hasProfileUrl ? (
+        {isAnonymous ? (
+          <p className="text-warning font-medium">身份待確認</p>
+        ) : hasProfileUrl ? (
           <Tooltip>
             <TooltipTrigger asChild>
               <a
@@ -70,30 +77,37 @@ export function WinnerCard({ result, index, pageId, postUrl, onAddToBlacklist }:
           <p className="font-medium">{winner.from_name}</p>
         )}
         <p className="text-muted-foreground text-caption truncate">{winner.comment_message}</p>
+        {isAnonymous && (
+          <p className="text-muted-foreground text-caption">請點擊右側連結前往留言確認得獎者</p>
+        )}
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="text-muted-foreground text-caption">
-          {formatDistanceToNow(new Date(winner.comment_created_time), {
-            addSuffix: true,
-            locale: zhTW,
-          })}
-        </span>
+        {!isAnonymous && (
+          <span className="text-muted-foreground text-caption">
+            {formatDistanceToNow(new Date(winner.comment_created_time), {
+              addSuffix: true,
+              locale: zhTW,
+            })}
+          </span>
+        )}
         {postUrl && <CommentLink commentId={winner.comment_id} postUrl={postUrl} />}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              size="icon-sm"
-              variant="ghost"
-              onClick={() =>
-                onAddToBlacklist({ from_id: winner.from_id, from_name: winner.from_name })
-              }
-            >
-              <Ban />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>加入黑名單</TooltipContent>
-        </Tooltip>
+        {!isAnonymous && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                onClick={() =>
+                  onAddToBlacklist({ from_id: winner.from_id, from_name: winner.from_name })
+                }
+              >
+                <Ban />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>加入黑名單</TooltipContent>
+          </Tooltip>
+        )}
       </div>
     </motion.div>
   );

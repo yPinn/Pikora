@@ -170,14 +170,17 @@ describe('buildDrawPool', () => {
     expect(stats.final_pool_size).toBe(2);
   });
 
-  it('沒有 from.id 的留言被排除', () => {
+  it('沒有 from.id 的留言以匿名身份進入 pool，is_anonymous 為 true', () => {
     const noFrom: FacebookComment = {
       id: 'cx',
       message: '留言',
       created_time: '2024-01-01T00:00:00Z',
     };
-    const { pool } = buildDrawPool([noFrom], NO_FILTERS, new Set());
-    expect(pool).toHaveLength(0);
+    const { pool, stats } = buildDrawPool([noFrom], NO_FILTERS, new Set());
+    expect(pool).toHaveLength(1);
+    expect(pool[0].is_anonymous).toBe(true);
+    expect(pool[0].from_id).toBe('anon_cx');
+    expect(stats.anonymous_comments).toBe(1);
   });
 });
 
@@ -188,6 +191,7 @@ describe('drawWinners', () => {
     return ids.map((id) => ({
       from_id: id,
       from_name: `User ${id}`,
+      is_anonymous: false,
       comment_id: `comment_${id}`,
       comment_message: '留言',
       comment_created_time: '2024-06-01T10:00:00Z',

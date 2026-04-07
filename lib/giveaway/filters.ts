@@ -117,14 +117,15 @@ export function buildDrawPool(
   }
   stats.after_reaction_filter = filtered.length;
 
-  // 排除黑名單（同時排除無用戶資訊的留言）
-  const withUserId = filtered.filter((c) => !!c.from?.id);
-  stats.anonymous_comments = filtered.length - withUserId.length;
-  filtered = withUserId.filter((c) => !blacklist.has(c.from!.id));
+  // 計算匿名留言數（from.id 缺失，身份無法識別）
+  stats.anonymous_comments = filtered.filter((c) => !c.from?.id).length;
+
+  // 排除黑名單（僅排除有 from.id 且在黑名單內的留言；匿名留言保留）
+  filtered = filtered.filter((c) => !c.from?.id || !blacklist.has(c.from.id));
   stats.after_blacklist_filter = filtered.length;
 
-  // 轉換為 DrawEntry
-  const entries = filtered.map(toDrawEntry).filter((e): e is DrawEntry => e !== null);
+  // 轉換為 DrawEntry（toDrawEntry 不再回傳 null，匿名留言以 anon_{id} 作為識別）
+  const entries = filtered.map(toDrawEntry) as DrawEntry[];
 
   // 處理重複規則
   let pool: DrawEntry[];
