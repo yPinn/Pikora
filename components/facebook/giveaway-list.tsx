@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFacebookPage } from '@/contexts/facebook-page-store';
 import type { FacebookComment } from '@/lib/services/facebook';
@@ -52,6 +53,8 @@ export function GiveawayList() {
   useEffect(() => {
     if (!postId || !activePage?.id) return;
 
+    const controller = new AbortController();
+
     const loadComments = async () => {
       setCommentsLoading(true);
       setCommentsError(null);
@@ -62,7 +65,9 @@ export function GiveawayList() {
           pageId: activePage.id,
           fetchAll: 'true',
         });
-        const res = await fetch(apiPath(`/api/facebook/comments?${commentsParams}`));
+        const res = await fetch(apiPath(`/api/facebook/comments?${commentsParams}`), {
+          signal: controller.signal,
+        });
 
         const data = await res.json();
         if (!res.ok) {
@@ -71,6 +76,7 @@ export function GiveawayList() {
 
         setComments(data.data || []);
       } catch (err) {
+        if ((err as Error).name === 'AbortError') return;
         const message = err instanceof Error ? err.message : '未知錯誤';
         setCommentsError(parseFacebookErrorMessage(message));
         setComments([]);
@@ -80,6 +86,7 @@ export function GiveawayList() {
     };
 
     loadComments();
+    return () => controller.abort();
   }, [postId, activePage?.id]);
 
   // 從 URL 解析並設定 postId（實際載入由 useEffect 處理）
@@ -102,7 +109,7 @@ export function GiveawayList() {
 
   if (!isReady) {
     return (
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-32 w-full" />
       </div>
@@ -140,7 +147,14 @@ export function GiveawayList() {
               className="text-muted-foreground hover:text-foreground"
               size="icon-sm"
               variant="ghost"
-              onClick={async () => setPostUrl(await navigator.clipboard.readText())}
+              onClick={async () => {
+                try {
+                  const text = await navigator.clipboard.readText();
+                  setPostUrl(text);
+                } catch {
+                  // 使用者拒絕剪貼簿存取，靜默忽略
+                }
+              }}
             >
               <Clipboard className="h-4 w-4" />
             </Button>
@@ -166,7 +180,8 @@ export function GiveawayList() {
 
       {/* 留言已載入：顯示抽獎面板 */}
       {comments.length > 0 && (
-        <div className="mt-4 border-t pt-4">
+        <div className="mt-4 flex flex-col gap-4">
+          <Separator />
           <GiveawayPanel
             comments={comments}
             pageId={activePage?.id}

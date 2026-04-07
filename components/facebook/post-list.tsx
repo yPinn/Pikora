@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 
 import Image from 'next/image';
 
@@ -87,29 +87,27 @@ function PostCard({ post, priority = false }: { post: FacebookPost; priority?: b
     [images.length]
   );
 
-  // 處理卡片點擊：Ctrl+點擊跳轉，單擊複製 URL
+  // 選取貼文：複製 URL 並存入 sessionStorage
+  const selectPost = useCallback(() => {
+    sessionStorage.setItem(SELECTED_POST_URL_KEY, post.permalink_url || '');
+    sessionStorage.setItem(SELECTED_POST_ID_KEY, post.id);
+    sessionStorage.setItem(SELECTED_POST_MESSAGE_KEY, post.message?.slice(0, 50) || '');
+    navigator.clipboard.writeText(post.permalink_url || '').then(() => {
+      toast.success('已複製 URL');
+    });
+  }, [post.permalink_url, post.id, post.message]);
+
+  // 處理卡片點擊：Ctrl+點擊跳轉，單擊選取
   const handleCardClick = useCallback(
     (e: React.MouseEvent) => {
-      // Ctrl/Cmd + 點擊：在新視窗開啟貼文
       if (e.ctrlKey || e.metaKey) {
         window.open(post.permalink_url, '_blank', 'noopener,noreferrer');
         return;
       }
-
-      // 單擊：複製 URL 並存入 sessionStorage
       e.preventDefault();
-
-      // 存入 sessionStorage 供其他頁面使用
-      sessionStorage.setItem(SELECTED_POST_URL_KEY, post.permalink_url || '');
-      sessionStorage.setItem(SELECTED_POST_ID_KEY, post.id);
-      sessionStorage.setItem(SELECTED_POST_MESSAGE_KEY, post.message?.slice(0, 50) || '');
-
-      // 複製到剪貼簿
-      navigator.clipboard.writeText(post.permalink_url || '').then(() => {
-        toast.success('已複製 URL');
-      });
+      selectPost();
     },
-    [post.permalink_url, post.id, post.message]
+    [post.permalink_url, selectPost]
   );
 
   return (
@@ -124,7 +122,8 @@ function PostCard({ post, priority = false }: { post: FacebookPost; priority?: b
       onFocus={() => setShowOverlay(true)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
-          handleCardClick(e as unknown as React.MouseEvent);
+          e.preventDefault();
+          selectPost();
         }
       }}
       onPointerEnter={() => setShowOverlay(true)}
@@ -276,16 +275,23 @@ export function PostList() {
     limit: 12,
   });
   const loaderRef = useRef<HTMLDivElement>(null);
+  // stable ref：避免 loadMore 參考變動時不必要地重建 IntersectionObserver
+  const loadMoreRef = useRef(loadMore);
+  useLayoutEffect(() => {
+    loadMoreRef.current = loadMore;
+  });
 
   // Intersection Observer 自動載入更多
+  // 依賴 isLoading：初始載入時 loaderRef.current 為 null（顯示骨架），
+  // 等 isLoading 變 false 後 div 才出現，此時重跑 effect 才能 observe
   useEffect(() => {
     const loader = loaderRef.current;
     if (!loader || !hasMore) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !isLoadingMore) {
-          loadMore();
+        if (entries[0].isIntersecting) {
+          loadMoreRef.current();
         }
       },
       { threshold: 0.1 }
@@ -293,7 +299,7 @@ export function PostList() {
 
     observer.observe(loader);
     return () => observer.disconnect();
-  }, [hasMore, isLoadingMore, loadMore]);
+  }, [hasMore, isLoading]);
 
   if (isLoading) {
     return (
@@ -326,7 +332,7 @@ export function PostList() {
     return <p className="text-muted-foreground text-body py-10 text-center">目前沒有貼文</p>;
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col gap-2">
       <motion.div
         animate="show"
         className="border-border/50 bg-muted/30 grid grid-cols-2 gap-2 rounded-lg border p-2 sm:grid-cols-3 lg:grid-cols-4"
