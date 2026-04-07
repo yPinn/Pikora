@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 
 import { useFacebookPage } from '@/contexts/facebook-page-store';
+import type { GiveawayFilters } from '@/lib/giveaway';
 import { createLogger } from '@/lib/logger';
 import { apiPath } from '@/lib/utils';
 
@@ -42,8 +43,8 @@ export interface GiveawayRecord {
   postId: string;
   post_url?: string;
   name?: string;
-  filters: Record<string, unknown>;
-  status: string;
+  filters: GiveawayFilters;
+  status: 'DRAFT' | 'COMPLETED';
   createdAt: string;
   updatedAt: string;
   prizes: GiveawayPrize[];

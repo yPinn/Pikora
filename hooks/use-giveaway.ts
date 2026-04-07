@@ -103,36 +103,39 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
   // 執行抽獎
   const draw = useCallback(() => {
     setIsDrawing(true);
-    const allResults: DrawResult[] = [];
-    const allowDuplicate = filters.allow_duplicate || false;
-    const allowMultiWin = filters.allow_multi_win || false;
+    // setTimeout(0) 讓 isDrawing=true 先渲染，再執行同步的抽獎運算
+    setTimeout(() => {
+      const allResults: DrawResult[] = [];
+      const allowDuplicate = filters.allow_duplicate || false;
+      const allowMultiWin = filters.allow_multi_win || false;
 
-    // allow_multi_win：每個獎項皆從完整 pool 重新抽，不跨獎項排除用戶
-    // 否則：依序抽，上一獎項中獎者排除在後續獎項之外
-    let currentPool = [...pool];
-    const excludedUsers = new Set<string>();
+      // allow_multi_win：每個獎項皆從完整 pool 重新抽，不跨獎項排除用戶
+      // 否則：依序抽，上一獎項中獎者排除在後續獎項之外
+      let currentPool = [...pool];
+      const excludedUsers = new Set<string>();
 
-    for (const prize of prizes) {
-      const { winners, remainingPool } = drawWinners(
-        allowMultiWin ? pool : currentPool,
-        prize.quantity,
-        allowMultiWin ? new Set() : excludedUsers,
-        allowDuplicate,
-        allowMultiWin
-      );
+      for (const prize of prizes) {
+        const { winners, remainingPool } = drawWinners(
+          allowMultiWin ? pool : currentPool,
+          prize.quantity,
+          allowMultiWin ? new Set() : excludedUsers,
+          allowDuplicate,
+          allowMultiWin
+        );
 
-      for (const winner of winners) {
-        allResults.push({ prize_id: prize.id, prize_name: prize.name, winner });
-        if (!allowMultiWin) excludedUsers.add(winner.from_id);
+        for (const winner of winners) {
+          allResults.push({ prize_id: prize.id, prize_name: prize.name, winner });
+          if (!allowMultiWin) excludedUsers.add(winner.from_id);
+        }
+
+        if (!allowMultiWin) currentPool = remainingPool;
       }
 
-      if (!allowMultiWin) currentPool = remainingPool;
-    }
-
-    setResults(allResults);
-    setIsDrawing(false);
-    setSavedId(null);
-    setIsDirty(false);
+      setResults(allResults);
+      setIsDrawing(false);
+      setSavedId(null);
+      setIsDirty(false);
+    }, 0);
   }, [pool, prizes, filters.allow_duplicate, filters.allow_multi_win]);
 
   // 重抽單一獎項
@@ -142,21 +145,22 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
       if (!prize) return;
 
       const allowMultiWin = filters.allow_multi_win || false;
-      // allow_multi_win：不排除任何人；否則排除其他獎項的中獎者
-      const otherWinnerIds = allowMultiWin
-        ? new Set<string>()
-        : new Set(results.filter((r) => r.prize_id !== prizeId).map((r) => r.winner.from_id));
 
-      const { winners } = drawWinners(
-        pool,
-        prize.quantity,
-        otherWinnerIds,
-        filters.allow_duplicate || false,
-        allowMultiWin
-      );
-
-      // 更新結果
+      // 透過 functional updater 讀取 prev results，避免 results 進入 deps 破壞 memoization
       setResults((prev) => {
+        // allow_multi_win：不排除任何人；否則排除其他獎項的中獎者
+        const otherWinnerIds = allowMultiWin
+          ? new Set<string>()
+          : new Set(prev.filter((r) => r.prize_id !== prizeId).map((r) => r.winner.from_id));
+
+        const { winners } = drawWinners(
+          pool,
+          prize.quantity,
+          otherWinnerIds,
+          filters.allow_duplicate || false,
+          allowMultiWin
+        );
+
         const filtered = prev.filter((r) => r.prize_id !== prizeId);
         const newResults = winners.map((w) => ({
           prize_id: prizeId,
@@ -171,7 +175,7 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
       });
       setIsDirty(true);
     },
-    [pool, prizes, results, filters.allow_duplicate, filters.allow_multi_win]
+    [pool, prizes, filters.allow_duplicate, filters.allow_multi_win]
   );
 
   // 重置
@@ -307,15 +311,19 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
         });
 
         // 儲存中獎者
-        const winners = results.map((r) => ({
-          prize_id: prizeMap.get(r.prize_id),
-          from_id: r.winner.from_id,
-          from_name: r.winner.from_name,
-          from_picture_url: r.winner.from_picture_url,
-          comment_id: r.winner.comment_id,
-          comment_message: r.winner.comment_message,
-          comment_created_time: r.winner.comment_created_time,
-        }));
+        const winners = results.map((r) => {
+          const dbPrizeId = prizeMap.get(r.prize_id);
+          if (!dbPrizeId) throw new Error('獎項映射失敗：請重試');
+          return {
+            prize_id: dbPrizeId,
+            from_id: r.winner.from_id,
+            from_name: r.winner.from_name,
+            from_picture_url: r.winner.from_picture_url,
+            comment_id: r.winner.comment_id,
+            comment_message: r.winner.comment_message,
+            comment_created_time: r.winner.comment_created_time,
+          };
+        });
 
         const patchRes = await fetch(apiPath(`/api/giveaway/${giveawayId}`), {
           method: 'PATCH',
