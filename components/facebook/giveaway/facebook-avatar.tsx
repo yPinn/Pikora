@@ -36,7 +36,7 @@ export function FacebookAvatar({
     const idx = hashIndex(userId, ANON_AVATAR_COUNT) + 1;
     return (
       <Avatar className={sizeClass}>
-        <AvatarImage alt="" src={`/images/Momonga_${idx}.jpg`} />
+        <AvatarImage alt="" src={apiPath(`/images/Momonga_${idx}.jpg`)} />
         <AvatarFallback>?</AvatarFallback>
       </Avatar>
     );
