@@ -98,6 +98,7 @@ export function validateGiveawayFilters(filters: unknown): string | null {
 export interface DrawEntry {
   from_id: string;
   from_name: string;
+  is_anonymous: boolean; // true = from 欄位缺失，身份需手動確認
   from_picture_url?: string;
   from_profile_url?: string; // Facebook 個人頁面連結
   comment_id: string;
@@ -106,13 +107,14 @@ export interface DrawEntry {
 }
 
 export function toDrawEntry(comment: FacebookComment): DrawEntry | null {
-  if (!comment.from?.id || !comment.from?.name) return null;
+  const isAnonymous = !comment.from?.id || !comment.from?.name;
 
   return {
-    from_id: comment.from.id,
-    from_name: comment.from.name,
-    from_picture_url: comment.from.picture?.data?.url,
-    from_profile_url: comment.from.link,
+    from_id: comment.from?.id ?? `anon_${comment.id}`,
+    from_name: comment.from?.name ?? '',
+    is_anonymous: isAnonymous,
+    from_picture_url: comment.from?.picture?.data?.url,
+    from_profile_url: comment.from?.link,
     comment_id: comment.id,
     comment_message: comment.message,
     comment_created_time: comment.created_time,
