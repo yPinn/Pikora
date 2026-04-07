@@ -55,6 +55,8 @@ export class MetaApiBase {
           }
         });
       }
+      // Next.js server-side cache：相同 URL 的 GET 請求在 30 秒內共用快取
+      (fetchOptions as RequestInit & { next?: { revalidate: number } }).next = { revalidate: 30 };
     } else if (method === 'POST') {
       // POST: 使用 form-urlencoded (Meta API 標準格式)
       fetchOptions.headers = {

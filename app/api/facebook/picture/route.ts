@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   const userId = searchParams.get('userId');
   const pageId = searchParams.get('pageId');
 
-  if (!userId || !/^\d+$/.test(userId)) {
+  if (!userId || !/^\d{1,30}$/.test(userId)) {
     return new NextResponse(null, { status: 400 });
   }
 
