@@ -31,6 +31,7 @@ interface GiveawayPanelProps {
   comments: FacebookComment[];
   postId: string;
   postUrl?: string;
+  postImage?: string;
   postMessage?: string;
   pageId?: string;
 }
@@ -39,6 +40,7 @@ export function GiveawayPanel({
   comments,
   postId,
   postUrl,
+  postImage,
   postMessage,
   pageId,
 }: GiveawayPanelProps) {
@@ -59,7 +61,7 @@ export function GiveawayPanel({
     isSaved,
     saveMode,
     save,
-  } = useGiveaway({ comments, postId, postUrl });
+  } = useGiveaway({ comments, postId, postUrl, postImage });
 
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('settings');

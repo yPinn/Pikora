@@ -68,6 +68,7 @@ model Giveaway {
   pageId    String                               // Facebook 粉專 ID (不使用外鍵)
   postId    String                               // Facebook 貼文 ID
   post_url  String?                              // 貼文網址
+  post_image String?                             // 貼文首圖（full_picture CDN URL）
   name      String?                              // 活動名稱
   filters   Json                                 // 篩選條件 (GiveawayFilters)
   status    GiveawayStatus @default(DRAFT)

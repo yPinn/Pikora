@@ -42,6 +42,7 @@ export interface GiveawayRecord {
   pageId: string;
   postId: string;
   post_url?: string;
+  post_image?: string;
   name?: string;
   filters: GiveawayFilters;
   status: 'DRAFT' | 'COMPLETED';

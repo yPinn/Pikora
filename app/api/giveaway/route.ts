@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 import { validateGiveawayFilters } from '@/lib/giveaway/types';
 import { createLogger } from '@/lib/logger';
 import prisma from '@/lib/prisma';
-import { FACEBOOK_ID_PATTERN } from '@/lib/utils/facebook';
+import { FACEBOOK_ID_PATTERN, isFacebookCdnUrl } from '@/lib/utils/facebook';
 
 const logger = createLogger('giveaway');
 // Facebook post ID 格式為 {pageId}_{postId}（如 123456789_987654321）
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { pageId, postId, post_url, name, filters, prizes } = body;
+    const { pageId, postId, post_url, post_image, name, filters, prizes } = body;
 
     if (typeof pageId !== 'string' || !FACEBOOK_ID_PATTERN.test(pageId.trim())) {
       return NextResponse.json({ error: '無效的 pageId' }, { status: 400 });
@@ -106,6 +106,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // post_image 僅接受 Facebook CDN 來源，忽略無效值（不報錯，靜默丟棄）
+    const safePostImage = isFacebookCdnUrl(post_image) ? (post_image as string) : undefined;
+
     if (name !== undefined) {
       if (typeof name !== 'string' || name.trim().length === 0) {
         return NextResponse.json({ error: '無效的 name 格式' }, { status: 400 });
@@ -121,6 +124,7 @@ export async function POST(request: NextRequest) {
         pageId: pageId.trim(),
         postId: postId.trim(),
         post_url: typeof post_url === 'string' ? post_url.trim() : undefined,
+        post_image: safePostImage,
         name: typeof name === 'string' ? name.trim() : undefined,
         filters,
         prizes: {

@@ -28,6 +28,7 @@ export function GiveawayList() {
   const [postUrl, setPostUrl] = useState('');
   const [postId, setPostId] = useState('');
   const [postMessage, setPostMessage] = useState('');
+  const [postImage, setPostImage] = useState('');
   const [comments, setComments] = useState<FacebookComment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsError, setCommentsError] = useState<string | null>(null);
@@ -85,6 +86,8 @@ export function GiveawayList() {
           const postData = await postRes.json();
           const message: string = postData.data?.message ?? '';
           if (message) setPostMessage(message);
+          const image: string = postData.data?.full_picture ?? '';
+          if (image) setPostImage(image);
         }
       } catch (err) {
         if ((err as Error).name === 'AbortError') return;
@@ -196,6 +199,7 @@ export function GiveawayList() {
             comments={comments}
             pageId={activePage?.id}
             postId={postId}
+            postImage={postImage || undefined}
             postMessage={postMessage}
             postUrl={postUrl}
           />

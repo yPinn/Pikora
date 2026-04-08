@@ -23,6 +23,7 @@ interface UseGiveawayOptions {
   comments: FacebookComment[];
   postId: string;
   postUrl?: string;
+  postImage?: string;
 }
 
 export type SaveMode = 'new' | 'replace' | 'saved';
@@ -64,7 +65,12 @@ interface UseGiveawayReturn {
   save: (name?: string) => Promise<string | null>;
 }
 
-export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): UseGiveawayReturn {
+export function useGiveaway({
+  comments,
+  postId,
+  postUrl,
+  postImage,
+}: UseGiveawayOptions): UseGiveawayReturn {
   const { activePage } = useFacebookPage();
 
   const [filters, setFilters] = useState<GiveawayFilters>({});
@@ -299,6 +305,7 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
             pageId: activePage.id,
             postId,
             post_url: postUrl,
+            post_image: postImage,
             name,
             filters,
             prizes,
@@ -354,7 +361,7 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
         setIsSaving(false);
       }
     },
-    [activePage?.id, postId, postUrl, filters, prizes, results, savedId, isDirty]
+    [activePage?.id, postId, postUrl, postImage, filters, prizes, results, savedId, isDirty]
   );
 
   return {
