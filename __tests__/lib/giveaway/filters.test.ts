@@ -135,8 +135,17 @@ describe('buildDrawPool', () => {
 
   it('@mention 篩選：min_mentions=2 排除 mention 不足的留言', () => {
     const mixed = [
-      makeComment('c1', 'u1', 'Alice', { message: '@bob' }),
-      makeComment('c2', 'u2', 'Bob', { message: '@alice @carol' }),
+      makeComment('c1', 'u1', 'Alice', {
+        message: '@bob',
+        message_tags: [{ id: 'bob', name: 'Bob', type: 'user', offset: 0, length: 4 }],
+      }),
+      makeComment('c2', 'u2', 'Bob', {
+        message: '@alice @carol',
+        message_tags: [
+          { id: 'alice', name: 'Alice', type: 'user', offset: 0, length: 6 },
+          { id: 'carol', name: 'Carol', type: 'user', offset: 7, length: 6 },
+        ],
+      }),
     ];
     const { pool } = buildDrawPool(mixed, { min_mentions: 2 }, new Set());
     expect(pool).toHaveLength(1);
