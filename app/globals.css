@@ -52,6 +52,9 @@
   --color-instagram: var(--instagram);
   --color-threads: var(--threads);
 
+  /* ===== Brand ===== */
+  --color-brand-lime: var(--brand-lime);
+
   /* ===== Sidebar ===== */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
@@ -111,6 +114,9 @@
   --toast-warning-bg: oklch(0.94 0.1 85);
   --toast-warning-text: oklch(0.4 0.12 85);
   --toast-warning-border: oklch(0.82 0.14 85);
+
+  /* ===== Brand ===== */
+  --brand-lime: #d4f23a; /* Landing page accent on dark bg */
 
   --radius: 0.625rem;
   --background: oklch(0.993 0.004 255);
@@ -224,21 +230,15 @@
     @apply bg-background text-foreground;
   }
   /* Reserve scrollbar gutter on html to prevent layout shift between pages.
-     Scroll functionality is preserved; only the visual track is hidden. */
+     Scroll functionality is preserved; only the visual track is hidden globally. */
   html {
     overflow-y: scroll;
     scroll-behavior: smooth;
   }
-  html,
-  body,
-  [data-slot='scroll-area-viewport'],
-  [data-radix-scroll-area-viewport] {
+  * {
     scrollbar-width: none; /* Firefox */
   }
-  html::-webkit-scrollbar,
-  body::-webkit-scrollbar,
-  [data-slot='scroll-area-viewport']::-webkit-scrollbar,
-  [data-radix-scroll-area-viewport]::-webkit-scrollbar {
+  *::-webkit-scrollbar {
     display: none; /* Chrome / Safari */
   }
 }

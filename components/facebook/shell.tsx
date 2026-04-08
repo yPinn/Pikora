@@ -23,7 +23,7 @@ export function Shell({ children, user, pages }: ShellProps) {
   return (
     <FacebookPageStore pages={pages}>
       <FacebookSidebar user={user} />
-      <SidebarInset className="overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <SidebarInset className="overflow-y-auto">
         <PageTransition>{children}</PageTransition>
       </SidebarInset>
     </FacebookPageStore>
