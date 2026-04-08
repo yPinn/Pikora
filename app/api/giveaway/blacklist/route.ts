@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     }
 
     const blacklist = await prisma.giveawayBlacklist.findMany({
-      where: { userId: session.user.id, pageId },
+      where: { pageId },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -58,13 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     const entry = await prisma.giveawayBlacklist.upsert({
-      where: {
-        userId_pageId_from_id: {
-          userId: session.user.id,
-          pageId,
-          from_id,
-        },
-      },
+      where: { pageId_from_id: { pageId, from_id } },
       update: { from_name, reason },
       create: {
         userId: session.user.id,
@@ -99,13 +93,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     await prisma.giveawayBlacklist.delete({
-      where: {
-        userId_pageId_from_id: {
-          userId: session.user.id,
-          pageId,
-          from_id: fromId,
-        },
-      },
+      where: { pageId_from_id: { pageId, from_id: fromId } },
     });
 
     return NextResponse.json({ success: true });

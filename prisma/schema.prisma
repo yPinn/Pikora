@@ -141,6 +141,6 @@ model GiveawayBlacklist {
   reason    String?                              // 排除原因
   createdAt DateTime @default(now())
 
-  @@unique([userId, pageId, from_id])
-  @@index([userId, pageId])
+  @@unique([pageId, from_id])
+  @@index([pageId])
 }

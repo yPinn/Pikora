@@ -281,7 +281,12 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
 
       // 重抽後再存：先刪舊記錄，以同一次行為取代
       if (savedId && isDirty) {
-        await fetch(apiPath(`/api/giveaway/${savedId}`), { method: 'DELETE' }).catch(() => null);
+        await fetch(
+          apiPath(
+            `/api/giveaway/${savedId}?${new URLSearchParams({ pageId: activePage?.id ?? '' })}`
+          ),
+          { method: 'DELETE' }
+        ).catch(() => null);
         setSavedId(null);
       }
 
@@ -328,7 +333,7 @@ export function useGiveaway({ comments, postId, postUrl }: UseGiveawayOptions): 
         const patchRes = await fetch(apiPath(`/api/giveaway/${giveawayId}`), {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ winners }),
+          body: JSON.stringify({ winners, pageId: activePage?.id }),
         });
         const patchData = await patchRes.json();
         if (!patchRes.ok) {

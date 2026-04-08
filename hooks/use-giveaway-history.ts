@@ -92,22 +92,27 @@ export function useGiveawayHistory(): UseGiveawayHistoryReturn {
     }
   }, [activePage?.id]);
 
-  const deleteRecord = useCallback(async (id: string): Promise<boolean> => {
-    try {
-      const res = await fetch(apiPath(`/api/giveaway/${id}`), {
-        method: 'DELETE',
-      });
+  const deleteRecord = useCallback(
+    async (id: string): Promise<boolean> => {
+      if (!activePage?.id) return false;
+      try {
+        const res = await fetch(
+          apiPath(`/api/giveaway/${id}?${new URLSearchParams({ pageId: activePage.id })}`),
+          { method: 'DELETE' }
+        );
 
-      if (res.ok) {
-        setRecords((prev) => prev.filter((r) => r.id !== id));
-        return true;
+        if (res.ok) {
+          setRecords((prev) => prev.filter((r) => r.id !== id));
+          return true;
+        }
+        return false;
+      } catch (error) {
+        logger.error('Failed to delete giveaway record', error);
+        return false;
       }
-      return false;
-    } catch (error) {
-      logger.error('Failed to delete giveaway record', error);
-      return false;
-    }
-  }, []);
+    },
+    [activePage?.id]
+  );
 
   useEffect(() => {
     fetchRecords();

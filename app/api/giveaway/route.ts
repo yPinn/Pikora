@@ -21,15 +21,16 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const pageId = searchParams.get('pageId');
 
-    if (pageId && !FACEBOOK_ID_PATTERN.test(pageId)) {
+    if (!pageId) {
+      return NextResponse.json({ error: '缺少 pageId 參數' }, { status: 400 });
+    }
+
+    if (!FACEBOOK_ID_PATTERN.test(pageId)) {
       return NextResponse.json({ error: '無效的 pageId' }, { status: 400 });
     }
 
     const giveaways = await prisma.giveaway.findMany({
-      where: {
-        userId: session.user.id,
-        ...(pageId && { pageId }),
-      },
+      where: { pageId },
       include: {
         prizes: { orderBy: { sort_order: 'asc' } },
         winners: {

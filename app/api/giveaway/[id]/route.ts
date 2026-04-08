@@ -20,8 +20,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const { id } = await params;
 
+    const pageId = request.nextUrl.searchParams.get('pageId');
+    if (!pageId) {
+      return NextResponse.json({ error: '缺少 pageId 參數' }, { status: 400 });
+    }
+
     const giveaway = await prisma.giveaway.findFirst({
-      where: { id, userId: session.user.id },
+      where: { id, pageId },
       include: {
         prizes: { orderBy: { sort_order: 'asc' } },
         winners: { orderBy: { drawnAt: 'asc' } },
@@ -43,8 +48,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
-    const userId = session?.user?.id;
-    if (!userId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: '未授權' }, { status: 401 });
     }
 
@@ -54,9 +58,14 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: '無效的請求格式' }, { status: 400 });
     }
 
-    // 驗證權限，同時取得 prizes 以驗證 prizeId 所有權
+    const pageId = typeof body.pageId === 'string' ? body.pageId.trim() : null;
+    if (!pageId) {
+      return NextResponse.json({ error: '缺少 pageId 參數' }, { status: 400 });
+    }
+
+    // 驗證頁面所有權，同時取得 prizes 以驗證 prizeId 所有權
     const existing = await prisma.giveaway.findFirst({
-      where: { id, userId },
+      where: { id, pageId },
       include: { prizes: { select: { id: true } } },
     });
 
@@ -152,7 +161,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         });
 
         return tx.giveaway.findFirst({
-          where: { id, userId },
+          where: { id },
           include: {
             prizes: { orderBy: { sort_order: 'asc' } },
             winners: { orderBy: { drawnAt: 'asc' } },
@@ -164,7 +173,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     const updated = await prisma.giveaway.findFirst({
-      where: { id, userId },
+      where: { id },
       include: {
         prizes: { orderBy: { sort_order: 'asc' } },
         winners: { orderBy: { drawnAt: 'asc' } },
@@ -187,9 +196,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     const { id } = await params;
+    const pageId = request.nextUrl.searchParams.get('pageId');
+    if (!pageId) {
+      return NextResponse.json({ error: '缺少 pageId 參數' }, { status: 400 });
+    }
 
     const existing = await prisma.giveaway.findFirst({
-      where: { id, userId: session.user.id },
+      where: { id, pageId },
     });
 
     if (!existing) {

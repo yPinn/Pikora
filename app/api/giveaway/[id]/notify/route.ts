@@ -70,7 +70,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // ── 驗證活動所有權 ───────────────────────────────────────────────
     const giveaway = await prisma.giveaway.findFirst({
-      where: { id: giveawayId, userId },
+      where: { id: giveawayId, pageId: pageId.trim() },
       include: {
         winners: {
           where: {
@@ -164,7 +164,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     // 驗證活動所有權
     const winner = await prisma.winner.findFirst({
-      where: { id: winnerId, giveawayId, giveaway: { userId } },
+      where: { id: winnerId, giveawayId, giveaway: { pageId: pageId.trim() } },
     });
 
     if (!winner) {
