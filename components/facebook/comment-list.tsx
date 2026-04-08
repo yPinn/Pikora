@@ -17,19 +17,18 @@ import {
   Clock,
   History,
   Flame,
-  Check,
   X,
   ChevronLeft,
   ChevronRight,
   type LucideIcon,
 } from 'lucide-react';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -38,7 +37,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useFacebookPage } from '@/contexts/facebook-page-store';
 import { useFacebookComments } from '@/hooks/use-facebook-comments';
 import type { FacebookComment } from '@/lib/services/facebook';
-import { cn, apiPath } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+
+import { FacebookAvatar } from './facebook-avatar';
 
 // --- 原子組件：狀態顯示 ---
 interface StatusViewProps {
@@ -66,30 +67,24 @@ const StatusView = ({ icon: Icon, title, desc, variant = 'default' }: StatusView
 // --- 原子組件：留言單項目 (Facebook 風格) ---
 const CommentItem = ({ comment, pageId }: { comment: FacebookComment; pageId?: string }) => {
   const hasReplies = comment.comments?.data && comment.comments.data.length > 0;
+  const displayName = comment.from?.name ?? `使用者 #${comment.id.slice(-4)}`;
 
   return (
     <div className="relative py-1">
-      <div className="relative flex gap-2">
-        {hasReplies && <div className="bg-border absolute top-9 bottom-0 left-3.75 w-0.5" />}
-        <Avatar className="size-8 shrink-0">
-          <AvatarImage
-            alt={comment.from?.name}
-            src={
-              comment.from?.id
-                ? apiPath(
-                    `/api/facebook/picture?userId=${comment.from.id}${pageId ? `&pageId=${pageId}` : ''}`
-                  )
-                : undefined
-            }
+      <div className="relative flex items-start gap-2">
+        {hasReplies && <div className="bg-border absolute top-8 bottom-0 left-3.75 w-0.5" />}
+        <div className="shrink-0">
+          <FacebookAvatar
+            name={displayName}
+            pageId={pageId}
+            pictureUrl={comment.from?.picture?.data?.url}
+            userId={comment.from?.id ?? `anon_${comment.id}`}
           />
-          <AvatarFallback className="text-caption font-medium" delayMs={300}>
-            {comment.from?.name?.[0] || '?'}
-          </AvatarFallback>
-        </Avatar>
+        </div>
         <div className="min-w-0 flex-1">
-          <div className="bg-muted inline-block max-w-full rounded-2xl px-3 py-2">
-            <p className="text-caption font-semibold">{comment.from?.name}</p>
-            <p className="text-body wrap-break-word whitespace-pre-wrap">{comment.message}</p>
+          <div className="bg-muted inline-block max-w-full rounded-2xl px-3 py-1.5">
+            <p className="text-caption font-semibold">{displayName}</p>
+            <p className="text-sm wrap-break-word whitespace-pre-wrap">{comment.message}</p>
           </div>
           {comment.attachment?.media?.image?.src && (
             <div className="relative mt-1 h-36 w-56">
@@ -102,7 +97,7 @@ const CommentItem = ({ comment, pageId }: { comment: FacebookComment; pageId?: s
               />
             </div>
           )}
-          <div className="text-muted-foreground text-caption flex items-center gap-3 px-1 pt-0.5">
+          <div className="text-muted-foreground flex items-center gap-2 px-1 pt-0.5 text-[11px]">
             <span>
               {formatDistanceToNow(new Date(comment.created_time), {
                 addSuffix: false,
@@ -111,13 +106,13 @@ const CommentItem = ({ comment, pageId }: { comment: FacebookComment; pageId?: s
             </span>
             {(comment.like_count ?? 0) > 0 && (
               <span className="flex items-center gap-1">
-                <ThumbsUp className="h-3 w-3" />
+                <ThumbsUp className="size-2.5" />
                 {comment.like_count}
               </span>
             )}
             {(comment.comment_count ?? 0) > 0 && (
               <span className="flex items-center gap-1">
-                <MessageCircle className="h-3 w-3" />
+                <MessageCircle className="size-2.5" />
                 {comment.comment_count}
               </span>
             )}
@@ -271,30 +266,23 @@ export function CommentList() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
-                <DropdownMenuItem
-                  className={state.sortBy === 'newest' ? 'bg-accent' : ''}
-                  onClick={() => actions.setSortBy('newest')}
+                <DropdownMenuRadioGroup
+                  value={state.sortBy}
+                  onValueChange={(v) => actions.setSortBy(v as typeof state.sortBy)}
                 >
-                  <Clock className="size-3.5" />
-                  最新優先
-                  {state.sortBy === 'newest' && <Check className="ml-2 h-3.5 w-3.5" />}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className={state.sortBy === 'oldest' ? 'bg-accent' : ''}
-                  onClick={() => actions.setSortBy('oldest')}
-                >
-                  <History className="size-3.5" />
-                  最早優先
-                  {state.sortBy === 'oldest' && <Check className="ml-2 h-3.5 w-3.5" />}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className={state.sortBy === 'most_likes' ? 'bg-accent' : ''}
-                  onClick={() => actions.setSortBy('most_likes')}
-                >
-                  <Flame className="size-3.5" />
-                  熱門優先
-                  {state.sortBy === 'most_likes' && <Check className="ml-2 h-3.5 w-3.5" />}
-                </DropdownMenuItem>
+                  <DropdownMenuRadioItem value="newest">
+                    <Clock className="size-3.5" />
+                    最新優先
+                  </DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="oldest">
+                    <History className="size-3.5" />
+                    最早優先
+                  </DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="most_likes">
+                    <Flame className="size-3.5" />
+                    熱門優先
+                  </DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
             <span className="text-muted-foreground text-caption">
