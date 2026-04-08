@@ -131,7 +131,7 @@ export function GiveawayList() {
   }
 
   return (
-    <Card className="p-4">
+    <Card className="flex flex-col gap-4 p-4">
       <h3 className="text-body flex items-center gap-2 font-medium">
         <Gift className="h-4 w-4" />
         建立新抽獎
@@ -186,14 +186,14 @@ export function GiveawayList() {
 
       {/* 錯誤訊息 */}
       {commentsError && (
-        <Alert className="mt-3" variant="destructive">
+        <Alert variant="destructive">
           <AlertDescription>{commentsError}</AlertDescription>
         </Alert>
       )}
 
       {/* 留言已載入：顯示抽獎面板 */}
       {comments.length > 0 && (
-        <div className="mt-4 flex flex-col gap-4">
+        <div className="flex flex-col gap-4">
           <Separator />
           <GiveawayPanel
             comments={comments}
@@ -208,7 +208,7 @@ export function GiveawayList() {
 
       {/* 無留言提示 */}
       {postId && !commentsLoading && !commentsError && comments.length === 0 && (
-        <p className="text-muted-foreground text-body mt-3 text-center">這則貼文尚未有任何留言</p>
+        <p className="text-muted-foreground text-body text-center">這則貼文尚未有任何留言</p>
       )}
     </Card>
   );

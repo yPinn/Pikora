@@ -257,7 +257,7 @@ export function CommentList() {
         </div>
       ) : state.comments.length > 0 ? (
         <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="sm" variant="outline">
@@ -291,7 +291,7 @@ export function CommentList() {
                 ` (全部 ${state.comments.length} 則)`}
             </span>
             <Input
-              className="text-caption ml-auto h-8 w-48"
+              className="text-caption ml-auto h-8 max-w-48 min-w-32"
               placeholder="搜尋內容..."
               value={state.searchQuery}
               onChange={(e) => actions.setSearchQuery(e.target.value)}

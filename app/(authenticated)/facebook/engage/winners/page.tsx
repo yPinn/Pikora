@@ -61,22 +61,20 @@ import {
   type GiveawayWinner,
 } from '@/hooks/use-giveaway-history';
 import { renderTemplate } from '@/lib/giveaway/template';
-import { apiPath } from '@/lib/utils';
+import { apiPath, cn } from '@/lib/utils';
 import { buildCommentUrl, isAnonymousUser } from '@/lib/utils/facebook';
 
 // ── 通知模板預設值 ─────────────────────────────────────────────────────────────
 
-const DEFAULT_REPLY_TEMPLATE = `恭喜您中獎！請私訊本粉絲專頁以完成後續領獎流程。`;
+const DEFAULT_REPLY_TEMPLATE = `恭喜您中獎！請私訊本粉絲專頁完成領獎。`;
 
-const DEFAULT_DM_TEMPLATE = `您好，恭喜您獲得【{{prizeName}}】！
+const DEFAULT_DM_TEMPLATE = `恭喜您獲得【{{prizeName}}】（{{activityName}}）！
 
-活動：{{activityName}}
-原貼文：{{postLink}}
-
-請提供以下資訊以完成領獎：
+請提供以下資訊：
 {{contactFields}}
 
-請於 7 天內回覆，逾期視同放棄。`;
+請於 7 天內回覆，逾期視同放棄。
+原貼文：{{postLink}}`;
 
 const CONTACT_FIELD_OPTIONS = [
   { id: 'phone', label: '電話' },
@@ -311,16 +309,16 @@ function TemplateEditor({
       />
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-muted-foreground text-caption shrink-0">插入：</span>
+          <span className="text-muted-foreground text-caption shrink-0 select-none">插入：</span>
           {variables.map(({ label, key }) => (
-            <button
+            <Button
               key={key}
-              className="text-caption bg-muted hover:bg-accent cursor-pointer rounded px-2 py-0.5 font-mono transition-colors"
-              type="button"
+              className="text-caption bg-muted hover:bg-accent h-auto rounded px-2 py-0.5 font-mono"
+              variant="ghost"
               onClick={() => insert(key)}
             >
               {label}
-            </button>
+            </Button>
           ))}
         </div>
         <Tooltip>
@@ -334,6 +332,29 @@ function TemplateEditor({
       </div>
       {hint && <p className="text-muted-foreground text-caption">{hint}</p>}
     </div>
+  );
+}
+
+// ── 狀態 icon tooltip（純展示，無互動）────────────────────────────────────────
+
+function StatusIconTooltip({
+  icon: Icon,
+  iconClassName,
+  label,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  iconClassName: string;
+  label: string;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="flex size-9 cursor-default items-center justify-center">
+          <Icon className={cn('h-4 w-4', iconClassName)} />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -390,27 +411,14 @@ function WinnerNotifyRow({
     }
   };
 
-  const statusIcon = isAnonymous ? (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <UserRound className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
-      </TooltipTrigger>
-      <TooltipContent>待確認身份</TooltipContent>
-    </Tooltip>
-  ) : isNotified ? (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <CheckCircle2 className="text-success h-3.5 w-3.5 shrink-0" />
-      </TooltipTrigger>
-      <TooltipContent>已通知</TooltipContent>
-    </Tooltip>
-  ) : (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <BellOff className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
-      </TooltipTrigger>
-      <TooltipContent>未通知</TooltipContent>
-    </Tooltip>
+  const isSelectable = !(isNotified || isAnonymous);
+
+  const statusIcon = (
+    <StatusIconTooltip
+      icon={isAnonymous ? UserRound : isNotified ? CheckCircle2 : BellOff}
+      iconClassName={isNotified ? 'text-success' : 'text-muted-foreground'}
+      label={isAnonymous ? '待確認身份' : isNotified ? '已通知' : '未通知'}
+    />
   );
 
   return (
@@ -481,25 +489,21 @@ function WinnerNotifyRow({
         </>
       }
       avatar={<FacebookAvatar name={winner.from_name} pageId={pageId} userId={winner.from_id} />}
+      className={isSelectable ? 'cursor-pointer' : undefined}
       left={
         <Checkbox
           checked={selected}
+          className="pointer-events-none"
           disabled={isNotified || isAnonymous}
           id={`winner-notify-${winner.id}`}
-          onCheckedChange={onToggle}
         />
       }
       meta={compact ? undefined : winner.comment_message || undefined}
       name={
         <>
-          <Label
-            className={!isAnonymous ? 'cursor-pointer font-medium' : 'font-medium'}
-            htmlFor={`winner-notify-${winner.id}`}
-          >
-            {winner.from_name}
-          </Label>
+          <span className="text-body font-medium select-none">{winner.from_name}</span>
           {!compact && (
-            <span className="text-muted-foreground flex items-center gap-1 text-xs">
+            <span className="text-muted-foreground flex items-center gap-1 text-xs select-none">
               <Gift className="h-3 w-3 shrink-0" />
               {winner.prize.name}
             </span>
@@ -507,6 +511,7 @@ function WinnerNotifyRow({
         </>
       }
       variant="interactive"
+      onClick={isSelectable ? onToggle : undefined}
     />
   );
 }
@@ -646,17 +651,17 @@ function NotifyTabContent({
   };
 
   return (
-    <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2 lg:items-start">
       {/* ══ 左欄：設定區 ══ */}
       <div className="flex min-w-0 flex-col gap-5">
         {/* ── 自動回覆 ── */}
         <div className="flex flex-col gap-3">
-          <div>
+          <div className="select-none">
             <div className="flex items-center gap-1.5">
               <Bell className="text-muted-foreground h-4 w-4 shrink-0" />
               <span className="text-body font-medium">留言自動回覆</span>
             </div>
-            <p className="text-muted-foreground text-caption mt-0.5 pl-[22px]">
+            <p className="text-muted-foreground text-caption mt-0.5 pl-5.5">
               系統在原留言下方回覆，@mention 自動加於開頭
             </p>
           </div>
@@ -671,7 +676,7 @@ function NotifyTabContent({
             onChange={setReplyTemplate}
           />
           {sendResults && (
-            <div className="flex items-center gap-3 rounded-lg border px-3 py-2">
+            <div className="flex items-center gap-3 rounded-lg border px-3 py-2 select-none">
               {sendResults.successCount > 0 && (
                 <span className="text-success flex items-center gap-1 text-sm">
                   <CheckCircle2 className="h-4 w-4" />
@@ -700,31 +705,32 @@ function NotifyTabContent({
 
         {/* ── 私訊草稿 ── */}
         <div className="flex flex-col gap-3">
-          <div>
+          <div className="select-none">
             <div className="flex items-center gap-1.5">
               <MessageSquare className="text-muted-foreground h-4 w-4 shrink-0" />
               <span className="text-body font-medium">私訊草稿</span>
             </div>
-            <p className="text-muted-foreground text-caption mt-0.5 pl-[22px]">
+            <p className="text-muted-foreground text-caption mt-0.5 pl-5.5">
               手動複製後逐一傳送給得獎者
             </p>
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-            <span className="text-muted-foreground text-caption w-full">領獎需提供的聯絡資訊</span>
+            <span className="text-muted-foreground text-caption w-full select-none">
+              領獎需提供的聯絡資訊
+            </span>
             {CONTACT_FIELD_OPTIONS.map((field) => (
-              <div key={field.id} className="flex items-center gap-2">
+              <Label
+                key={field.id}
+                className="flex cursor-pointer items-center gap-2 font-normal select-none"
+                htmlFor={`field-${record.id}-${field.id}`}
+              >
                 <Checkbox
                   checked={selectedContactFields.includes(field.id)}
                   id={`field-${record.id}-${field.id}`}
                   onCheckedChange={() => toggleContactField(field.id)}
                 />
-                <Label
-                  className="cursor-pointer font-normal"
-                  htmlFor={`field-${record.id}-${field.id}`}
-                >
-                  {field.label}
-                </Label>
-              </div>
+                {field.label}
+              </Label>
             ))}
           </div>
           <TemplateEditor
@@ -744,7 +750,7 @@ function NotifyTabContent({
 
       {/* ══ 右欄：中獎者名單 ══ */}
       <div className="flex min-w-0 flex-col gap-2">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between select-none">
           <div className="flex items-center gap-1.5">
             <span className="text-body font-medium">中獎者</span>
             <span className="text-muted-foreground text-caption">{allValid.length} 位</span>
@@ -755,7 +761,7 @@ function NotifyTabContent({
             </Button>
           )}
         </div>
-        <div className="bg-muted/40 flex flex-col gap-0.5 overflow-x-hidden rounded-lg p-1.5 lg:max-h-[420px] lg:overflow-y-auto">
+        <div className="bg-muted/40 flex min-h-0 flex-1 flex-col gap-1 overflow-x-hidden overflow-y-auto rounded-lg p-2">
           {allValid.length === 0 ? (
             <p className="text-muted-foreground text-caption py-6 text-center">此活動尚無中獎者</p>
           ) : (
@@ -764,12 +770,12 @@ function NotifyTabContent({
               if (prizeWinners.length === 0) return null;
               return (
                 <div key={prize.id} className="flex flex-col gap-0.5">
-                  <div className="flex items-center gap-1 px-1 pt-1.5 pb-0.5">
+                  <div className="flex items-center gap-1.5 px-3 pt-2 pb-1 select-none">
                     <Trophy className="text-primary h-3 w-3 shrink-0" />
                     <span className="text-caption truncate font-medium">{prize.name}</span>
-                    <span className="text-muted-foreground text-caption shrink-0">
+                    <Badge className="shrink-0" variant="secondary">
                       {prizeWinners.length} 名
-                    </span>
+                    </Badge>
                   </div>
                   {prizeWinners.map((winner) => (
                     <WinnerNotifyRow
@@ -808,7 +814,7 @@ function WinnersTabContent({ record }: { record: GiveawayRecord }) {
     <div className="flex flex-col gap-3">
       {winnerGroups.map(({ prize, winners }) => (
         <div key={prize.id}>
-          <h4 className="text-body mb-2 flex items-center gap-2 font-medium">
+          <h4 className="text-body mb-2 flex items-center gap-2 font-medium select-none">
             <Trophy className="text-primary h-4 w-4" />
             {prize.name}
             <span className="text-muted-foreground font-normal">
@@ -826,7 +832,7 @@ function WinnersTabContent({ record }: { record: GiveawayRecord }) {
                   actions={
                     <>
                       {winner.comment_created_time && (
-                        <span className="text-muted-foreground text-caption">
+                        <span className="text-muted-foreground text-caption select-none">
                           {format(new Date(winner.comment_created_time), 'MM/dd HH:mm')}
                         </span>
                       )}
@@ -843,7 +849,7 @@ function WinnersTabContent({ record }: { record: GiveawayRecord }) {
                     />
                   }
                   meta={winner.comment_message || undefined}
-                  name={<p className="text-body font-medium">{winner.from_name}</p>}
+                  name={<p className="text-body font-medium select-none">{winner.from_name}</p>}
                 />
               ))}
             </div>
@@ -886,7 +892,7 @@ function GiveawayRecordCard({
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <Card className="overflow-hidden">
+      <Card className="gap-0 overflow-hidden py-0">
         <GiveawayRecordHeader
           actions={
             <>

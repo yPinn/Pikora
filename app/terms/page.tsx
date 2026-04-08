@@ -6,6 +6,7 @@ import Link from 'next/link';
 
 import { ArrowLeft } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 type Lang = 'zh' | 'en';
@@ -317,18 +318,19 @@ export default function TermsOfService() {
         {/* Language toggle */}
         <div className="bg-muted flex items-center rounded-lg p-1">
           {LANG_OPTIONS.map((opt) => (
-            <button
+            <Button
               key={opt.value}
               className={cn(
-                'text-caption rounded-md px-3 py-1.5 font-medium transition-all duration-150',
+                'text-caption h-auto rounded-md px-3 py-1.5 font-medium transition-all duration-150',
                 lang === opt.value
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-background text-foreground hover:bg-background shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-transparent'
               )}
+              variant="ghost"
               onClick={() => setLang(opt.value)}
             >
               {opt.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -379,15 +381,13 @@ export default function TermsOfService() {
             id={s.id}
           >
             {/* Heading */}
-            <div className="mb-4 flex items-start gap-3">
-              <span className="bg-muted text-muted-foreground text-caption mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md font-semibold tabular-nums">
+            <div className="mb-4 flex items-center gap-3 select-none">
+              <span className="bg-muted text-muted-foreground text-caption flex h-6 w-6 shrink-0 items-center justify-center rounded-md font-semibold tabular-nums">
                 {i + 1}
               </span>
-              <div>
-                <h2 className="text-body text-foreground font-semibold">
-                  {lang === 'en' ? s.en.title : s.zh.title}
-                </h2>
-              </div>
+              <h2 className="text-body text-foreground font-semibold">
+                {lang === 'en' ? s.en.title : s.zh.title}
+              </h2>
             </div>
 
             {/* Body */}

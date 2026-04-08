@@ -26,6 +26,7 @@ import { useFacebookPage } from '@/contexts/facebook-page-store';
 import { useFacebookPosts } from '@/hooks/use-facebook-posts';
 import { ANIM, scaleInItem, staggerContainer } from '@/lib/animation';
 import type { FacebookPost } from '@/lib/services/facebook';
+import { cn } from '@/lib/utils';
 import momonga2 from '@/public/images/Momonga_2.jpg';
 
 // 從貼文中提取所有媒體圖片
@@ -68,7 +69,17 @@ export const SELECTED_POST_ID_KEY = 'pikora_selected_post_id';
 export const SELECTED_POST_MESSAGE_KEY = 'pikora_selected_post_message';
 
 // 單一貼文卡片元件
-function PostCard({ post, priority = false }: { post: FacebookPost; priority?: boolean }) {
+function PostCard({
+  post,
+  priority = false,
+  isSelected = false,
+  onSelect,
+}: {
+  post: FacebookPost;
+  priority?: boolean;
+  isSelected?: boolean;
+  onSelect?: (id: string) => void;
+}) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showOverlay, setShowOverlay] = useState(false);
   const images = getMediaImages(post);
@@ -93,10 +104,11 @@ function PostCard({ post, priority = false }: { post: FacebookPost; priority?: b
     sessionStorage.setItem(SELECTED_POST_URL_KEY, post.permalink_url || '');
     sessionStorage.setItem(SELECTED_POST_ID_KEY, post.id);
     sessionStorage.setItem(SELECTED_POST_MESSAGE_KEY, post.message?.slice(0, 50) || '');
+    onSelect?.(post.id);
     navigator.clipboard.writeText(post.permalink_url || '').then(() => {
       toast.success('已複製 URL');
     });
-  }, [post.permalink_url, post.id, post.message]);
+  }, [post.permalink_url, post.id, post.message, onSelect]);
 
   // 處理卡片點擊：Ctrl+點擊跳轉，單擊選取
   const handleCardClick = useCallback(
@@ -113,7 +125,10 @@ function PostCard({ post, priority = false }: { post: FacebookPost; priority?: b
 
   return (
     <motion.div
-      className="group bg-muted relative aspect-square cursor-pointer overflow-hidden rounded-sm"
+      className={cn(
+        'group bg-muted relative aspect-square cursor-pointer overflow-hidden rounded-sm',
+        isSelected && 'ring-primary ring-2 ring-offset-1'
+      )}
       role="button"
       tabIndex={0}
       variants={scaleInItem}
@@ -184,39 +199,51 @@ function PostCard({ post, priority = false }: { post: FacebookPost; priority?: b
 
       {/* 左右換頁按鈕（多圖時顯示，首/末圖隱藏對應方向） */}
       {hasMultipleImages && currentIndex > 0 && (
-        <button
+        <Button
           aria-label="上一張"
-          className={`absolute top-1/2 left-2 z-20 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-black/50 text-white transition-opacity motion-reduce:transition-none ${showOverlay ? 'opacity-100' : 'opacity-0'}`}
-          type="button"
+          className={cn(
+            'absolute top-1/2 left-2 z-20 -translate-y-1/2 rounded-full border border-white/40 bg-black/50 text-white transition-opacity hover:bg-black/70 hover:text-white motion-reduce:transition-none',
+            showOverlay ? 'opacity-100' : 'opacity-0'
+          )}
+          size="icon-sm"
+          variant="ghost"
           onClick={handlePrev}
           onPointerDown={(e) => e.nativeEvent.stopImmediatePropagation()}
         >
           <ChevronLeft className="h-4 w-4" />
-        </button>
+        </Button>
       )}
       {hasMultipleImages && currentIndex < images.length - 1 && (
-        <button
+        <Button
           aria-label="下一張"
-          className={`absolute top-1/2 right-2 z-20 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-black/50 text-white transition-opacity motion-reduce:transition-none ${showOverlay ? 'opacity-100' : 'opacity-0'}`}
-          type="button"
+          className={cn(
+            'absolute top-1/2 right-2 z-20 -translate-y-1/2 rounded-full border border-white/40 bg-black/50 text-white transition-opacity hover:bg-black/70 hover:text-white motion-reduce:transition-none',
+            showOverlay ? 'opacity-100' : 'opacity-0'
+          )}
+          size="icon-sm"
+          variant="ghost"
           onClick={handleNext}
           onPointerDown={(e) => e.nativeEvent.stopImmediatePropagation()}
         >
           <ChevronRight className="h-4 w-4" />
-        </button>
+        </Button>
       )}
 
       {/* 圖片指示點 */}
       {hasMultipleImages && (
         <div
-          className={`absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 gap-1 transition-opacity motion-reduce:transition-none ${showOverlay ? 'opacity-100' : 'opacity-0'}`}
+          className={cn(
+            'absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 gap-1 transition-opacity motion-reduce:transition-none',
+            showOverlay ? 'opacity-100' : 'opacity-0'
+          )}
         >
           {images.map((_, idx) => (
             <span
               key={idx}
-              className={`h-1.5 w-1.5 rounded-full transition-colors ${
+              className={cn(
+                'h-1.5 w-1.5 rounded-full transition-colors',
                 idx === currentIndex ? 'bg-white' : 'bg-white/50'
-              }`}
+              )}
             />
           ))}
         </div>
@@ -225,7 +252,10 @@ function PostCard({ post, priority = false }: { post: FacebookPost; priority?: b
       {/* Hover / Focus / Touch 時顯示互動數據與文字預覽 */}
       <div
         aria-hidden="true"
-        className={`pointer-events-none absolute inset-0 z-10 flex flex-col justify-end bg-linear-to-t from-black/90 via-black/50 to-transparent p-2 text-white transition-opacity motion-reduce:transition-none ${showOverlay ? 'opacity-100' : 'opacity-0'}`}
+        className={cn(
+          'pointer-events-none absolute inset-0 z-10 flex flex-col justify-end bg-linear-to-t from-black/90 via-black/50 to-transparent p-2 text-white transition-opacity motion-reduce:transition-none',
+          showOverlay ? 'opacity-100' : 'opacity-0'
+        )}
       >
         {/* 貼文文字預覽 */}
         {post.message && (
@@ -256,7 +286,10 @@ function PostCard({ post, priority = false }: { post: FacebookPost; priority?: b
       {post.permalink_url && (
         <a
           aria-label="開啟原始貼文"
-          className={`absolute right-2 bottom-2 z-20 flex size-9 items-center justify-center rounded-full border border-white/40 bg-black/50 text-white transition-opacity motion-reduce:transition-none ${showOverlay ? 'opacity-100' : 'opacity-0'}`}
+          className={cn(
+            'absolute right-2 bottom-2 z-20 flex size-9 items-center justify-center rounded-full border border-white/40 bg-black/50 text-white transition-opacity motion-reduce:transition-none',
+            showOverlay ? 'opacity-100' : 'opacity-0'
+          )}
           href={post.permalink_url}
           rel="noopener noreferrer"
           target="_blank"
@@ -280,6 +313,12 @@ export function PostList() {
   const loadMoreRef = useRef(loadMore);
   useLayoutEffect(() => {
     loadMoreRef.current = loadMore;
+  });
+
+  // 追蹤目前選取的貼文 ID，供卡片顯示 ring 樣式
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return sessionStorage.getItem(SELECTED_POST_ID_KEY);
   });
 
   // Intersection Observer 自動載入更多
@@ -337,7 +376,13 @@ export function PostList() {
         variants={staggerContainer}
       >
         {posts.map((post, index) => (
-          <PostCard key={post.id} post={post} priority={index < 2} />
+          <PostCard
+            key={post.id}
+            isSelected={selectedPostId === post.id}
+            post={post}
+            priority={index < 2}
+            onSelect={setSelectedPostId}
+          />
         ))}
       </motion.div>
 

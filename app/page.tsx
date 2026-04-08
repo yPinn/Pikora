@@ -23,6 +23,7 @@ import { SiThreads } from 'react-icons/si';
 
 import { ModeToggle } from '@/components/mode-toggle';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import momonga1 from '@/public/images/Momonga_1.jpg';
 
 // Navbar is h-14 (3.5rem); each section fills the remainder so header+section = 100dvh
@@ -99,7 +100,10 @@ function Sticker({
 }) {
   return (
     <div
-      className={`border-card bg-card border-[5px] p-5 shadow-2xl transition-transform duration-300 ${className}`}
+      className={cn(
+        'border-card bg-card border-[5px] p-5 shadow-2xl transition-transform duration-300',
+        className
+      )}
       style={style}
     >
       {children}
@@ -208,7 +212,7 @@ export default function Home() {
 
       <main
         ref={mainRef}
-        className="h-[calc(100dvh-3.5rem)] snap-y snap-mandatory overflow-y-scroll scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="h-[calc(100dvh-3.5rem)] snap-y snap-mandatory overflow-y-scroll scroll-smooth"
       >
         {/* ── Hero ── */}
         <section
@@ -329,7 +333,7 @@ export default function Home() {
           <div className="relative mx-auto flex h-full w-full max-w-7xl flex-col px-4 py-12 sm:px-6 lg:px-8">
             {/* Title + doodle underline */}
             <div className="anim-item mb-0 text-center" style={delay(0.05)}>
-              <h2 className="relative inline-block text-4xl font-bold text-[#d4f23a] [text-shadow:2px_2px_0_rgba(0,0,0,0.18)] lg:text-5xl">
+              <h2 className="relative inline-block text-4xl font-bold text-[var(--brand-lime)] [text-shadow:2px_2px_0_rgba(0,0,0,0.18)] lg:text-5xl">
                 支援 Meta 全平台
                 {/* Hand-drawn underline drawn in after title appears */}
                 <svg
@@ -524,13 +528,15 @@ export default function Home() {
                   <div className="mb-2 flex items-center gap-2">
                     <Info className="h-4 w-4 shrink-0 text-blue-500" />
                     <span className="text-body flex-1 font-semibold">通知</span>
-                    <button
+                    <Button
                       aria-label="關閉通知"
-                      className="text-muted-foreground hover:text-foreground flex size-8 items-center justify-center rounded transition-colors"
+                      className="size-8 rounded"
+                      size="icon-sm"
+                      variant="ghost"
                       onClick={() => setNotifVisible(false)}
                     >
                       <X className="h-4 w-4" />
-                    </button>
+                    </Button>
                   </div>
                   {/* Body */}
                   <p className="text-body text-muted-foreground mb-3 leading-relaxed">
@@ -671,14 +677,16 @@ export default function Home() {
         className="pointer-events-none fixed top-1/2 right-4 z-50 flex -translate-y-1/2 flex-col gap-2"
       >
         {(['hero', 'platforms', 'features', 'cta'] as const).map((_, i) => (
-          <button
+          <Button
             key={i}
             aria-label={`前往第 ${i + 1} 區塊`}
-            className={`pointer-events-auto size-2 rounded-full ring-1 ring-black/15 transition-all duration-300 ${
+            className={cn(
+              'pointer-events-auto size-2 rounded-full ring-1 ring-black/15 transition-all duration-300',
               currentSection === i
-                ? 'scale-125 bg-white ring-black/20'
+                ? 'scale-125 bg-white ring-black/20 hover:bg-white'
                 : 'bg-white/60 hover:bg-white/80'
-            }`}
+            )}
+            variant="ghost"
             onClick={() => {
               const el = mainRef.current;
               if (el)

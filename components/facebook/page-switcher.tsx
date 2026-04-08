@@ -23,6 +23,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFacebookPage } from '@/contexts/facebook-page-store';
 import type { FacebookPage } from '@/lib/services/facebook';
+import { cn } from '@/lib/utils';
 
 // 權限對應表：用於顯示與排序權重
 const ROLES: Record<string, { label: string; weight: number }> = {
@@ -126,7 +127,10 @@ export function PageSwitcher() {
                   )}
                 </div>
                 <span
-                  className={`flex-1 truncate ${activePage.id === page.id ? 'text-primary font-bold' : ''}`}
+                  className={cn(
+                    'flex-1 truncate',
+                    activePage.id === page.id && 'text-primary font-bold'
+                  )}
                 >
                   {page.name}
                 </span>
