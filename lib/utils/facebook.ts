@@ -35,6 +35,20 @@ export function extractPostIdFromUrl(url: string, pageId?: string): string | nul
 }
 
 /**
+ * 建構 Facebook 留言連結
+ * 使用 URL API 正確附加 comment_id，避免 post_url 已含 query string 時產生雙重 ?
+ */
+export function buildCommentUrl(postUrl: string, commentId: string): string {
+  try {
+    const url = new URL(postUrl);
+    url.searchParams.set('comment_id', commentId);
+    return url.toString();
+  } catch {
+    return `${postUrl}?comment_id=${commentId}`;
+  }
+}
+
+/**
  * 解析 Facebook API 錯誤訊息為使用者友善提示
  */
 export function parseFacebookErrorMessage(error: string): string {
@@ -52,7 +66,8 @@ export function parseFacebookErrorMessage(error: string): string {
 
 /** 允許的 Facebook 圖片 CDN 網域（與 next.config.ts remotePatterns 一致） */
 const ALLOWED_FB_CDN_HOSTNAMES = [
-  /^[a-z0-9-]+\.fbcdn\.net$/,
+  // fbcdn.net 允許任意深度的 subdomain（如 scontent-nrt1-1.xx.fbcdn.net）
+  /^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+fbcdn\.net$/,
   /^platform-lookaside\.fbsbx\.com$/,
   /^lookaside\.fbsbx\.com$/,
   /^graph\.facebook\.com$/,

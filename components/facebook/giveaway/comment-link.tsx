@@ -2,6 +2,7 @@ import { ExternalLink } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { buildCommentUrl } from '@/lib/utils/facebook';
 
 interface CommentLinkProps {
   postUrl: string;
@@ -13,7 +14,7 @@ export function CommentLink({ postUrl, commentId }: CommentLinkProps) {
     <Tooltip>
       <TooltipTrigger asChild>
         <Button asChild size="icon-sm" variant="ghost">
-          <a href={`${postUrl}?comment_id=${commentId}`} rel="noopener noreferrer" target="_blank">
+          <a href={buildCommentUrl(postUrl, commentId)} rel="noopener noreferrer" target="_blank">
             <ExternalLink />
           </a>
         </Button>

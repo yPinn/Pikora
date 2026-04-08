@@ -5,13 +5,12 @@ import { zhTW } from 'date-fns/locale';
 import { Ban, ExternalLink } from 'lucide-react';
 import { motion } from 'motion/react';
 
+import { FacebookAvatar } from '@/components/facebook/facebook-avatar';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ANIM, cardReveal } from '@/lib/animation';
 import type { DrawResult } from '@/lib/giveaway';
-import { isFacebookProfileUrl, isAnonymousUser } from '@/lib/utils/facebook';
-
-import { FacebookAvatar } from './facebook-avatar';
+import { buildCommentUrl, isFacebookProfileUrl, isAnonymousUser } from '@/lib/utils/facebook';
 
 interface WinnerCardProps {
   result: DrawResult;
@@ -25,7 +24,7 @@ export function WinnerCard({ result, index, pageId, postUrl, onAddToBlacklist }:
   const { winner } = result;
   const hasProfileUrl = isFacebookProfileUrl(winner.from_profile_url);
   const isAnonymous = isAnonymousUser(winner.from_id);
-  const commentUrl = postUrl ? `${postUrl}?comment_id=${winner.comment_id}` : undefined;
+  const commentUrl = postUrl ? buildCommentUrl(postUrl, winner.comment_id) : undefined;
 
   const avatar = (
     <FacebookAvatar
@@ -95,7 +94,7 @@ export function WinnerCard({ result, index, pageId, postUrl, onAddToBlacklist }:
                 </a>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{isAnonymous ? '確認身份' : '查看留言'}</TooltipContent>
+            <TooltipContent>{isAnonymous ? '前往留言確認身份' : '查看留言'}</TooltipContent>
           </Tooltip>
         )}
         {!isAnonymous && (
