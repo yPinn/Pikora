@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 import { format } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import { Calendar, ChevronDown, ChevronRight, Gift, Users } from 'lucide-react';
@@ -34,6 +36,12 @@ export function GiveawayRecordHeader({
           <div className="text-muted-foreground shrink-0">
             {isOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
           </div>
+
+          {record.post_image && (
+            <div className="relative size-10 shrink-0 overflow-hidden rounded-md">
+              <Image fill unoptimized alt="" className="object-cover" src={record.post_image} />
+            </div>
+          )}
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">

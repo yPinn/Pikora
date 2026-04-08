@@ -6,6 +6,7 @@ import { Ban, Loader2, Shuffle, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { PersonRow } from '@/components/common/person-row';
+import { FacebookAvatar } from '@/components/facebook/facebook-avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -17,10 +18,10 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { BlacklistEntry, DrawEntry, FilterStats, GiveawayFilters } from '@/lib/giveaway';
 
 import { CardSectionHeader } from './card-section-header';
-import { FacebookAvatar } from './facebook-avatar';
 
 interface StatsDrawCardProps {
   stats: FilterStats;
@@ -107,19 +108,24 @@ export function StatsDrawCard({
                           key={entry.from_id}
                           actions={
                             !entry.is_anonymous ? (
-                              <Button
-                                size="icon-sm"
-                                variant="ghost"
-                                onClick={() => {
-                                  void onAddToBlacklist({
-                                    from_id: entry.from_id,
-                                    from_name: entry.from_name,
-                                  });
-                                  toast.success(`已將 ${entry.from_name} 加入黑名單`);
-                                }}
-                              >
-                                <Ban />
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="icon-sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      void onAddToBlacklist({
+                                        from_id: entry.from_id,
+                                        from_name: entry.from_name,
+                                      });
+                                      toast.success(`已將 ${entry.from_name} 加入黑名單`);
+                                    }}
+                                  >
+                                    <Ban />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>加入黑名單</TooltipContent>
+                              </Tooltip>
                             ) : undefined
                           }
                           avatar={

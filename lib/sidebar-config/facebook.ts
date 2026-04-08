@@ -25,7 +25,6 @@ export const facebookNavConfig: {
       items: [
         { title: '抽獎活動', url: '/facebook/engage/giveaway' },
         { title: '中獎名單', url: '/facebook/engage/winners' },
-        { title: '通知發送', url: '/facebook/engage/notify' },
       ],
     },
     {

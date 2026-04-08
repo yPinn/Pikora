@@ -16,7 +16,7 @@ export function NotificationStatusBadge({
   if (notifiedCount === totalCount) {
     return (
       <Badge variant="default">
-        <CheckCircle2 className="mr-1 h-3 w-3" />
+        <CheckCircle2 />
         全部已通知
       </Badge>
     );
@@ -25,7 +25,7 @@ export function NotificationStatusBadge({
   if (notifiedCount > 0) {
     return (
       <Badge variant="secondary">
-        <Bell className="mr-1 h-3 w-3" />
+        <Bell />
         {notifiedCount}/{totalCount} 已通知
       </Badge>
     );
@@ -33,7 +33,7 @@ export function NotificationStatusBadge({
 
   return (
     <Badge variant="outline">
-      <BellOff className="mr-1 h-3 w-3" />
+      <BellOff />
       未通知
     </Badge>
   );
