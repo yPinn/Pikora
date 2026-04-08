@@ -20,6 +20,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFacebookPage } from '@/contexts/facebook-page-store';
 import { useFacebookPosts } from '@/hooks/use-facebook-posts';
@@ -315,13 +316,9 @@ export function PostList() {
     return (
       <div className="flex flex-col items-center gap-3 py-10 text-center">
         <p className="text-muted-foreground text-body">{error}</p>
-        <button
-          className="text-primary text-body underline-offset-4 hover:underline"
-          type="button"
-          onClick={refetch}
-        >
+        <Button variant="link" onClick={refetch}>
           重試
-        </button>
+        </Button>
       </div>
     );
 

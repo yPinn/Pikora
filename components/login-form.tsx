@@ -38,7 +38,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
               <p className="text-muted-foreground text-balance">Post the Best, Pikora the Rest</p>
             </div>
 
-            <div className="w-full space-y-3">
+            <div className="flex w-full flex-col gap-3">
               <Button
                 className="bg-facebook/15 hover:bg-facebook/25 text-facebook w-full"
                 variant="ghost"
