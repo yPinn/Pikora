@@ -162,6 +162,7 @@ export interface FilterStats {
   after_reaction_filter: number; // 反應篩選後數量
   after_blacklist_filter: number;
   anonymous_comments: number; // 因缺少用戶資訊（from.id/name）而無法參與的留言數
+  comments_with_tag_data: number; // 有 message_tags 欄位的留言數（用於診斷 API 是否回傳 tag 資料）
   final_pool_size: number;
   unique_users: number;
 }

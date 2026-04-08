@@ -88,6 +88,14 @@ export interface FacebookComment {
       };
     };
   };
+  // Facebook API 回傳的 @tag 資訊（message 本身不含 @ 符號）
+  message_tags?: {
+    id?: string;
+    name: string;
+    type?: string;
+    offset: number;
+    length: number;
+  }[];
   like_count?: number;
   comment_count?: number;
   attachment?: {
@@ -396,6 +404,7 @@ export class FacebookService extends MetaApiBase {
       fields = [
         'id',
         'message',
+        'message_tags',
         'created_time',
         'from{id,name,picture,link}',
         'like_count',
@@ -403,7 +412,7 @@ export class FacebookService extends MetaApiBase {
         'attachment',
         'parent{id}',
         // 巢狀回覆：最多支援 2 層 (Facebook API 限制)
-        'comments{id,message,created_time,from{id,name,picture,link},like_count,comment_count,attachment,parent{id},comments{id,message,created_time,from{id,name,picture,link},like_count,attachment,parent{id}}}',
+        'comments{id,message,message_tags,created_time,from{id,name,picture,link},like_count,comment_count,attachment,parent{id},comments{id,message,message_tags,created_time,from{id,name,picture,link},like_count,attachment,parent{id}}}',
       ],
       limit = 100,
       after,

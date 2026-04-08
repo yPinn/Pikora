@@ -29,7 +29,6 @@ interface StatsDrawCardProps {
   pageId?: string;
   canDraw: boolean;
   isDrawing: boolean;
-  isWaitingForReactions: boolean;
   onDraw: () => void;
   onAddToBlacklist: (entry: BlacklistEntry) => Promise<void>;
 }
@@ -41,7 +40,6 @@ export function StatsDrawCard({
   pageId,
   canDraw,
   isDrawing,
-  isWaitingForReactions,
   onDraw,
   onAddToBlacklist,
 }: StatsDrawCardProps) {
@@ -200,14 +198,8 @@ export function StatsDrawCard({
         </Button>
       </div>
 
-      {!canDraw && (
-        <p className="text-destructive text-caption text-center">
-          {isWaitingForReactions
-            ? '正在載入反應資料...'
-            : pool.length === 0
-              ? '沒有符合條件的參與者'
-              : null}
-        </p>
+      {!canDraw && pool.length === 0 && (
+        <p className="text-destructive text-caption text-center">沒有符合條件的參與者</p>
       )}
     </Card>
   );

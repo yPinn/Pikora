@@ -14,14 +14,13 @@ function smartTruncateName(text: string): string {
   return firstLine.slice(0, 50).trim();
 }
 
-import { Filter, Trophy, UserX } from 'lucide-react';
+import { Filter, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGiveaway } from '@/hooks/use-giveaway';
 import type { FacebookComment } from '@/lib/services/facebook';
 
-import { BlacklistTab } from './giveaway/blacklist-tab';
 import { FilterSetupCard } from './giveaway/filter-setup-card';
 import { PrizeSetupCard } from './giveaway/prize-setup-card';
 import { ResultPanel } from './giveaway/result-panel';
@@ -48,13 +47,7 @@ export function GiveawayPanel({
     setFilters,
     prizes,
     setPrizes,
-    blacklist,
     addToBlacklist,
-    removeFromBlacklist,
-    reactions,
-    isLoadingReactions,
-    hasLoadedReactions,
-    fetchReactions,
     pool,
     stats,
     results,
@@ -81,12 +74,6 @@ export function GiveawayPanel({
     fetchBlacklist();
   }, [fetchBlacklist]);
 
-  useEffect(() => {
-    if (filters.require_reaction && !hasLoadedReactions && !isLoadingReactions) {
-      fetchReactions();
-    }
-  }, [filters.require_reaction, hasLoadedReactions, isLoadingReactions, fetchReactions]);
-
   const handleDraw = () => {
     draw();
     setActiveTab('results');
@@ -105,8 +92,7 @@ export function GiveawayPanel({
   };
 
   const totalPrizeCount = prizes.reduce((sum, p) => sum + p.quantity, 0);
-  const isWaitingForReactions = !!(filters.require_reaction && !hasLoadedReactions);
-  const canDraw = pool.length > 0 && totalPrizeCount > 0 && !isWaitingForReactions;
+  const canDraw = pool.length > 0 && totalPrizeCount > 0;
 
   return (
     <Tabs className="flex flex-col gap-4" value={activeTab} onValueChange={setActiveTab}>
@@ -120,28 +106,17 @@ export function GiveawayPanel({
           結果
           {results.length > 0 && <TabBadge count={results.length} />}
         </TabsTrigger>
-        <TabsTrigger value="blacklist">
-          <UserX data-icon="inline-start" />
-          黑名單
-          {blacklist.length > 0 && <TabBadge count={blacklist.length} />}
-        </TabsTrigger>
+        {/* 黑名單 tab 在匿名模式下無效，暫時隱藏 */}
       </TabsList>
 
       <TabsContent value="settings">
         <div className="grid gap-4 lg:grid-cols-2">
           <PrizeSetupCard prizes={prizes} onChangePrizes={setPrizes} />
-          <FilterSetupCard
-            fetchReactions={fetchReactions}
-            filters={filters}
-            isLoadingReactions={isLoadingReactions}
-            reactions={reactions}
-            onChangeFilters={setFilters}
-          />
+          <FilterSetupCard filters={filters} onChangeFilters={setFilters} />
           <StatsDrawCard
             canDraw={canDraw}
             filters={filters}
             isDrawing={isDrawing}
-            isWaitingForReactions={isWaitingForReactions}
             pageId={pageId}
             pool={pool}
             stats={stats}
@@ -167,10 +142,6 @@ export function GiveawayPanel({
           onRedraw={redraw}
           onSave={handleSave}
         />
-      </TabsContent>
-
-      <TabsContent value="blacklist">
-        <BlacklistTab blacklist={blacklist} onRemoveFromBlacklist={removeFromBlacklist} />
       </TabsContent>
     </Tabs>
   );

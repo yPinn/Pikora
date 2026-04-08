@@ -5,8 +5,8 @@ import { toDrawEntry } from './types';
 
 import type { DrawEntry, GiveawayFilters, FilterStats } from './types';
 
-// 計算留言中 @mention 的數量
-// 匹配 Facebook 用戶名：@ 後接字母、數字、中文、底線、點
+// 計算留言中 @mention 的數量（regex，僅用於 message 仍含 @ 符號的情境）
+// 注意：Facebook API 回傳的 message 不含 @ 符號，應改用 comment.message_tags.length
 export function countMentions(message: string): number {
   if (!message) return 0;
   const matches = message.match(/@[\w\u4e00-\u9fff][\w\u4e00-\u9fff.]*/g);
@@ -51,9 +51,11 @@ function matchesPatternFilter(comment: FacebookComment, filters: GiveawayFilters
 }
 
 // 檢查留言是否符合 @mention 條件
+// 依賴 message_tags（Facebook API 專用欄位，message 本身不含 @ 符號）
+// message_tags 不存在或為空陣列皆視為 0 個 tag
 function matchesMentionFilter(comment: FacebookComment, filters: GiveawayFilters): boolean {
   if (!filters.min_mentions || filters.min_mentions <= 0) return true;
-  return countMentions(comment.message || '') >= filters.min_mentions;
+  return (comment.message_tags?.length ?? 0) >= filters.min_mentions;
 }
 
 // 取得留言中的 @mention 集合 (排序後作為唯一鍵)
@@ -92,6 +94,7 @@ export function buildDrawPool(
     after_reaction_filter: 0,
     after_blacklist_filter: 0,
     anonymous_comments: 0,
+    comments_with_tag_data: comments.filter((c) => c.message_tags !== undefined).length,
     final_pool_size: 0,
     unique_users: 0,
   };
