@@ -10,6 +10,7 @@ import crypto from 'crypto';
 
 import { createLogger } from '@/lib/logger';
 import { type WebhookPayload } from '@/lib/services';
+import { discordNotify } from '@/lib/utils/discord-notify';
 
 const logger = createLogger('webhook');
 const VERIFY_TOKEN = process.env.META_WEBHOOK_VERIFY_TOKEN;
@@ -34,6 +35,12 @@ export async function GET(request: NextRequest) {
   }
 
   logger.warn('Webhook verification failed', { mode, tokenMatch: token === VERIFY_TOKEN });
+  void discordNotify({
+    level: 'warn',
+    title: 'Webhook 驗證失敗',
+    description: '收到無效的 hub.verify_token，可能有人嘗試偽造驗證請求。',
+    fields: { mode: mode ?? '(none)', tokenMatch: String(token === VERIFY_TOKEN) },
+  });
   return new NextResponse('Forbidden', { status: 403 });
 }
 
@@ -52,6 +59,11 @@ export async function POST(request: NextRequest) {
 
     if (!signature) {
       logger.warn('Missing x-hub-signature-256 header');
+      void discordNotify({
+        level: 'warn',
+        title: 'Webhook 缺少簽章',
+        description: '收到未帶 `x-hub-signature-256` 的 POST 請求，已拒絕。',
+      });
       return new NextResponse('Missing signature', { status: 401 });
     }
 
@@ -62,6 +74,11 @@ export async function POST(request: NextRequest) {
     const expBuf = Buffer.from(expectedSignature);
     if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
       logger.warn('Webhook signature verification failed');
+      void discordNotify({
+        level: 'error',
+        title: 'Webhook 簽章驗證失敗',
+        description: '收到 HMAC-SHA256 不符的請求，可能是偽造或竄改的 payload。',
+      });
       return new NextResponse('Invalid signature', { status: 401 });
     }
 
@@ -71,6 +88,11 @@ export async function POST(request: NextRequest) {
     return new NextResponse('OK', { status: 200 });
   } catch (error) {
     logger.error('Failed to process webhook event', error);
+    void discordNotify({
+      level: 'error',
+      title: 'Webhook 處理失敗',
+      description: error instanceof Error ? error.message : String(error),
+    });
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
