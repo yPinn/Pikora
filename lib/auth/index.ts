@@ -7,6 +7,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import NextAuth from 'next-auth';
 
 import prisma from '@/lib/prisma';
+import { discordNotify } from '@/lib/utils/discord-notify';
 
 import { authConfig } from './config';
 import { SESSION_COOKIE_NAME, IS_PROD, APP_BASE_PATH } from './cookie-names';
@@ -17,6 +18,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
   basePath: '/api/auth',
+  events: {
+    async createUser({ user }) {
+      void discordNotify({
+        level: 'info',
+        title: '新用戶首次登入 Pikora',
+        description: '請至 Meta App 後台確認是否需要將其加為測試人員。',
+        fields: {
+          名稱: user.name ?? '未知',
+          Email: user.email ?? '未知',
+        },
+      });
+    },
+  },
   callbacks: {
     ...restCallbacks,
     async jwt(params) {

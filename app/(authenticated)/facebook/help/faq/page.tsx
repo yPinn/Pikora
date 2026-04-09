@@ -34,11 +34,14 @@ export default function FAQPage() {
 
               <AccordionItem value="q2">
                 <AccordionTrigger>系統提示 Token 過期或無效怎麼辦？</AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
+                <AccordionContent className="text-muted-foreground space-y-2">
                   <p>
-                    Facebook 的使用者存取權杖有效期通常為 60
-                    天。過期後系統會提示重新授權，請點擊提示連結或直接登出再登入即可更新
-                    Token。若粉絲專頁管理員身分有異動，也可能造成 Token 失效。
+                    Pikora 的登入 session 有效期為 24
+                    小時。過期後系統會自動要求重新登入，點擊提示或直接登出再登入即可。
+                  </p>
+                  <p>
+                    若粉絲專頁管理員身分有異動（例如被移除管理員），或您在 Facebook 設定中撤銷了
+                    Pikora 的授權，也會造成 Token 失效，同樣重新登入授權即可解決。
                   </p>
                 </AccordionContent>
               </AccordionItem>
@@ -49,6 +52,53 @@ export default function FAQPage() {
                   <p>
                     可以。授權後，所有已勾選的粉絲專頁都會出現在左側選單的粉專選擇器中，點擊即可切換。每個粉專的黑名單與抽獎紀錄各自獨立。
                   </p>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>貼文與留言</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Accordion collapsible className="w-full" type="single">
+              <AccordionItem value="q-post-1">
+                <AccordionTrigger>點擊貼文後沒有看到任何反應？</AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  <p>
+                    點擊貼文會自動將該貼文的網址複製到剪貼簿，並顯示「已複製
+                    URL」的提示。接著前往「Content → 留言」或「Engage →
+                    抽獎」頁面，在輸入框貼上即可載入對應留言。
+                  </p>
+                  <p className="mt-2">
+                    若要直接開啟 Facebook 原始貼文，請使用 Ctrl + 點擊（Mac 為 ⌘ + 點擊）。
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="q-post-2">
+                <AccordionTrigger>留言數量很多，載入需要很久嗎？</AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  <p>
+                    留言透過 Meta Graph API 分批載入，每次最多取得 100
+                    則（含巢狀回覆）。留言量較大時（數千則以上），載入時間會相對較長，頁面會顯示目前進度。完成後方可進行抽獎。
+                  </p>
+                  <p className="mt-2">貼文與留言資料僅暫存於當次瀏覽 session，不會儲存至伺服器。</p>
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="q-post-3">
+                <AccordionTrigger>輸入貼文連結後顯示錯誤怎麼辦？</AccordionTrigger>
+                <AccordionContent className="text-muted-foreground space-y-2">
+                  <p>可能的原因：</p>
+                  <ul className="list-inside list-disc space-y-1">
+                    <li>連結不是該粉絲專頁的貼文（例如個人動態的貼文無法存取）</li>
+                    <li>貼文已被刪除或設為不公開</li>
+                    <li>目前選取的粉絲專頁與貼文所屬粉專不符</li>
+                    <li>Token 已失效，需重新登入授權</li>
+                  </ul>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
@@ -82,6 +132,9 @@ export default function FAQPage() {
                     <li>啟用了「排除重複」，且該用戶已有更早的留言被計入</li>
                     <li>該用戶已被加入此粉絲專頁的黑名單</li>
                   </ul>
+                  <p className="mt-2">
+                    可點擊「查看獎池」按鈕確認目前符合資格的參加者名單，幫助排查問題。
+                  </p>
                 </AccordionContent>
               </AccordionItem>
 
@@ -102,17 +155,6 @@ export default function FAQPage() {
                   </p>
                 </AccordionContent>
               </AccordionItem>
-
-              <AccordionItem value="q8">
-                <AccordionTrigger>留言數量很多，載入需要很久嗎？</AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  <p>
-                    留言透過 Meta Graph API
-                    分頁批次載入。留言量較大時（數千則以上），載入時間會相對較長。載入期間可以看到進度，完成後方可進行抽獎。貼文與留言資料僅暫存於當次瀏覽
-                    session，不會儲存至伺服器。
-                  </p>
-                </AccordionContent>
-              </AccordionItem>
             </Accordion>
           </CardContent>
         </Card>
@@ -129,7 +171,7 @@ export default function FAQPage() {
                   <p>系統僅儲存以下必要資料：</p>
                   <ul className="mt-2 list-inside list-disc space-y-1">
                     <li>您的 Facebook 帳號基本資訊（ID、姓名、頭像）</li>
-                    <li>加密儲存的 OAuth 存取權杖</li>
+                    <li>加密儲存的 OAuth 存取權杖（存於 HTTP-only Cookie）</li>
                     <li>您建立的抽獎紀錄、獎項設定與得獎名單</li>
                     <li>各粉絲專頁的黑名單</li>
                   </ul>
