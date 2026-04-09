@@ -17,7 +17,7 @@ import {
   Images,
   Loader2,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -145,28 +145,29 @@ function PostCard({
       onPointerEnter={() => setShowOverlay(true)}
       onPointerLeave={() => setShowOverlay(false)}
     >
-      {/* 圖片顯示（AnimatePresence crossfade） */}
+      {/* 圖片顯示：所有圖片同時 render，CSS 控制顯示，避免換頁時才發請求 */}
       {images.length > 0 ? (
-        <AnimatePresence initial={false} mode="sync">
-          <motion.div
-            key={currentIndex}
-            animate={{ opacity: 1 }}
-            className="absolute inset-0"
-            exit={{ opacity: 0 }}
-            initial={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-          >
-            <Image
-              fill
-              alt={post.message ? post.message.slice(0, 60) : 'Facebook 貼文圖片'}
-              className="object-cover transition-transform group-hover:scale-105 motion-reduce:transition-none"
-              loading={priority ? 'eager' : 'lazy'}
-              priority={priority}
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"
-              src={images[currentIndex]}
-            />
-          </motion.div>
-        </AnimatePresence>
+        <div className="absolute inset-0">
+          {images.map((src, idx) => (
+            <motion.div
+              key={src}
+              animate={{ opacity: idx === currentIndex ? 1 : 0 }}
+              className="absolute inset-0"
+              initial={false}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+            >
+              <Image
+                fill
+                alt={idx === 0 && post.message ? post.message.slice(0, 60) : ''}
+                className="object-cover transition-transform group-hover:scale-105 motion-reduce:transition-none"
+                loading={priority && idx === 0 ? 'eager' : 'lazy'}
+                priority={priority && idx === 0}
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"
+                src={src}
+              />
+            </motion.div>
+          ))}
+        </div>
       ) : (
         <div className="relative h-full overflow-hidden">
           {/* 背景圖片（模糊+低對比） */}
