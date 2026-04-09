@@ -6,7 +6,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -42,6 +42,7 @@ function Button({
   variant = 'default',
   size = 'default',
   asChild = false,
+  disabled,
   ...props
 }: React.ComponentProps<'button'> &
   VariantProps<typeof buttonVariants> & {
@@ -50,13 +51,16 @@ function Button({
   const Comp = asChild ? Slot : 'button';
 
   return (
-    <Comp
-      className={cn(buttonVariants({ variant, size, className }))}
-      data-size={size}
-      data-slot="button"
-      data-variant={variant}
-      {...props}
-    />
+    <span className={disabled ? 'cursor-not-allowed' : undefined}>
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        data-size={size}
+        data-slot="button"
+        data-variant={variant}
+        disabled={disabled}
+        {...props}
+      />
+    </span>
   );
 }
 
