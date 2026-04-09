@@ -33,14 +33,14 @@ export function GiveawayRecordHeader({
   return (
     <div className="flex items-stretch gap-4">
       {record.post_image && (
-        <div className="relative my-4 ml-4 size-24 shrink-0 self-center overflow-hidden rounded-lg">
+        <div className="ring-border relative my-4 ml-4 size-24 shrink-0 self-center overflow-hidden rounded-lg ring-1">
           <Image fill unoptimized alt="" className="object-cover" src={record.post_image} />
         </div>
       )}
 
       <CollapsibleTrigger asChild>
         <Button
-          className="flex min-w-0 flex-1 justify-start gap-3 px-2 py-6 text-left"
+          className="flex h-auto min-w-0 flex-1 items-center justify-start gap-3 px-2 py-4 text-left hover:bg-transparent"
           variant="ghost"
         >
           <div className="text-muted-foreground shrink-0">
@@ -56,7 +56,7 @@ export function GiveawayRecordHeader({
               {badges}
             </div>
 
-            <div className="text-muted-foreground text-caption mt-1.5 flex flex-wrap items-center gap-3 select-none">
+            <div className="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-3 text-sm select-none">
               <span className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
                 {format(new Date(record.createdAt), 'yyyy/MM/dd HH:mm', { locale: zhTW })}
