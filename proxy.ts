@@ -38,7 +38,7 @@ export function proxy(request: NextRequest) {
   const isProtectedRoute = protectedPaths.some((path) => pathname.startsWith(path));
 
   // 未登入攔截：訪問保護頁面時強制跳轉登入
-  // 使用 basePath 確保重定向 URL 正確（含 /pikora 前綴）
+  // 使用 basePath 確保重定向 URL 正確
   if (isProtectedRoute && !sessionCookie) {
     const basePath = request.nextUrl.basePath;
     const loginUrl = new URL(`${basePath}/login`, request.url);

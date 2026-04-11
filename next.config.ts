@@ -18,25 +18,13 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://*.fbcdn.net https://platform-lookaside.fbsbx.com https://lookaside.fbsbx.com https://graph.facebook.com",
       "font-src 'self'",
-      "connect-src 'self' https://llazypilot.com https://graph.facebook.com https://graph.threads.net",
+      "connect-src 'self' https://graph.facebook.com https://graph.threads.net",
       "frame-ancestors 'none'",
     ].join('; '),
   },
 ];
 
-function deriveBasePath(): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (!appUrl) return '';
-  try {
-    const { pathname } = new URL(appUrl);
-    return pathname === '/' ? '' : pathname.replace(/\/$/, '');
-  } catch {
-    return '';
-  }
-}
-
 const nextConfig: NextConfig = {
-  basePath: deriveBasePath(),
   images: {
     remotePatterns: [
       // Facebook CDN (用戶大頭貼、貼文圖片) - 單層萬用字元，不允許任意子網域深度

@@ -1,19 +1,6 @@
 // Is this a production HTTPS deployment? (controls __Secure- prefix and secure flag)
 export const IS_PROD = process.env.NEXT_PUBLIC_DEPLOYMENT_ENV === 'production';
 
-// Base path derived from NEXT_PUBLIC_APP_URL — single source of truth for routing
-function deriveBasePath(): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (!appUrl) return '';
-  try {
-    const { pathname } = new URL(appUrl);
-    return pathname === '/' ? '' : pathname.replace(/\/$/, '');
-  } catch {
-    return '';
-  }
-}
-export const APP_BASE_PATH = deriveBasePath();
-
 // Both variants exported so the proxy can accept either during env drift / migration
 export const SESSION_COOKIE_NAME_SECURE = '__Secure-next-auth.session-token.pikora';
 export const SESSION_COOKIE_NAME_INSECURE = 'next-auth.session-token.pikora';

@@ -10,7 +10,7 @@ import prisma from '@/lib/prisma';
 import { discordNotify } from '@/lib/utils/discord-notify';
 
 import { authConfig } from './config';
-import { SESSION_COOKIE_NAME, IS_PROD, APP_BASE_PATH } from './cookie-names';
+import { SESSION_COOKIE_NAME, IS_PROD } from './cookie-names';
 
 const { jwt: baseJwt, ...restCallbacks } = authConfig.callbacks ?? {};
 
@@ -66,7 +66,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       options: {
         httpOnly: true,
         sameSite: 'lax',
-        path: APP_BASE_PATH || '/',
+        path: '/',
         secure: IS_PROD,
       },
     },
