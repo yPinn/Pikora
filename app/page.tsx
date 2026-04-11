@@ -195,7 +195,7 @@ export default function Home() {
           */}
           <div className="flex items-stretch border-l-2 border-black dark:border-white/20">
             {/* ModeToggle — square: width = nav-h */}
-            <div className="flex w-(--nav-btn-icon-w) items-stretch [&>button]:h-full [&>button]:w-full [&>button]:rounded-none! [&>button]:border-0! [&>button]:bg-amber-500! [&>button]:text-gray-900! [&>button]:shadow-none! [&>button]:transition-colors [&>button]:duration-150 [&>button]:hover:bg-amber-400!">
+            <div className="flex w-(--nav-btn-icon-w) items-stretch [&_button]:h-full [&_button]:w-full [&_button]:rounded-none! [&_button]:border-0! [&_button]:bg-amber-500! [&_button]:text-gray-900! [&_button]:shadow-none! [&_button]:transition-colors [&_button]:duration-150 [&_button]:hover:bg-amber-400! [&>span]:flex [&>span]:h-full [&>span]:w-full">
               <ModeToggle />
             </div>
 
@@ -677,16 +677,15 @@ export default function Home() {
         className="pointer-events-none fixed top-1/2 right-4 z-50 flex -translate-y-1/2 flex-col gap-2"
       >
         {(['hero', 'platforms', 'features', 'cta'] as const).map((_, i) => (
-          <Button
+          <button
             key={i}
             aria-label={`前往第 ${i + 1} 區塊`}
             className={cn(
-              'pointer-events-auto size-2 rounded-full ring-1 ring-black/15 transition-all duration-300',
+              'pointer-events-auto size-2 cursor-pointer rounded-full ring-1 ring-black/15 transition-all duration-300',
               currentSection === i
                 ? 'scale-125 bg-white ring-black/20 hover:bg-white'
                 : 'bg-white/60 hover:bg-white/80'
             )}
-            variant="ghost"
             onClick={() => {
               const el = mainRef.current;
               if (el)
